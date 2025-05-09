@@ -1,11 +1,14 @@
 "use client"
 
+import type React from "react"
+
 import { useEffect, useRef, type FormEvent } from "react"
 import { ArrowLeft, Search, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useSearch } from "@/context/search-context"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 
 // Mock search results based on query - same as in SearchDropdown
 const getSearchResults = (query: string) => {
@@ -15,49 +18,99 @@ const getSearchResults = (query: string) => {
   const products = [
     {
       id: 1,
-      name: "Air Max Pulse",
-      type: "Running",
-      size: "US 9",
-      price: 149.99,
-      image: "/sneaker-1.png",
+      name: "Cola Classic 6-Pack",
+      type: "Carbonated",
+      size: "6 x 330ml",
+      price: 4.99,
+      image: "/cola-6pack.png",
       inStock: true,
     },
     {
       id: 2,
-      name: "Ultra Boost 22",
-      type: "Running",
-      size: "US 10",
-      price: 189.99,
-      image: "/sneaker-2.png",
+      name: "Sparkling Water Variety",
+      type: "Water",
+      size: "12 x 500ml",
+      price: 6.49,
+      image: "/sparkling-water-variety.png",
       inStock: false,
     },
     {
       id: 3,
-      name: "Classic Leather",
-      type: "Casual",
-      size: "US 8.5",
-      price: 79.99,
-      image: "/sneaker-3.png",
+      name: "Orange Soda",
+      type: "Carbonated",
+      size: "2L Bottle",
+      price: 1.99,
+      image: "/orange-soda-2l.png",
       inStock: true,
     },
     {
       id: 4,
-      name: "Dunk Low Retro",
-      type: "Skateboarding",
-      size: "US 11",
-      price: 110.0,
-      image: "/sneaker-4.png",
+      name: "Lemon-Lime Soda Cans",
+      type: "Carbonated",
+      size: "8 x 330ml",
+      price: 5.29,
+      image: "/lemon-lime-cans.png",
+      inStock: true,
+    },
+    {
+      id: 5,
+      name: "Energy Drink 4-Pack",
+      type: "Energy",
+      size: "4 x 250ml",
+      price: 7.99,
+      image: "/energy-4pack.png",
+      inStock: false,
+    },
+    {
+      id: 6,
+      name: "Iced Tea Peach",
+      type: "Tea",
+      size: "1.5L Bottle",
+      price: 2.49,
+      image: "/iced-tea-peach.png",
+      inStock: true,
+    },
+    {
+      id: 7,
+      name: "Premium Still Water",
+      type: "Water",
+      size: "6 x 1L",
+      price: 3.99,
+      image: "/still-water-6pack.png",
+      inStock: true,
+    },
+    {
+      id: 8,
+      name: "Cola Zero Sugar",
+      type: "Carbonated",
+      size: "1.5L Bottle",
+      price: 1.79,
+      image: "/cola-zero-1.5l.png",
+      inStock: true,
+    },
+    {
+      id: 9,
+      name: "Ginger Ale",
+      type: "Carbonated",
+      size: "4 x 330ml",
+      price: 3.49,
+      image: "/ginger-ale-4pack.png",
       inStock: true,
     },
   ]
 
-  return products.filter((product) => product.name.toLowerCase().includes(query.toLowerCase()))
+  return products.filter(
+    (product) =>
+      product.name.toLowerCase().includes(query.toLowerCase()) ||
+      product.type.toLowerCase().includes(query.toLowerCase()),
+  )
 }
 
 export function SearchOverlay() {
-  const { isSearchOpen, searchQuery, closeSearch, setSearchQuery, submitSearch, clearSearch } = useSearch()
+  const { isSearchOpen, searchQuery, closeSearch, setSearchQuery, submitSearch } = useSearch()
   const inputRef = useRef<HTMLInputElement>(null)
   const results = getSearchResults(searchQuery)
+  const router = useRouter()
 
   useEffect(() => {
     if (isSearchOpen && inputRef.current) {
@@ -71,10 +124,21 @@ export function SearchOverlay() {
     submitSearch()
   }
 
+  // Handle input change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value)
+  }
+
+  // Simple and reliable approach to clear search
   const handleClearSearch = () => {
-    if (searchQuery) {
-      clearSearch()
-    }
+    // Clear the search query in the context
+    setSearchQuery("")
+
+    // Close the search overlay
+    closeSearch()
+
+    // Navigate to home page without query parameters
+    router.push("/")
   }
 
   if (!isSearchOpen) return null
@@ -90,18 +154,18 @@ export function SearchOverlay() {
           <div className="relative flex-1">
             <Input
               ref={inputRef}
-              type="search"
+              type="text"
               placeholder="Search products"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={handleSearchChange}
               className="pl-4 pr-10 border-gray-200 rounded-full w-full"
             />
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              className="absolute right-0 top-0 h-full"
-              onClick={handleClearSearch}
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 rounded-full hover:bg-gray-100 transition-colors"
+              onClick={searchQuery ? handleClearSearch : undefined}
             >
               {searchQuery ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
             </Button>

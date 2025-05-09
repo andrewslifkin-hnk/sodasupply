@@ -1,7 +1,7 @@
 "use client"
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react"
-import { useRouter, usePathname } from "next/navigation"
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react"
+import { useRouter, usePathname, useSearchParams } from "next/navigation"
 
 interface SearchContextType {
   isSearchOpen: boolean
@@ -20,12 +20,16 @@ export function SearchProvider({ children }: { children: ReactNode }) {
   const [searchQuery, setSearchQuery] = useState("")
   const router = useRouter()
   const pathname = usePathname()
+  const searchParams = useSearchParams()
+
+  // Initialize searchQuery from URL on mount and when URL changes
+  useEffect(() => {
+    const query = searchParams.get("q") || ""
+    setSearchQuery(query)
+  }, [searchParams])
 
   const openSearch = () => setIsSearchOpen(true)
-  const closeSearch = () => {
-    setIsSearchOpen(false)
-    // Don't clear the search query when closing
-  }
+  const closeSearch = () => setIsSearchOpen(false)
 
   const submitSearch = useCallback(() => {
     if (searchQuery.trim()) {
@@ -41,12 +45,12 @@ export function SearchProvider({ children }: { children: ReactNode }) {
     // Clear the search query
     setSearchQuery("")
 
-    // Reset the URL to remove the search parameter
-    router.push(pathname)
+    // Navigate to home page without query parameters
+    router.push("/")
 
     // Close the search dropdown/overlay
     setIsSearchOpen(false)
-  }, [router, pathname])
+  }, [router])
 
   return (
     <SearchContext.Provider

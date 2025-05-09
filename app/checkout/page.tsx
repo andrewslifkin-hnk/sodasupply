@@ -6,61 +6,149 @@ import { useStore } from "@/context/store-context"
 import { formatCurrency } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { MapPin, Truck, CreditCard, ArrowLeft, Recycle } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { MapPin, Truck, CreditCard, ArrowLeft, Recycle, Tag, Loader2 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
+import { PromoCodeSheet } from "@/components/checkout/promo-code-sheet"
+import { DeliveryDateSheet } from "@/components/checkout/delivery-date-sheet"
+import { useMediaQuery } from "@/hooks/use-media-query"
+import Header from "@/components/header"
+import Footer from "@/components/footer"
+import { createOrder } from "@/services/order-service"
 
 export default function CheckoutPage() {
   const { items, totalItems } = useCart()
   const { selectedStore } = useStore()
   const [remarks, setRemarks] = useState("")
   const router = useRouter()
+  const isMobile = useMediaQuery("(max-width: 768px)")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // State for promo code
+  const [isPromoSheetOpen, setIsPromoSheetOpen] = useState(false)
+  const [promoCode, setPromoCode] = useState("")
+  const [discount, setDiscount] = useState(0)
+  const [isPromoInputVisible, setIsPromoInputVisible] = useState(false)
+
+  // State for delivery date
+  const [isDateSheetOpen, setIsDateSheetOpen] = useState(false)
+  const [selectedDateId, setSelectedDateId] = useState("date-0")
+
+  // Generate a formatted date string based on the selected date ID
+  const getFormattedDate = () => {
+    const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+    const today = new Date()
+    const dayOffset = Number.parseInt(selectedDateId.split("-")[1]) + 1
+    const date = new Date(today)
+    date.setDate(today.getDate() + dayOffset)
+
+    return `${days[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]}`
+  }
+
+  // Get delivery date as ISO string
+  const getDeliveryDateISO = () => {
+    const today = new Date()
+    const dayOffset = Number.parseInt(selectedDateId.split("-")[1]) + 1
+    const date = new Date(today)
+    date.setDate(today.getDate() + dayOffset)
+    return date.toISOString()
+  }
 
   // Calculate order totals
   const subtotal = items.reduce((total, item) => total + item.price * item.quantity, 0)
   const vat = subtotal * 0.21 // 21% VAT
   const delivery = 0 // Free delivery
-  const discount = 12.5 // Example discount
   const total = subtotal + vat - discount
 
-  // Mock delivery date
-  const deliveryDate = new Date()
-  deliveryDate.setDate(deliveryDate.getDate() + 2)
-  const formattedDate = deliveryDate.toLocaleDateString("en-US", {
-    weekday: "long",
-    day: "numeric",
-    month: "short",
-  })
+  // Handle promo code application
+  const handleApplyPromo = (code: string) => {
+    setPromoCode(code)
+    // Mock discount calculation - in a real app, this would validate the code with an API
+    if (code.toUpperCase() === "WELCOME10") {
+      setDiscount(10)
+    } else if (code.toUpperCase() === "SUMMER20") {
+      setDiscount(20)
+    } else {
+      // Invalid code
+      setDiscount(0)
+    }
+  }
+
+  // Handle inline promo code application
+  const handleInlineApplyPromo = () => {
+    handleApplyPromo(promoCode)
+  }
+
+  // Toggle promo code input visibility on desktop
+  const togglePromoInput = () => {
+    if (isMobile) {
+      setIsPromoSheetOpen(true)
+    } else {
+      setIsPromoInputVisible(!isPromoInputVisible)
+    }
+  }
+
+  // Handle place order
+  const handlePlaceOrder = async () => {
+    if (!selectedStore) return
+
+    try {
+      setIsSubmitting(true)
+
+      // Generate a random order number
+      const orderNumber = `SO${Date.now().toString().slice(-8)}`
+
+      const order = {
+        store_id: Number.parseInt(selectedStore.id),
+        order_number: orderNumber,
+        order_date: new Date().toISOString(),
+        delivery_date: getDeliveryDateISO(),
+        subtotal,
+        vat,
+        discount,
+        total,
+        status: "pending",
+        payment_method: "cash_on_delivery",
+        remarks: remarks || undefined,
+      }
+
+      const result = await createOrder(order, items)
+
+      if (result.success) {
+        router.push("/order-confirmation")
+      } else {
+        console.error("Failed to create order:", result.error)
+        alert("There was an error placing your order. Please try again.")
+      }
+    } catch (error) {
+      console.error("Error placing order:", error)
+      alert("There was an error placing your order. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   if (totalItems === 0) {
     return (
       <div className="min-h-screen flex flex-col">
-        <header className="bg-black text-white py-4">
-          <div className="container mx-auto px-4 flex items-center">
-            <Link href="/" className="font-bold text-xl tracking-[-2px]">
-              Store
-            </Link>
-          </div>
-        </header>
+        <Header />
         <main className="flex-1 container mx-auto px-4 py-8 flex flex-col items-center justify-center">
           <h1 className="text-2xl font-bold mb-4">Your cart is empty</h1>
           <p className="text-gray-500 mb-6">Add some products to your cart before checking out</p>
           <Button onClick={() => router.push("/")}>Continue shopping</Button>
         </main>
+        <Footer />
       </div>
     )
   }
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="bg-black text-white py-4">
-        <div className="container mx-auto px-4 flex items-center">
-          <Link href="/" className="font-bold text-xl tracking-[-2px]">
-            Store
-          </Link>
-        </div>
-      </header>
+      <Header />
 
       <main className="flex-1 container mx-auto px-4 py-8">
         <Link href="/" className="inline-flex items-center text-sm text-gray-600 hover:text-black mb-6">
@@ -93,12 +181,17 @@ export default function CheckoutPage() {
             <section>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-medium">Preferred delivery date</h2>
-                <Button variant="ghost" size="sm" className="text-sm text-gray-600">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-sm text-gray-600"
+                  onClick={() => setIsDateSheetOpen(true)}
+                >
                   Change
                 </Button>
               </div>
               <div className="border rounded-lg p-4">
-                <div className="font-medium">{formattedDate}</div>
+                <div className="font-medium">{getFormattedDate()}</div>
                 <div className="text-sm text-gray-600">Earliest option available. Free of charge.</div>
               </div>
             </section>
@@ -110,7 +203,7 @@ export default function CheckoutPage() {
                 <div className="bg-gray-100 p-2 rounded-full">
                   <Truck className="h-5 w-5 text-gray-700" />
                 </div>
-                <div className="font-medium">Sneaker Vault</div>
+                <div className="font-medium">Beverage Direct</div>
               </div>
             </section>
 
@@ -198,7 +291,36 @@ export default function CheckoutPage() {
             <div className="bg-white border rounded-lg p-6 sticky top-8">
               <h2 className="text-lg font-medium mb-4">Summary</h2>
 
-              <button className="text-sm text-blue-600 hover:underline mb-4 flex items-center">Add a promo code</button>
+              {/* Promo code section */}
+              <div className="mb-4">
+                {!isMobile && isPromoInputVisible ? (
+                  <div className="space-y-2">
+                    <label htmlFor="desktop-promo-code" className="text-sm font-medium">
+                      Promo code
+                    </label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="desktop-promo-code"
+                        value={promoCode}
+                        onChange={(e) => setPromoCode(e.target.value)}
+                        placeholder="Enter promo code"
+                        className="flex-1"
+                      />
+                      <Button onClick={handleInlineApplyPromo} className="bg-black hover:bg-black/90 text-white">
+                        Apply
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    className="text-sm text-blue-600 hover:underline flex items-center gap-1"
+                    onClick={togglePromoInput}
+                  >
+                    <Tag className="h-4 w-4" />
+                    {promoCode && !isMobile ? `${promoCode} applied` : "Add a promo code"}
+                  </button>
+                )}
+              </div>
 
               <div className="space-y-2 mb-4">
                 <div className="flex justify-between">
@@ -213,10 +335,12 @@ export default function CheckoutPage() {
                   <span className="text-gray-600">Delivery</span>
                   <span className="text-green-600">Free</span>
                 </div>
-                <div className="flex justify-between text-purple-600">
-                  <span>Discounts</span>
-                  <span>− {formatCurrency(discount)}</span>
-                </div>
+                {discount > 0 && (
+                  <div className="flex justify-between text-purple-600">
+                    <span>Discounts</span>
+                    <span>− {formatCurrency(discount)}</span>
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-between font-bold text-lg border-t pt-4 mb-6">
@@ -224,51 +348,43 @@ export default function CheckoutPage() {
                 <span>{formatCurrency(total)}</span>
               </div>
 
-              <Button className="w-full bg-black hover:bg-black/90">Place order</Button>
+              <Button
+                className="w-full bg-black hover:bg-black/90 text-white"
+                onClick={handlePlaceOrder}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  "Place order"
+                )}
+              </Button>
             </div>
           </div>
         </div>
       </main>
 
-      <footer className="bg-black text-white py-8 mt-12">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="mb-4 md:mb-0">
-              <div className="font-bold text-xl tracking-[-2px]">Store</div>
-            </div>
-            <div className="flex items-center gap-4">
-              <Link href="#" className="text-white/70 hover:text-white">
-                Customer Support
-              </Link>
-              <div className="flex items-center gap-1">
-                <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center text-black text-xs">
-                  E
-                </div>
-                <span className="text-sm">English</span>
-              </div>
-            </div>
-          </div>
-          <div className="border-t border-white/10 mt-8 pt-4">
-            <div className="flex flex-col md:flex-row justify-between text-sm text-white/50">
-              <div className="flex flex-wrap gap-4 mb-4 md:mb-0">
-                <Link href="#" className="hover:text-white/80">
-                  Privacy Policy
-                </Link>
-                <Link href="#" className="hover:text-white/80">
-                  Terms & Conditions
-                </Link>
-                <Link href="#" className="hover:text-white/80">
-                  Cookie Settings
-                </Link>
-                <Link href="#" className="hover:text-white/80">
-                  Cookie Policy
-                </Link>
-              </div>
-              <div>Heineken Company Limited ©2023 All rights reserved. Account region: The Netherlands</div>
-            </div>
-          </div>
-        </div>
-      </footer>
+      {/* Mobile Promo Code Sheet */}
+      {isMobile && (
+        <PromoCodeSheet
+          isOpen={isPromoSheetOpen}
+          onClose={() => setIsPromoSheetOpen(false)}
+          onApply={handleApplyPromo}
+        />
+      )}
+
+      {/* Delivery Date Sheet */}
+      <DeliveryDateSheet
+        isOpen={isDateSheetOpen}
+        onClose={() => setIsDateSheetOpen(false)}
+        onSave={setSelectedDateId}
+        selectedDateId={selectedDateId}
+      />
+
+      <Footer />
     </div>
   )
 }

@@ -16,13 +16,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <CartProvider>
-          <StoreProvider>
+        <StoreProvider>
+          <CartProvider>
             <Suspense>
               <SearchProvider>{children}</SearchProvider>
             </Suspense>
-          </StoreProvider>
-        </CartProvider>
+          </CartProvider>
+        </StoreProvider>
       </body>
     </html>
   )

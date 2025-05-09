@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import { useStore } from "@/context/store-context"
 
 export interface CartItem {
   id: number
@@ -12,6 +13,11 @@ export interface CartItem {
   size: string
 }
 
+interface StoreCart {
+  storeId: string
+  items: CartItem[]
+}
+
 interface CartContextType {
   items: CartItem[]
   addToCart: (product: Omit<CartItem, "quantity">) => void
@@ -19,81 +25,155 @@ interface CartContextType {
   updateQuantity: (productId: number, quantity: number) => void
   getItemQuantity: (productId: number) => number
   totalItems: number
+  clearCart: () => void
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
+// Create a safe version of useStore that returns null if used outside StoreProvider
+// function useSafeStore() {
+//   try {
+//     return useStore()
+//   } catch (error) {
+//     // Return a default value if the store context is not available
+//     return { selectedStore: null, stores: [] }
+//   }
+// }
+
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>([])
+  const [storeCarts, setStoreCarts] = useState<StoreCart[]>([])
+  const [currentItems, setCurrentItems] = useState<CartItem[]>([])
   const [totalItems, setTotalItems] = useState(0)
   const [isInitialized, setIsInitialized] = useState(false)
 
-  // Load cart from localStorage on initial render
+  // Use the safe version of useStore
+  // const { selectedStore } = useSafeStore()
+  const { selectedStore } = useStore()
+
+  // Load carts from localStorage on initial render
   useEffect(() => {
-    const storedCart = localStorage.getItem("cart")
-    if (storedCart) {
+    const storedCarts = localStorage.getItem("storeCarts")
+    if (storedCarts) {
       try {
-        const parsedCart = JSON.parse(storedCart)
-        setItems(parsedCart)
+        const parsedCarts = JSON.parse(storedCarts)
+        setStoreCarts(parsedCarts)
       } catch (error) {
-        console.error("Failed to parse cart from localStorage:", error)
+        console.error("Failed to parse carts from localStorage:", error)
       }
     }
     setIsInitialized(true)
   }, [])
 
-  // Update localStorage whenever cart changes
+  // Update localStorage whenever carts change
   useEffect(() => {
     if (isInitialized) {
-      localStorage.setItem("cart", JSON.stringify(items))
+      localStorage.setItem("storeCarts", JSON.stringify(storeCarts))
     }
-  }, [items, isInitialized])
+  }, [storeCarts, isInitialized])
+
+  // Update current items when selected store changes
+  useEffect(() => {
+    if (selectedStore) {
+      const storeCart = storeCarts.find((cart) => cart.storeId === selectedStore.id)
+      setCurrentItems(storeCart?.items || [])
+    } else {
+      setCurrentItems([])
+    }
+  }, [selectedStore, storeCarts])
 
   // Update total items count
   useEffect(() => {
-    const count = items.reduce((total, item) => total + item.quantity, 0)
+    const count = currentItems.reduce((total, item) => total + item.quantity, 0)
     setTotalItems(count)
-  }, [items])
+  }, [currentItems])
 
-  const addToCart = (product: Omit<CartItem, "quantity">) => {
-    setItems((prevItems) => {
-      const existingItem = prevItems.find((item) => item.id === product.id)
+  // Update the store cart in the storeCarts array
+  const updateStoreCart = (items: CartItem[]) => {
+    if (!selectedStore) return
 
-      if (existingItem) {
-        return prevItems.map((item) => (item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item))
+    setStoreCarts((prevCarts) => {
+      const existingCartIndex = prevCarts.findIndex((cart) => cart.storeId === selectedStore.id)
+
+      if (existingCartIndex >= 0) {
+        // Update existing cart
+        const updatedCarts = [...prevCarts]
+        updatedCarts[existingCartIndex] = {
+          ...updatedCarts[existingCartIndex],
+          items,
+        }
+        return updatedCarts
+      } else {
+        // Create new cart for this store
+        return [...prevCarts, { storeId: selectedStore.id, items }]
       }
-
-      return [...prevItems, { ...product, quantity: 1 }]
     })
   }
 
+  const addToCart = (product: Omit<CartItem, "quantity">) => {
+    if (!selectedStore) return
+
+    const updatedItems = [...currentItems]
+    const existingItemIndex = updatedItems.findIndex((item) => item.id === product.id)
+
+    if (existingItemIndex >= 0) {
+      // Update existing item
+      updatedItems[existingItemIndex] = {
+        ...updatedItems[existingItemIndex],
+        quantity: updatedItems[existingItemIndex].quantity + 1,
+      }
+    } else {
+      // Add new item
+      updatedItems.push({ ...product, quantity: 1 })
+    }
+
+    setCurrentItems(updatedItems)
+    updateStoreCart(updatedItems)
+  }
+
   const removeFromCart = (productId: number) => {
-    setItems((prevItems) => prevItems.filter((item) => item.id !== productId))
+    if (!selectedStore) return
+
+    const updatedItems = currentItems.filter((item) => item.id !== productId)
+    setCurrentItems(updatedItems)
+    updateStoreCart(updatedItems)
   }
 
   const updateQuantity = (productId: number, quantity: number) => {
+    if (!selectedStore) return
+
     if (quantity <= 0) {
       removeFromCart(productId)
       return
     }
 
-    setItems((prevItems) => prevItems.map((item) => (item.id === productId ? { ...item, quantity } : item)))
+    const updatedItems = currentItems.map((item) => (item.id === productId ? { ...item, quantity } : item))
+
+    setCurrentItems(updatedItems)
+    updateStoreCart(updatedItems)
   }
 
   const getItemQuantity = (productId: number) => {
-    const item = items.find((item) => item.id === productId)
+    const item = currentItems.find((item) => item.id === productId)
     return item ? item.quantity : 0
+  }
+
+  const clearCart = () => {
+    if (!selectedStore) return
+
+    setCurrentItems([])
+    updateStoreCart([])
   }
 
   return (
     <CartContext.Provider
       value={{
-        items,
+        items: currentItems,
         addToCart,
         removeFromCart,
         updateQuantity,
         getItemQuantity,
         totalItems,
+        clearCart,
       }}
     >
       {children}

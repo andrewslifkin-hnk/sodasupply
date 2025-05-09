@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import Link from "next/link"
 import { Menu, Bell, ShoppingCart, Search, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -16,14 +18,16 @@ import { useMediaQuery } from "@/hooks/use-media-query"
 import { StoreDropdown } from "@/components/store-selector/store-dropdown"
 import { StoreSheet } from "@/components/store-selector/store-sheet"
 import { CartSheet } from "@/components/cart/cart-sheet"
+import { useRouter } from "next/navigation"
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false)
   const [isCartOpen, setIsCartOpen] = useState(false)
   const { totalItems } = useCart()
-  const { isSearchOpen, searchQuery, openSearch, setSearchQuery, submitSearch, clearSearch } = useSearch()
+  const { isSearchOpen, searchQuery, openSearch, setSearchQuery, submitSearch } = useSearch()
   const isMobile = useMediaQuery("(max-width: 768px)")
   const searchContainerRef = useRef<HTMLDivElement>(null)
+  const router = useRouter()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -39,8 +43,18 @@ export default function Header() {
     submitSearch()
   }
 
+  // Handle input change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value)
+  }
+
+  // Simple and reliable approach to clear search
   const handleClearSearch = () => {
-    clearSearch()
+    // Clear the search query in the context
+    setSearchQuery("")
+
+    // Navigate to home page without query parameters
+    router.push("/")
   }
 
   return (
@@ -81,7 +95,7 @@ export default function Header() {
               </Sheet>
 
               <Link href="/" className="flex items-center">
-                <span className="font-bold text-xl text-white tracking-[-2px]">Store</span>
+                <span className="font-bold text-xl text-white tracking-[-2px]">SodaSupply</span>
               </Link>
             </div>
 
@@ -92,10 +106,10 @@ export default function Header() {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
-                      type="search"
+                      type="text"
                       placeholder="Search products"
                       value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onChange={handleSearchChange}
                       onFocus={openSearch}
                       className="pl-10 pr-10 bg-gray-800 border-gray-700 text-white placeholder:text-gray-400 w-full rounded-full focus-visible:ring-gray-600"
                     />
@@ -105,9 +119,10 @@ export default function Header() {
                         variant="ghost"
                         size="icon"
                         onClick={handleClearSearch}
-                        className="absolute right-0 top-0 h-full text-gray-400 hover:text-white"
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 rounded-full hover:bg-gray-700 transition-colors"
                       >
-                        <X className="h-4 w-4" />
+                        <X className="h-4 w-4 text-gray-400 hover:text-white" />
+                        <span className="sr-only">Clear search</span>
                       </Button>
                     )}
                   </div>
@@ -144,7 +159,7 @@ export default function Header() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
-              type="search"
+              type="text"
               placeholder="Search products"
               className="pl-10 bg-gray-800 border-gray-700 text-white placeholder:text-gray-400 w-full rounded-full focus-visible:ring-gray-600"
               onClick={openSearch}

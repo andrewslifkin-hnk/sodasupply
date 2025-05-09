@@ -4,7 +4,7 @@ export default function Footer() {
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="font-bold text-lg mb-4 tracking-[-2px]">Store</h3>
+            <h3 className="font-bold text-lg mb-4 tracking-[-2px]">SodaSupply</h3>
             <p className="text-white/70 text-sm">
               Your one-stop shop for premium beverages and more. Discover quality products at competitive prices.
             </p>
@@ -90,7 +90,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-white/10 mt-8 pt-8 text-center text-white/70 text-sm">
-          <p>© 2024 eazle. All rights reserved.</p>
+          <p>© 2025 SodaSupply. All rights reserved.</p>
         </div>
       </div>
     </footer>

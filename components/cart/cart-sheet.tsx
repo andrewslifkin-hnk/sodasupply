@@ -1,10 +1,10 @@
 "use client"
 
-import { X, Trash2, ShoppingBag } from "lucide-react"
+import { Trash2, ShoppingBag } from "lucide-react"
 import { useCart } from "@/context/cart-context"
 import { useStore } from "@/context/store-context"
 import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import Image from "next/image"
 import { CartItemQuantity } from "./cart-item-quantity"
@@ -36,11 +36,6 @@ export function CartSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
       <SheetContent side={isMobile ? "bottom" : "right"} className={isMobile ? "h-[90vh] rounded-t-xl" : "w-[400px]"}>
         <SheetHeader className="flex flex-row items-center justify-between mb-4">
           <SheetTitle>Cart</SheetTitle>
-          <SheetClose asChild>
-            <Button variant="ghost" size="icon">
-              <X className="h-4 w-4" />
-            </Button>
-          </SheetClose>
         </SheetHeader>
 
         {selectedStore && (
