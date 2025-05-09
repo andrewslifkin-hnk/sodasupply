@@ -526,58 +526,66 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
           }
         }
 
-        // Apply all active filters
-        for (const filter of state.activeFilters) {
-          switch (filter.type) {
-            case FilterType.CHECKBOX:
-            case FilterType.TEXT:
-            case FilterType.RADIO:
-              // Text-based filters (exact match or includes)
-              if (filter.category === "type" && product.type !== filter.value) {
-                return false
-              }
-              if (
-                filter.category === "brand" &&
-                !(product.brand?.includes(filter.value as string) || product.name?.includes(filter.value as string))
-              ) {
-                return false
-              }
-              if (
-                filter.category === "package" &&
-                !product.name?.toLowerCase().includes((filter.value as string).toLowerCase())
-              ) {
-                return false
-              }
-              if (filter.category === "size" && !product.size?.includes(filter.value as string)) {
-                return false
-              }
-              break
-
-            case FilterType.TOGGLE:
-              // Boolean filters
-              if (filter.category === "availability") {
-                if (filter.id === "availability-instock" && !product.inStock) {
-                  return false
-                }
-                if (filter.id === "availability-returnable" && !product.returnable) {
-                  return false
-                }
-              }
-              break
-
-            case FilterType.RANGE:
-              // Range filters
-              if (filter.category === "price") {
-                const [min, max] = filter.value as [number, number]
-                if (product.price < min || (max > 0 && product.price > max)) {
-                  return false
-                }
-              }
-              break
+        // Group filters by category
+        const filtersByCategory: Record<string, ActiveFilter[]> = {}
+        state.activeFilters.forEach((filter) => {
+          if (!filtersByCategory[filter.category]) {
+            filtersByCategory[filter.category] = []
           }
-        }
+          filtersByCategory[filter.category].push(filter)
+        })
 
-        return true
+        // Apply filters grouped by category
+        return Object.entries(filtersByCategory).every(([category, filters]) => {
+          switch (category) {
+            case "type":
+              // For type category, check if ANY filter matches (OR condition)
+              return filters.some(filter => 
+                product.type === filter.value
+              )
+              
+            case "brand":
+              // For brand category, check if ANY filter matches (OR condition)
+              return filters.some(filter => 
+                product.brand?.includes(filter.value as string) || 
+                product.name?.includes(filter.value as string)
+              )
+              
+            case "package":
+              // For package category, check if ANY filter matches (OR condition)
+              return filters.some(filter => 
+                product.name?.toLowerCase().includes((filter.value as string).toLowerCase())
+              )
+              
+            case "size":
+              // For size category, check if ANY filter matches (OR condition)
+              return filters.some(filter => 
+                product.size?.includes(filter.value as string)
+              )
+              
+            case "availability":
+              // For availability toggles, use OR condition
+              return filters.every(filter => {
+                if (filter.id === "availability-instock") {
+                  return product.inStock
+                }
+                if (filter.id === "availability-returnable") {
+                  return product.returnable
+                }
+                return true
+              })
+              
+            case "price":
+              // For price range filter
+              return filters.every(filter => {
+                const [min, max] = filter.value as [number, number]
+                return !(product.price < min || (max > 0 && product.price > max))
+              })
+              
+            default:
+              return true
+          }
+        })
       })
     },
     [state.activeFilters, state.searchQuery],
