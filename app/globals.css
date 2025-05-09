@@ -85,3 +85,33 @@
     -webkit-appearance: none;
   }
 }
+
+@layer components {
+  .max-w-site {
+    width: 100%;
+    max-width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  
+  .content-container {
+    width: 100%;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  .btn-primary {
+    @apply bg-[#004851] hover:bg-[#003840] text-white rounded-full px-6 py-2;
+  }
+  
+  .page-title {
+    @apply text-2xl font-bold mb-6;
+  }
+  
+  .card-container {
+    @apply bg-white rounded-lg shadow-sm p-8;
+  }
+}

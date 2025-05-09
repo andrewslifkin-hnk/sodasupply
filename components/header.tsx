@@ -61,12 +61,20 @@ export default function Header() {
 
   // Handle logo click to clear all filters and show all products
   const handleLogoClick = (e: React.MouseEvent) => {
+    // Prevent the default link behavior
     e.preventDefault()
-
+    
     // Clear all filters
     clearAllFilters()
+    
+    // Navigate to the homepage after a small delay
+    setTimeout(() => {
+      router.push("/")
+    }, 0)
+  }
 
-    // Then navigate to home page
+  // Simple direct function to go to homepage
+  const goToHomePage = () => {
     router.push("/")
   }
 
@@ -78,109 +86,157 @@ export default function Header() {
           scrolled ? "bg-black shadow-md" : "bg-black",
         )}
       >
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-[auto_1fr_auto] items-center h-16 gap-4">
-            {/* Left section - Logo and mobile menu */}
-            <div className="flex items-center">
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="text-white mr-2 md:hidden">
-                    <Menu className="h-5 w-5" />
-                    <span className="sr-only">Toggle menu</span>
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-[300px] sm:w-[400px]">
-                  <nav className="flex flex-col gap-4 mt-8">
-                    <Link href="/" className="text-lg font-medium" onClick={handleLogoClick}>
-                      Home
-                    </Link>
-                    <Link href="/categories" className="text-lg font-medium">
-                      Categories
-                    </Link>
-                    <Link href="/deals" className="text-lg font-medium">
-                      Deals
-                    </Link>
-                    <Link href="/about" className="text-lg font-medium">
-                      About
-                    </Link>
-                  </nav>
-                </SheetContent>
-              </Sheet>
-
-              <Button variant="ghost" className="flex items-center p-0 h-auto" onClick={handleLogoClick}>
-                <span className="font-bold text-xl text-white tracking-[-2px]">SodaSupply</span>
-              </Button>
-            </div>
-
-            {/* Center section - Search */}
-            <div className="hidden md:flex justify-center">
-              <div ref={searchContainerRef} className="relative w-full max-w-md">
-                <form onSubmit={handleSearchSubmit}>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <Input
-                      type="text"
-                      placeholder="Search products"
-                      value={searchQuery}
-                      onChange={handleSearchChange}
-                      onFocus={openSearch}
-                      className="pl-10 pr-10 bg-gray-800 border-gray-700 text-white placeholder:text-gray-400 w-full rounded-full focus-visible:ring-gray-600"
-                    />
-                    {searchQuery && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={handleClearSearch}
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 rounded-full hover:bg-gray-700 transition-colors"
+        <div className="max-w-site">
+          <div className="content-container">
+            <div className="grid grid-cols-[auto_1fr_auto] items-center h-16 gap-4">
+              {/* Left section - Logo and mobile menu */}
+              <div className="flex items-center">
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon" className="text-white mr-2 md:hidden">
+                      <Menu className="h-5 w-5" />
+                      <span className="sr-only">Toggle menu</span>
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+                    <nav className="flex flex-col gap-4 mt-8">
+                      <button
+                        onClick={() => {
+                          clearAllFilters();
+                          router.push("/");
+                        }}
+                        className="text-left text-lg font-medium bg-transparent border-0 p-0"
                       >
-                        <X className="h-4 w-4 text-gray-400 hover:text-white" />
-                        <span className="sr-only">Clear search</span>
-                      </Button>
-                    )}
-                  </div>
-                </form>
-                <SearchDropdown />
+                        Home
+                      </button>
+                      <Link href="/categories" className="text-lg font-medium">
+                        Categories
+                      </Link>
+                      <Link href="/deals" className="text-lg font-medium">
+                        Deals
+                      </Link>
+                      <Link href="/about" className="text-lg font-medium">
+                        About
+                      </Link>
+                    </nav>
+                  </SheetContent>
+                </Sheet>
+                <Link 
+                  href="/" 
+                  className="font-bold text-xl text-white tracking-[-2px]"
+                >
+                  SodaSupply
+                </Link>
               </div>
-            </div>
+              
+              {/* Search section */}
+              <div className="hidden md:flex justify-center">
+                <div ref={searchContainerRef} className="relative w-full max-w-md">
+                  <form onSubmit={handleSearchSubmit}>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        type="text"
+                        placeholder="Search products"
+                        value={searchQuery}
+                        onChange={handleSearchChange}
+                        onFocus={openSearch}
+                        className="pl-10 pr-10 bg-gray-800 border-gray-700 text-white placeholder:text-gray-400 w-full rounded-full focus-visible:ring-gray-600"
+                      />
+                      {searchQuery && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={handleClearSearch}
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 rounded-full hover:bg-gray-700 transition-colors"
+                        >
+                          <X className="h-4 w-4 text-gray-400 hover:text-white" />
+                          <span className="sr-only">Clear search</span>
+                        </Button>
+                      )}
+                    </div>
+                  </form>
+                  <SearchDropdown />
+                </div>
+              </div>
 
-            {/* Right section - Icons */}
-            <div className="flex items-center justify-end gap-4">
-              {/* Store selector */}
-              <StoreDropdown />
+              {/* Right section - Icons */}
+              <div className="flex items-center justify-end gap-4">
+                {/* Store selector */}
+                <StoreDropdown />
 
-              <Button variant="ghost" size="icon" className="text-white">
-                <Bell className="h-5 w-5" />
-                <span className="sr-only">Notifications</span>
-              </Button>
+                <Button variant="ghost" size="icon" className="text-white">
+                  <Bell className="h-5 w-5" />
+                  <span className="sr-only">Notifications</span>
+                </Button>
 
-              <Button variant="ghost" size="icon" className="text-white relative" onClick={() => setIsCartOpen(true)}>
-                <ShoppingCart className="h-5 w-5" />
-                {totalItems > 0 && (
-                  <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-white text-black font-bold">
-                    {totalItems}
-                  </Badge>
-                )}
-                <span className="sr-only">Cart</span>
-              </Button>
+                <Button variant="ghost" size="icon" className="text-white relative" onClick={() => setIsCartOpen(true)}>
+                  <ShoppingCart className="h-5 w-5" />
+                  {totalItems > 0 && (
+                    <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-white text-black font-bold">
+                      {totalItems}
+                    </Badge>
+                  )}
+                  <span className="sr-only">Cart</span>
+                </Button>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Mobile search bar */}
-        <div className="md:hidden px-4 pb-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              type="text"
-              placeholder="Search products"
-              className="pl-10 bg-gray-800 border-gray-700 text-white placeholder:text-gray-400 w-full rounded-full focus-visible:ring-gray-600"
-              onClick={openSearch}
-              readOnly
-            />
+        <div className="md:hidden pb-3 max-w-site">
+          <div className="content-container">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Search products"
+                className="pl-10 bg-gray-800 border-gray-700 text-white placeholder:text-gray-400 w-full rounded-full focus-visible:ring-gray-600"
+                onClick={openSearch}
+                readOnly
+              />
+            </div>
           </div>
         </div>
       </header>
+
+      {/* Secondary Navigation Bar - Desktop Only */}
+      <div className="hidden md:block bg-black text-white w-full border-t border-gray-800 shadow-sm">
+        <div className="max-w-site">
+          <div className="content-container">
+            <nav className="flex items-center h-12">
+              <div className="flex space-x-8">
+                <Link 
+                  href="/" 
+                  className="text-white hover:text-gray-300 font-medium text-sm transition-colors"
+                >
+                  Products
+                </Link>
+                <Link 
+                  href="/club" 
+                  className="text-white hover:text-gray-300 font-medium text-sm transition-colors"
+                >
+                  Club
+                </Link>
+                <Link 
+                  href="/orders" 
+                  className="text-white hover:text-gray-300 font-medium text-sm transition-colors"
+                >
+                  My Orders
+                </Link>
+                <Link 
+                  href="/account" 
+                  className="text-white hover:text-gray-300 font-medium text-sm transition-colors"
+                >
+                  My Account
+                </Link>
+              </div>
+            </nav>
+          </div>
+        </div>
+      </div>
 
       {/* Mobile search overlay */}
       {isMobile && <SearchOverlay />}

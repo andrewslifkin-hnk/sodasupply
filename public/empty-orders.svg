@@ -1,0 +1,21 @@
+<svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Refrigerator/cabinet outline -->
+  <rect x="40" y="20" width="80" height="120" rx="4" stroke="#004851" stroke-width="2" fill="none"/>
+  
+  <!-- Door handle -->
+  <line x1="113" y1="40" x2="113" y2="80" stroke="#004851" stroke-width="2"/>
+  
+  <!-- Door panel divider -->
+  <line x1="40" y1="80" x2="120" y2="80" stroke="#004851" stroke-width="2"/>
+  
+  <!-- Shelf lines -->
+  <line x1="55" y1="50" x2="105" y2="50" stroke="#004851" stroke-width="1.5"/>
+  <line x1="55" y1="110" x2="105" y2="110" stroke="#004851" stroke-width="1.5"/>
+  
+  <!-- Glass reflections -->
+  <line x1="50" y1="35" x2="100" y2="75" stroke="#004851" stroke-width="1.5"/>
+  <line x1="50" y1="85" x2="100" y2="125" stroke="#004851" stroke-width="1.5"/>
+  
+  <!-- Green highlight/glow -->
+  <rect x="35" y="15" width="80" height="120" rx="4" fill="#AAFF00" opacity="0.5"/>
+</svg> 
