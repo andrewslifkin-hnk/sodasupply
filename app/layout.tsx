@@ -4,6 +4,7 @@ import "./globals.css"
 import { CartProvider } from "@/context/cart-context"
 import { SearchProvider } from "@/context/search-context"
 import { StoreProvider } from "@/context/store-context"
+import { FilterProvider } from "@/context/filter-context"
 import { Suspense } from "react"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -19,7 +20,9 @@ export default function RootLayout({
         <StoreProvider>
           <CartProvider>
             <Suspense>
-              <SearchProvider>{children}</SearchProvider>
+              <FilterProvider>
+                <SearchProvider>{children}</SearchProvider>
+              </FilterProvider>
             </Suspense>
           </CartProvider>
         </StoreProvider>
