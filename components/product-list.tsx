@@ -22,9 +22,9 @@ interface Product {
 export default function ProductList() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
-  const { activeFilters, sortOption, searchQuery, setFilteredProductCount, getActiveFiltersByCategory } = useFilter()
+  const { searchQuery, sortOption, filterProducts, setFilteredProductCount } = useFilter()
 
-  // Fetch products whenever filters change
+  // Fetch products whenever search query changes
   useEffect(() => {
     let isMounted = true
 
@@ -51,20 +51,19 @@ export default function ProductList() {
 
           if (isMounted) {
             setProducts(mappedProducts)
+            setLoading(false)
           }
         } else {
           // Fallback to default products if none are found in the database
           if (isMounted) {
             setProducts(defaultProducts)
+            setLoading(false)
           }
         }
       } catch (error) {
         console.error("Error fetching products:", error)
         if (isMounted) {
           setProducts(defaultProducts)
-        }
-      } finally {
-        if (isMounted) {
           setLoading(false)
         }
       }
@@ -78,59 +77,7 @@ export default function ProductList() {
   }, [searchQuery])
 
   // Apply filters to products
-  const filteredProducts = products.filter((product) => {
-    // If no filters are active, show all products
-    if (activeFilters.length === 0) {
-      return true
-    }
-
-    // Check if the product matches the search query
-    if (searchQuery && !product.name.toLowerCase().includes(searchQuery.toLowerCase())) {
-      return false
-    }
-
-    // Get active filters by category
-    const typeFilters = getActiveFiltersByCategory("type")
-    const packageFilters = getActiveFiltersByCategory("package")
-    const sizeFilters = getActiveFiltersByCategory("size")
-    const brandFilters = getActiveFiltersByCategory("brand")
-    const availabilityFilters = getActiveFiltersByCategory("availability")
-
-    // For each category with active filters, check if the product matches any filter in that category
-    // If a category has no active filters, consider it a match
-
-    // Check type filters
-    const matchesType = typeFilters.length === 0 || typeFilters.some((filter) => product.type === filter.value)
-
-    // Check package filters
-    const matchesPackage =
-      packageFilters.length === 0 ||
-      packageFilters.some((filter) => product.name.toLowerCase().includes(filter.value.toLowerCase()))
-
-    // Check size filters
-    const matchesSize = sizeFilters.length === 0 || sizeFilters.some((filter) => product.size.includes(filter.value))
-
-    // Check brand filters
-    const matchesBrand =
-      brandFilters.length === 0 ||
-      brandFilters.some(
-        (filter) =>
-          product.brand?.toLowerCase().includes(filter.value.toLowerCase()) ||
-          product.name.toLowerCase().includes(filter.value.toLowerCase()),
-      )
-
-    // Check availability filters
-    const matchesAvailability =
-      availabilityFilters.length === 0 ||
-      availabilityFilters.some((filter) => {
-        if (filter.value === "instock") return product.inStock
-        if (filter.value === "returnable") return product.returnable
-        return true
-      })
-
-    // Product must match all categories that have active filters
-    return matchesType && matchesPackage && matchesSize && matchesBrand && matchesAvailability
-  })
+  const filteredProducts = filterProducts(products)
 
   // Update the filtered product count in the context
   useEffect(() => {

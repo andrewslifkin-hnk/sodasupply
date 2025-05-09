@@ -1,4 +1,22 @@
+"use client"
+
+import type React from "react"
+
+import Link from "next/link"
+import { useFilter } from "@/context/filter-context"
+import { useRouter } from "next/navigation"
+
 export default function Footer() {
+  const { clearAllFilters } = useFilter()
+  const router = useRouter()
+
+  // Handle "All Products" link click to clear all filters
+  const handleAllProductsClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    clearAllFilters()
+    router.push("/")
+  }
+
   return (
     <footer className="bg-black text-white py-8 mt-12">
       <div className="container mx-auto px-4">
@@ -14,24 +32,24 @@ export default function Footer() {
             <h4 className="font-medium mb-4">Shop</h4>
             <ul className="space-y-2 text-white/70">
               <li>
-                <a href="#" className="hover:text-white transition-colors">
+                <Link href="/" className="hover:text-white transition-colors" onClick={handleAllProductsClick}>
                   All Products
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition-colors">
+                <Link href="#" className="hover:text-white transition-colors">
                   Featured
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition-colors">
+                <Link href="#" className="hover:text-white transition-colors">
                   New Arrivals
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition-colors">
+                <Link href="#" className="hover:text-white transition-colors">
                   Deals & Discounts
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -40,24 +58,24 @@ export default function Footer() {
             <h4 className="font-medium mb-4">Company</h4>
             <ul className="space-y-2 text-white/70">
               <li>
-                <a href="#" className="hover:text-white transition-colors">
+                <Link href="#" className="hover:text-white transition-colors">
                   About Us
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition-colors">
+                <Link href="#" className="hover:text-white transition-colors">
                   Contact
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition-colors">
+                <Link href="#" className="hover:text-white transition-colors">
                   Careers
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition-colors">
+                <Link href="#" className="hover:text-white transition-colors">
                   Press
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -66,24 +84,24 @@ export default function Footer() {
             <h4 className="font-medium mb-4">Support</h4>
             <ul className="space-y-2 text-white/70">
               <li>
-                <a href="#" className="hover:text-white transition-colors">
+                <Link href="#" className="hover:text-white transition-colors">
                   Help Center
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition-colors">
+                <Link href="#" className="hover:text-white transition-colors">
                   Shipping Info
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition-colors">
+                <Link href="#" className="hover:text-white transition-colors">
                   Returns
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-white transition-colors">
+                <Link href="#" className="hover:text-white transition-colors">
                   Privacy Policy
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

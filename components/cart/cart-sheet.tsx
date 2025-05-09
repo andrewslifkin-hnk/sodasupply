@@ -71,7 +71,13 @@ export function CartSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
               {items.map((item) => (
                 <div key={item.id} className="flex gap-3 pb-4 border-b">
                   <div className="relative h-20 w-20 bg-gray-100 rounded">
-                    <Image src={item.image || "/placeholder.svg"} alt={item.name} fill className="object-contain p-2" />
+                    <Image
+                      src={item.image || `/placeholder.svg?height=80&width=80&query=${encodeURIComponent(item.name)}`}
+                      alt={item.name}
+                      fill
+                      className="object-contain p-2"
+                      sizes="80px"
+                    />
                   </div>
                   <div className="flex-1">
                     <div className="flex justify-between">

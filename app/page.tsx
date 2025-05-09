@@ -4,9 +4,10 @@ import { Suspense } from "react"
 import ProductList from "@/components/product-list"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
-import { FilterBar } from "@/components/filter-bar"
 import { ProductListSkeleton } from "@/components/skeletons"
 import { FilterProvider } from "@/context/filter-context"
+import { FilterBar } from "@/components/filters/filter-bar"
+import { FilterSheet } from "@/components/filters/filter-sheet"
 
 export default function Home() {
   return (
@@ -25,6 +26,7 @@ export default function Home() {
           </div>
 
           <FilterBar />
+          <FilterSheet />
 
           <div className="h-px w-full bg-gray-200 my-4"></div>
 

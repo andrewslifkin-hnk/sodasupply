@@ -1,16 +1,16 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { SlidersHorizontal, X, ChevronUp, ChevronDown } from "lucide-react"
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet"
+import { SlidersHorizontal, X, ChevronUp, ChevronDown, RefreshCw } from "lucide-react"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose, SheetFooter } from "@/components/ui/sheet"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { useFilter, type FilterOption, type SortOption } from "@/context/filter-context"
+import { useFilter, type FilterOption, type SortOption, type FilterCategory } from "@/context/filter-context"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 
 export function FilterBar() {
   const {
@@ -18,6 +18,7 @@ export function FilterBar() {
     sortOption,
     toggleFilter,
     clearAllFilters,
+    clearCategoryFilters,
     setSortOption,
     isFilterSheetOpen,
     openFilterSheet,
@@ -27,22 +28,35 @@ export function FilterBar() {
     filteredProductCount,
     isFilterActiveById,
     removeFilter,
+    getActiveFiltersByCategory,
   } = useFilter()
 
   const isMobile = useMediaQuery("(max-width: 768px)")
 
   // Use local state for sort option to prevent infinite updates
   const [localSortOption, setLocalSortOption] = useState<SortOption>(sortOption)
+  const isInitialRender = useRef(true)
 
-  // Update local sort option when context sort option changes
+  // Update local sort option when context sort option changes, but only on initial render
+  // or when the sort option changes from outside this component
   useEffect(() => {
-    setLocalSortOption(sortOption)
-  }, [sortOption])
+    if (isInitialRender.current) {
+      setLocalSortOption(sortOption)
+      isInitialRender.current = false
+    } else if (sortOption !== localSortOption) {
+      setLocalSortOption(sortOption)
+    }
+  }, [sortOption, localSortOption])
 
   // Handle sort option change
   const handleSortChange = (value: string) => {
-    setLocalSortOption(value as SortOption)
-    setSortOption(value as SortOption)
+    const newSortOption = value as SortOption
+    setLocalSortOption(newSortOption)
+
+    // Only update the context if the value actually changed
+    if (newSortOption !== sortOption) {
+      setSortOption(newSortOption)
+    }
   }
 
   // Filter options based on actual product attributes
@@ -128,7 +142,13 @@ export function FilterBar() {
         ))}
 
         {filtersToRender.length > 0 && (
-          <Button variant="link" className="text-sm font-normal h-7 px-2" onClick={clearAllFilters}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-full flex items-center gap-1 text-sm font-normal h-7 px-3"
+            onClick={clearAllFilters}
+          >
+            <RefreshCw className="h-3 w-3" />
             Clear all
           </Button>
         )}
@@ -155,6 +175,45 @@ export function FilterBar() {
     )
   }
 
+  // Render a filter section with title and clear button
+  const FilterSection = ({
+    title,
+    options,
+    category,
+  }: {
+    title: string
+    options: FilterOption[]
+    category: FilterCategory
+  }) => {
+    const activeCount = getActiveFiltersByCategory(category).length
+
+    return (
+      <div className="py-4 border-b border-gray-200">
+        <div className="flex items-center justify-between px-1 mb-4">
+          <h3 className="text-lg font-medium">{title}</h3>
+          <div className="flex items-center gap-2">
+            {activeCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-xs text-gray-500 hover:text-black"
+                onClick={() => clearCategoryFilters(category)}
+              >
+                Clear {activeCount}
+              </Button>
+            )}
+            <ChevronUp className="h-5 w-5 text-gray-500" />
+          </div>
+        </div>
+        <div className="space-y-3">
+          {options.map((option) => (
+            <FilterCheckbox key={option.id} option={option} />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   // Filter sheet content
   const filterContent = (
     <div className="flex flex-col h-full">
@@ -165,7 +224,7 @@ export function FilterBar() {
             <h3 className="text-lg font-medium">Sort by</h3>
             <ChevronDown className="h-5 w-5 text-gray-500" />
           </div>
-          <RadioGroup value={localSortOption} onValueChange={(value) => handleSortChange(value)}>
+          <RadioGroup value={localSortOption} onValueChange={handleSortChange}>
             <div className="space-y-3">
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="featured" id="featured" />
@@ -188,69 +247,19 @@ export function FilterBar() {
         </div>
 
         {/* Brand section */}
-        <div className="py-4 border-b border-gray-200">
-          <div className="flex items-center justify-between px-1 mb-4">
-            <h3 className="text-lg font-medium">Brand</h3>
-            <ChevronUp className="h-5 w-5 text-gray-500" />
-          </div>
-          <div className="space-y-3">
-            {brandOptions.map((option) => (
-              <FilterCheckbox key={option.id} option={option} />
-            ))}
-          </div>
-        </div>
+        <FilterSection title="Brand" options={brandOptions} category="brand" />
 
         {/* Type section */}
-        <div className="py-4 border-b border-gray-200">
-          <div className="flex items-center justify-between px-1 mb-4">
-            <h3 className="text-lg font-medium">Type</h3>
-            <ChevronUp className="h-5 w-5 text-gray-500" />
-          </div>
-          <div className="space-y-3">
-            {typeOptions.map((option) => (
-              <FilterCheckbox key={option.id} option={option} />
-            ))}
-          </div>
-        </div>
+        <FilterSection title="Type" options={typeOptions} category="type" />
 
         {/* Package type section */}
-        <div className="py-4 border-b border-gray-200">
-          <div className="flex items-center justify-between px-1 mb-4">
-            <h3 className="text-lg font-medium">Package type</h3>
-            <ChevronUp className="h-5 w-5 text-gray-500" />
-          </div>
-          <div className="space-y-3">
-            {packageOptions.map((option) => (
-              <FilterCheckbox key={option.id} option={option} />
-            ))}
-          </div>
-        </div>
+        <FilterSection title="Package type" options={packageOptions} category="package" />
 
         {/* Size section */}
-        <div className="py-4 border-b border-gray-200">
-          <div className="flex items-center justify-between px-1 mb-4">
-            <h3 className="text-lg font-medium">Size</h3>
-            <ChevronUp className="h-5 w-5 text-gray-500" />
-          </div>
-          <div className="space-y-3">
-            {sizeOptions.map((option) => (
-              <FilterCheckbox key={option.id} option={option} />
-            ))}
-          </div>
-        </div>
+        <FilterSection title="Size" options={sizeOptions} category="size" />
 
         {/* Availability section */}
-        <div className="py-4 border-b border-gray-200">
-          <div className="flex items-center justify-between px-1 mb-4">
-            <h3 className="text-lg font-medium">Availability</h3>
-            <ChevronUp className="h-5 w-5 text-gray-500" />
-          </div>
-          <div className="space-y-3">
-            {availabilityOptions.map((option) => (
-              <FilterCheckbox key={option.id} option={option} />
-            ))}
-          </div>
-        </div>
+        <FilterSection title="Availability" options={availabilityOptions} category="availability" />
       </div>
     </div>
   )
@@ -323,18 +332,25 @@ export function FilterBar() {
             <SheetHeader className="px-6 py-4 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <SheetTitle className="text-xl">Filter</SheetTitle>
-                <SheetClose asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <X className="h-5 w-5" />
-                  </Button>
-                </SheetClose>
+                <div className="flex items-center gap-2">
+                  {activeFilters.length > 0 && (
+                    <Button variant="outline" size="sm" className="h-8 text-sm" onClick={clearAllFilters}>
+                      Reset all
+                    </Button>
+                  )}
+                  <SheetClose asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <X className="h-5 w-5" />
+                    </Button>
+                  </SheetClose>
+                </div>
               </div>
             </SheetHeader>
 
             <div className="px-6 flex-1 overflow-auto">{filterContent}</div>
 
-            <div className="p-4 border-t border-gray-200 mt-auto">
-              <div className="space-y-3">
+            <SheetFooter className="p-4 border-t border-gray-200 mt-auto">
+              <div className="space-y-3 w-full">
                 <Button
                   className="w-full bg-[#004851] hover:bg-[#004851]/90 text-white rounded-full py-6"
                   onClick={() => {
@@ -345,18 +361,20 @@ export function FilterBar() {
                     ? `View ${filteredProductCount} filtered product${filteredProductCount !== 1 ? "s" : ""}`
                     : "View all products"}
                 </Button>
-                <Button
-                  variant="outline"
-                  className="w-full rounded-full py-6"
-                  onClick={() => {
-                    clearAllFilters()
-                    closeFilterSheet()
-                  }}
-                >
-                  Clear all
-                </Button>
+                {activeFilters.length > 0 && (
+                  <Button
+                    variant="outline"
+                    className="w-full rounded-full py-6"
+                    onClick={() => {
+                      clearAllFilters()
+                      closeFilterSheet()
+                    }}
+                  >
+                    Clear all filters
+                  </Button>
+                )}
               </div>
-            </div>
+            </SheetFooter>
           </div>
         </SheetContent>
       </Sheet>

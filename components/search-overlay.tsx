@@ -9,107 +9,24 @@ import { Input } from "@/components/ui/input"
 import { useSearch } from "@/context/search-context"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
+import { getProducts } from "@/services/product-service"
+import { useState } from "react"
 
-// Mock search results based on query - same as in SearchDropdown
-const getSearchResults = (query: string) => {
-  if (!query) return []
-
-  // Mock data - in a real app, this would come from an API or database
-  const products = [
-    {
-      id: 1,
-      name: "Cola Classic 6-Pack",
-      type: "Carbonated",
-      size: "6 x 330ml",
-      price: 4.99,
-      image: "/cola-6pack.png",
-      inStock: true,
-    },
-    {
-      id: 2,
-      name: "Sparkling Water Variety",
-      type: "Water",
-      size: "12 x 500ml",
-      price: 6.49,
-      image: "/sparkling-water-variety.png",
-      inStock: false,
-    },
-    {
-      id: 3,
-      name: "Orange Soda",
-      type: "Carbonated",
-      size: "2L Bottle",
-      price: 1.99,
-      image: "/orange-soda-2l.png",
-      inStock: true,
-    },
-    {
-      id: 4,
-      name: "Lemon-Lime Soda Cans",
-      type: "Carbonated",
-      size: "8 x 330ml",
-      price: 5.29,
-      image: "/lemon-lime-cans.png",
-      inStock: true,
-    },
-    {
-      id: 5,
-      name: "Energy Drink 4-Pack",
-      type: "Energy",
-      size: "4 x 250ml",
-      price: 7.99,
-      image: "/energy-4pack.png",
-      inStock: false,
-    },
-    {
-      id: 6,
-      name: "Iced Tea Peach",
-      type: "Tea",
-      size: "1.5L Bottle",
-      price: 2.49,
-      image: "/iced-tea-peach.png",
-      inStock: true,
-    },
-    {
-      id: 7,
-      name: "Premium Still Water",
-      type: "Water",
-      size: "6 x 1L",
-      price: 3.99,
-      image: "/still-water-6pack.png",
-      inStock: true,
-    },
-    {
-      id: 8,
-      name: "Cola Zero Sugar",
-      type: "Carbonated",
-      size: "1.5L Bottle",
-      price: 1.79,
-      image: "/cola-zero-1.5l.png",
-      inStock: true,
-    },
-    {
-      id: 9,
-      name: "Ginger Ale",
-      type: "Carbonated",
-      size: "4 x 330ml",
-      price: 3.49,
-      image: "/ginger-ale-4pack.png",
-      inStock: true,
-    },
-  ]
-
-  return products.filter(
-    (product) =>
-      product.name.toLowerCase().includes(query.toLowerCase()) ||
-      product.type.toLowerCase().includes(query.toLowerCase()),
-  )
+interface SearchProduct {
+  id: number
+  name: string
+  type: string
+  size: string
+  price: number
+  image: string
+  inStock: boolean
 }
 
 export function SearchOverlay() {
   const { isSearchOpen, searchQuery, closeSearch, setSearchQuery, submitSearch } = useSearch()
   const inputRef = useRef<HTMLInputElement>(null)
-  const results = getSearchResults(searchQuery)
+  const [results, setResults] = useState<SearchProduct[]>([])
+  const [loading, setLoading] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -118,6 +35,38 @@ export function SearchOverlay() {
       inputRef.current.focus()
     }
   }, [isSearchOpen])
+
+  // Fetch search results when query changes
+  useEffect(() => {
+    if (!searchQuery) {
+      setResults([])
+      return
+    }
+
+    async function fetchSearchResults() {
+      setLoading(true)
+      try {
+        const productsData = await getProducts(searchQuery)
+        const mappedResults = productsData.map((product) => ({
+          id: product.id,
+          name: product.name,
+          type: product.type,
+          size: product.size,
+          price: product.price,
+          image: product.image_url || `/placeholder.svg?height=64&width=64&query=${encodeURIComponent(product.name)}`,
+          inStock: product.in_stock,
+        }))
+        setResults(mappedResults)
+      } catch (error) {
+        console.error("Error fetching search results:", error)
+        setResults([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchSearchResults()
+  }, [searchQuery])
 
   const handleSearchSubmit = (e: FormEvent) => {
     e.preventDefault()
@@ -177,7 +126,9 @@ export function SearchOverlay() {
         <div className="p-4 text-gray-500">Type to search for products</div>
       ) : (
         <div className="flex-1 overflow-auto">
-          <div className="p-3 border-b text-sm text-gray-500">{results.length} results</div>
+          <div className="p-3 border-b text-sm text-gray-500">
+            {loading ? "Searching..." : `${results.length} results`}
+          </div>
 
           <div className="divide-y">
             {results.map((product) => (
@@ -188,6 +139,7 @@ export function SearchOverlay() {
                     alt={product.name}
                     fill
                     className="object-contain p-2"
+                    sizes="64px"
                   />
                 </div>
                 <div className="flex-1">
@@ -202,10 +154,15 @@ export function SearchOverlay() {
             ))}
           </div>
 
-          <div className="p-3 border-t flex items-center gap-2 hover:bg-gray-50 cursor-pointer" onClick={submitSearch}>
-            <Search className="h-4 w-4" />
-            <span className="text-sm">View all results for "{searchQuery}"</span>
-          </div>
+          {results.length > 0 && (
+            <div
+              className="p-3 border-t flex items-center gap-2 hover:bg-gray-50 cursor-pointer"
+              onClick={submitSearch}
+            >
+              <Search className="h-4 w-4" />
+              <span className="text-sm">View all results for "{searchQuery}"</span>
+            </div>
+          )}
         </div>
       )}
     </div>

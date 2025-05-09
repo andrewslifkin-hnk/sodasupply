@@ -1,186 +1,419 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from "react"
-import { useSearchParams, useRouter, usePathname } from "next/navigation"
+import type React from "react"
+import { createContext, useContext, useReducer, useCallback, useEffect, useMemo, useState, useRef } from "react"
+import { useRouter, usePathname, useSearchParams } from "next/navigation"
 
-export type SortOption = "featured" | "price-low" | "price-high" | "newest"
-export type FilterCategory = "type" | "package" | "size" | "availability" | "brand"
+/**
+ * Defines the types of filters supported by the system
+ */
+export enum FilterType {
+  TEXT = "text",
+  CHECKBOX = "checkbox",
+  RADIO = "radio",
+  RANGE = "range",
+  TOGGLE = "toggle",
+}
 
-export interface FilterOption {
+/**
+ * Base interface for all filter options
+ */
+export interface BaseFilterOption {
   id: string
   label: string
-  category: FilterCategory
+  type: FilterType
+  category: string
+}
+
+/**
+ * Interface for text-based filter options
+ */
+export interface TextFilterOption extends BaseFilterOption {
+  type: FilterType.TEXT
   value: string
 }
 
-interface FilterContextType {
-  activeFilters: FilterOption[]
+/**
+ * Interface for checkbox filter options
+ */
+export interface CheckboxFilterOption extends BaseFilterOption {
+  type: FilterType.CHECKBOX
+  value: string
+}
+
+/**
+ * Interface for radio filter options
+ */
+export interface RadioFilterOption extends BaseFilterOption {
+  type: FilterType.RADIO
+  value: string
+  groupId: string
+}
+
+/**
+ * Interface for range filter options
+ */
+export interface RangeFilterOption extends BaseFilterOption {
+  type: FilterType.RANGE
+  min: number
+  max: number
+  step?: number
+  currentMin?: number
+  currentMax?: number
+}
+
+/**
+ * Interface for toggle filter options
+ */
+export interface ToggleFilterOption extends BaseFilterOption {
+  type: FilterType.TOGGLE
+  value: boolean
+}
+
+/**
+ * Union type for all filter option types
+ */
+export type FilterOption =
+  | TextFilterOption
+  | CheckboxFilterOption
+  | RadioFilterOption
+  | RangeFilterOption
+  | ToggleFilterOption
+
+/**
+ * Interface for active filter state
+ */
+export interface ActiveFilter {
+  id: string
+  label: string
+  category: string
+  type: FilterType
+  value: string | boolean | number | [number, number]
+  displayValue?: string
+}
+
+/**
+ * Sort options for the filter system
+ */
+export type SortOption = "featured" | "price-low" | "price-high" | "newest"
+
+/**
+ * Interface for filter category
+ */
+export interface FilterCategory {
+  id: string
+  label: string
+  type: FilterType
+  options?: FilterOption[]
+  isExpanded?: boolean
+}
+
+/**
+ * Interface for a product to be filtered
+ */
+export interface FilterableProduct {
+  id: number
+  [key: string]: any
+}
+
+/**
+ * Type for filter predicate functions
+ */
+export type FilterPredicate = (product: FilterableProduct) => boolean
+
+/**
+ * Interface for filter state
+ */
+export interface FilterState {
+  activeFilters: ActiveFilter[]
   sortOption: SortOption
-  addFilter: (filter: FilterOption) => void
-  removeFilter: (filterId: string) => void
-  clearAllFilters: () => void
-  setSortOption: (option: SortOption) => void
+  searchQuery: string | null
+  categories: FilterCategory[]
+}
+
+/**
+ * Actions for the filter reducer
+ */
+type FilterAction =
+  | { type: "SET_ACTIVE_FILTERS"; payload: ActiveFilter[] }
+  | { type: "ADD_FILTER"; payload: ActiveFilter }
+  | { type: "REMOVE_FILTER"; payload: string }
+  | { type: "CLEAR_ALL_FILTERS" }
+  | { type: "CLEAR_CATEGORY_FILTERS"; payload: string }
+  | { type: "SET_SORT_OPTION"; payload: SortOption }
+  | { type: "SET_SEARCH_QUERY"; payload: string | null }
+  | { type: "SET_FILTER_CATEGORIES"; payload: FilterCategory[] }
+  | { type: "TOGGLE_CATEGORY_EXPANSION"; payload: string }
+  | {
+      type: "SYNC_FROM_URL"
+      payload: { activeFilters: ActiveFilter[]; sortOption: SortOption; searchQuery: string | null }
+    }
+
+/**
+ * Interface for the filter context
+ */
+interface FilterContextType {
+  // State
+  activeFilters: ActiveFilter[]
+  sortOption: SortOption
+  searchQuery: string | null
+  categories: FilterCategory[]
+  totalActiveFilters: number
+
+  // Filter sheet state
   isFilterSheetOpen: boolean
   openFilterSheet: () => void
   closeFilterSheet: () => void
-  searchQuery: string | null
-  totalActiveFilters: number
+
+  // Filter operations
+  addFilter: (filter: ActiveFilter) => void
+  removeFilter: (filterId: string) => void
+  clearAllFilters: () => void
+  clearCategoryFilters: (category: string) => void
+  setSortOption: (option: SortOption) => void
+  setSearchQuery: (query: string | null) => void
+  toggleCategoryExpansion: (categoryId: string) => void
+
+  // Filter helpers
+  isFilterActive: (filterId: string) => boolean
+  getActiveFiltersByCategory: (category: string) => ActiveFilter[]
+
+  // Product filtering
+  filterProducts: <T extends FilterableProduct>(products: T[]) => T[]
   filteredProductCount: number
   setFilteredProductCount: (count: number) => void
-  isFilterActiveByValue: (category: FilterCategory, value: string) => boolean
-  isFilterActiveById: (filterId: string) => boolean
-  toggleFilter: (filter: FilterOption) => void
-  getActiveFiltersByCategory: (category: FilterCategory) => FilterOption[]
 }
 
+/**
+ * Initial state for the filter reducer
+ */
+const initialFilterState: FilterState = {
+  activeFilters: [],
+  sortOption: "featured",
+  searchQuery: null,
+  categories: [],
+}
+
+/**
+ * Filter reducer function
+ */
+function filterReducer(state: FilterState, action: FilterAction): FilterState {
+  switch (action.type) {
+    case "SET_ACTIVE_FILTERS":
+      return {
+        ...state,
+        activeFilters: action.payload,
+      }
+    case "ADD_FILTER":
+      return {
+        ...state,
+        activeFilters: [...state.activeFilters, action.payload],
+      }
+    case "REMOVE_FILTER":
+      return {
+        ...state,
+        activeFilters: state.activeFilters.filter((filter) => filter.id !== action.payload),
+      }
+    case "CLEAR_ALL_FILTERS":
+      return {
+        ...state,
+        activeFilters: [],
+        sortOption: "featured",
+      }
+    case "CLEAR_CATEGORY_FILTERS":
+      return {
+        ...state,
+        activeFilters: state.activeFilters.filter((filter) => filter.category !== action.payload),
+      }
+    case "SET_SORT_OPTION":
+      return {
+        ...state,
+        sortOption: action.payload,
+      }
+    case "SET_SEARCH_QUERY":
+      return {
+        ...state,
+        searchQuery: action.payload,
+      }
+    case "SET_FILTER_CATEGORIES":
+      return {
+        ...state,
+        categories: action.payload,
+      }
+    case "TOGGLE_CATEGORY_EXPANSION":
+      return {
+        ...state,
+        categories: state.categories.map((category) =>
+          category.id === action.payload ? { ...category, isExpanded: !category.isExpanded } : category,
+        ),
+      }
+    case "SYNC_FROM_URL":
+      return {
+        ...state,
+        activeFilters: action.payload.activeFilters,
+        sortOption: action.payload.sortOption,
+        searchQuery: action.payload.searchQuery,
+      }
+    default:
+      return state
+  }
+}
+
+// Create the context
 const FilterContext = createContext<FilterContextType | undefined>(undefined)
 
-export function FilterProvider({ children }: { children: ReactNode }) {
-  const [activeFilters, setActiveFilters] = useState<FilterOption[]>([])
-  const [sortOption, setSortOption] = useState<SortOption>("featured")
-  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false)
-  const [filteredProductCount, setFilteredProductCount] = useState(0)
-  const searchParams = useSearchParams()
+/**
+ * Provider component for the filter context
+ */
+export function FilterProvider({ children }: { children: React.ReactNode }) {
+  // State management with useReducer
+  const [state, dispatch] = useReducer(filterReducer, initialFilterState)
+
+  // Router hooks
   const router = useRouter()
   const pathname = usePathname()
-  const searchQuery = searchParams.get("q")
+  const searchParams = useSearchParams()
 
-  // Use a ref to track if we're currently updating from URL
+  // UI state
+  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false)
+  const [filteredProductCount, setFilteredProductCount] = useState(0)
+
+  // Sync flags to prevent infinite loops
   const isUpdatingFromUrl = useRef(false)
-  // Use a ref to track if we need to update the URL
-  const needsUrlUpdate = useRef(false)
+  const skipNextUrlUpdate = useRef(false)
 
-  // Helper function to normalize filter values for consistent IDs
-  const normalizeValue = (value: string): string => {
-    return value.toLowerCase().replace(/\s+/g, "-")
-  }
+  // Calculate total active filters
+  const totalActiveFilters = state.activeFilters.length + (state.searchQuery ? 1 : 0)
 
-  // Helper function to create a filter ID
-  const createFilterId = (category: string, value: string): string => {
-    return `${category}-${normalizeValue(value)}`
-  }
-
-  // Initialize filters from URL on mount or when URL changes
+  /**
+   * Parse URL parameters into filter state
+   */
   useEffect(() => {
-    // Skip if we're in the middle of updating the URL ourselves
-    if (needsUrlUpdate.current) {
-      needsUrlUpdate.current = false
+    if (skipNextUrlUpdate.current) {
+      skipNextUrlUpdate.current = false
       return
     }
 
     isUpdatingFromUrl.current = true
-    const urlFilters: FilterOption[] = []
 
-    // Parse type filters
-    const types = searchParams.getAll("type")
-    types.forEach((type) => {
-      urlFilters.push({
-        id: createFilterId("type", type),
-        label: type,
-        category: "type",
-        value: type,
-      })
-    })
+    try {
+      const activeFilters: ActiveFilter[] = []
+      let sortOption: SortOption = "featured"
+      const searchQuery = searchParams.get("q")
 
-    // Parse package filters
-    const packages = searchParams.getAll("package")
-    packages.forEach((pkg) => {
-      urlFilters.push({
-        id: createFilterId("package", pkg),
-        label: pkg,
-        category: "package",
-        value: pkg,
-      })
-    })
+      // Parse checkbox filters (can have multiple values per category)
+      for (const category of ["type", "package", "size", "brand"]) {
+        const values = searchParams.getAll(category)
+        values.forEach((value) => {
+          activeFilters.push({
+            id: `${category}-${value.toLowerCase().replace(/\s+/g, "-")}`,
+            label: value,
+            category,
+            type: FilterType.CHECKBOX,
+            value,
+          })
+        })
+      }
 
-    // Parse size filters
-    const sizes = searchParams.getAll("size")
-    sizes.forEach((size) => {
-      urlFilters.push({
-        id: createFilterId("size", size),
-        label: size,
-        category: "size",
-        value: size,
-      })
-    })
+      // Parse toggle filters
+      if (searchParams.get("instock") === "true") {
+        activeFilters.push({
+          id: "availability-instock",
+          label: "In stock",
+          category: "availability",
+          type: FilterType.TOGGLE,
+          value: true,
+        })
+      }
 
-    // Parse availability filters
-    if (searchParams.get("instock") === "true") {
-      urlFilters.push({
-        id: "availability-instock",
-        label: "In stock",
-        category: "availability",
-        value: "instock",
+      if (searchParams.get("returnable") === "true") {
+        activeFilters.push({
+          id: "availability-returnable",
+          label: "Returnable",
+          category: "availability",
+          type: FilterType.TOGGLE,
+          value: true,
+        })
+      }
+
+      // Parse range filters
+      const minPrice = searchParams.get("minPrice")
+      const maxPrice = searchParams.get("maxPrice")
+      if (minPrice || maxPrice) {
+        activeFilters.push({
+          id: "price-range",
+          label: "Price",
+          category: "price",
+          type: FilterType.RANGE,
+          value: [minPrice ? Number.parseFloat(minPrice) : 0, maxPrice ? Number.parseFloat(maxPrice) : 100],
+          displayValue: `€${minPrice || "0"} - €${maxPrice || "100+"}`,
+        })
+      }
+
+      // Parse sort option
+      const sort = searchParams.get("sort") as SortOption
+      if (sort && ["featured", "price-low", "price-high", "newest"].includes(sort)) {
+        sortOption = sort
+      }
+
+      // Update state from URL
+      dispatch({
+        type: "SYNC_FROM_URL",
+        payload: { activeFilters, sortOption, searchQuery },
       })
+    } catch (error) {
+      console.error("Error parsing URL parameters:", error)
+    } finally {
+      isUpdatingFromUrl.current = false
     }
-
-    if (searchParams.get("returnable") === "true") {
-      urlFilters.push({
-        id: "availability-returnable",
-        label: "Returnable",
-        category: "availability",
-        value: "returnable",
-      })
-    }
-
-    // Parse brand filters
-    const brands = searchParams.getAll("brand")
-    brands.forEach((brand) => {
-      urlFilters.push({
-        id: createFilterId("brand", brand),
-        label: brand,
-        category: "brand",
-        value: brand,
-      })
-    })
-
-    // Parse sort option
-    const sort = searchParams.get("sort") as SortOption
-    if (sort) {
-      setSortOption(sort)
-    } else {
-      setSortOption("featured")
-    }
-
-    setActiveFilters(urlFilters)
-    isUpdatingFromUrl.current = false
   }, [searchParams])
 
-  // Update URL when filters change, but only if not updating from URL
-  useEffect(() => {
-    // Skip if we're currently updating from URL changes
+  /**
+   * Update URL based on current filter state
+   */
+  const updateURL = useCallback(() => {
     if (isUpdatingFromUrl.current) return
 
-    // Mark that we need to update the URL
-    needsUrlUpdate.current = true
+    skipNextUrlUpdate.current = true
 
     const params = new URLSearchParams()
 
     // Add search query if exists
-    if (searchQuery) {
-      params.set("q", searchQuery)
+    if (state.searchQuery) {
+      params.set("q", state.searchQuery)
     }
 
     // Add sort option if not default
-    if (sortOption !== "featured") {
-      params.set("sort", sortOption)
+    if (state.sortOption !== "featured") {
+      params.set("sort", state.sortOption)
     }
 
     // Group filters by category for cleaner URL
     const filtersByCategory: Record<string, string[]> = {}
 
-    activeFilters.forEach((filter) => {
-      if (filter.category === "availability") {
-        if (filter.value === "instock") {
-          params.set("instock", "true")
-        } else if (filter.value === "returnable") {
-          params.set("returnable", "true")
+    state.activeFilters.forEach((filter) => {
+      if (filter.type === FilterType.TOGGLE) {
+        // Handle toggle filters
+        if (filter.category === "availability") {
+          if (filter.id === "availability-instock") {
+            params.set("instock", "true")
+          } else if (filter.id === "availability-returnable") {
+            params.set("returnable", "true")
+          }
+        }
+      } else if (filter.type === FilterType.RANGE) {
+        // Handle range filters
+        if (filter.category === "price") {
+          const [min, max] = filter.value as [number, number]
+          params.set("minPrice", min.toString())
+          params.set("maxPrice", max.toString())
         }
       } else {
+        // Handle checkbox and radio filters
         if (!filtersByCategory[filter.category]) {
           filtersByCategory[filter.category] = []
         }
-        filtersByCategory[filter.category].push(filter.value)
+        filtersByCategory[filter.category].push(filter.value as string)
       }
     })
 
@@ -193,89 +426,270 @@ export function FilterProvider({ children }: { children: ReactNode }) {
 
     const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname
     router.push(newUrl, { scroll: false })
-  }, [activeFilters, sortOption, pathname, router, searchQuery])
+  }, [state.activeFilters, state.sortOption, state.searchQuery, pathname, router])
 
-  // Check if a filter is active by its ID
-  const isFilterActiveById = (filterId: string): boolean => {
-    return activeFilters.some((filter) => filter.id === filterId)
-  }
+  // Update URL when filter state changes
+  useEffect(() => {
+    updateURL()
+  }, [state.activeFilters, state.sortOption, state.searchQuery, updateURL])
 
-  // Check if a filter is active by its category and value
-  const isFilterActiveByValue = (category: FilterCategory, value: string): boolean => {
-    return activeFilters.some((filter) => filter.category === category && filter.value === value)
-  }
+  /**
+   * Filter operations
+   */
+  const openFilterSheet = useCallback(() => setIsFilterSheetOpen(true), [])
+  const closeFilterSheet = useCallback(() => setIsFilterSheetOpen(false), [])
 
-  // Get all active filters for a specific category
-  const getActiveFiltersByCategory = (category: FilterCategory): FilterOption[] => {
-    return activeFilters.filter((filter) => filter.category === category)
-  }
+  const addFilter = useCallback((filter: ActiveFilter) => {
+    dispatch({ type: "ADD_FILTER", payload: filter })
+  }, [])
 
-  const addFilter = (filter: FilterOption) => {
-    if (!isFilterActiveById(filter.id)) {
-      setActiveFilters((prev) => [...prev, filter])
+  const removeFilter = useCallback((filterId: string) => {
+    dispatch({ type: "REMOVE_FILTER", payload: filterId })
+  }, [])
+
+  const clearAllFilters = useCallback(() => {
+    // Clear all filters in the state
+    dispatch({ type: "CLEAR_ALL_FILTERS" })
+
+    // Reset the search query as well
+    dispatch({ type: "SET_SEARCH_QUERY", payload: null })
+
+    // Update URL directly to ensure immediate effect
+    skipNextUrlUpdate.current = true
+
+    // Navigate to the base path without any query parameters
+    router.push(pathname, { scroll: false })
+
+    // Close the filter sheet if it's open
+    if (isFilterSheetOpen) {
+      closeFilterSheet()
     }
-  }
+  }, [pathname, router, isFilterSheetOpen, closeFilterSheet])
 
-  const removeFilter = (filterId: string) => {
-    setActiveFilters((prev) => prev.filter((filter) => filter.id !== filterId))
-  }
+  const clearCategoryFilters = useCallback((category: string) => {
+    dispatch({ type: "CLEAR_CATEGORY_FILTERS", payload: category })
+  }, [])
 
-  // Toggle a filter (add if not active, remove if active)
-  const toggleFilter = (filter: FilterOption) => {
-    if (isFilterActiveById(filter.id)) {
-      removeFilter(filter.id)
-    } else {
-      addFilter(filter)
-    }
-  }
+  const setSortOption = useCallback((option: SortOption) => {
+    dispatch({ type: "SET_SORT_OPTION", payload: option })
+  }, [])
 
-  const clearAllFilters = () => {
-    setActiveFilters([])
-    setSortOption("featured")
+  const setSearchQuery = useCallback((query: string | null) => {
+    dispatch({ type: "SET_SEARCH_QUERY", payload: query })
+  }, [])
 
-    // Update URL immediately
-    needsUrlUpdate.current = true
-    const newUrl = searchQuery ? `${pathname}?q=${searchQuery}` : pathname
-    router.push(newUrl, { scroll: false })
-  }
+  const toggleCategoryExpansion = useCallback((categoryId: string) => {
+    dispatch({ type: "TOGGLE_CATEGORY_EXPANSION", payload: categoryId })
+  }, [])
 
-  const handleSetSortOption = (option: SortOption) => {
-    setSortOption(option)
-  }
-
-  const openFilterSheet = () => setIsFilterSheetOpen(true)
-  const closeFilterSheet = () => setIsFilterSheetOpen(false)
-
-  // Calculate total active filters (including search query)
-  const totalActiveFilters = activeFilters.length + (searchQuery ? 1 : 0)
-
-  return (
-    <FilterContext.Provider
-      value={{
-        activeFilters,
-        sortOption,
-        addFilter,
-        removeFilter,
-        clearAllFilters,
-        setSortOption: handleSetSortOption,
-        isFilterSheetOpen,
-        openFilterSheet,
-        closeFilterSheet,
-        searchQuery,
-        totalActiveFilters,
-        filteredProductCount,
-        setFilteredProductCount,
-        isFilterActiveByValue,
-        isFilterActiveById,
-        toggleFilter,
-        getActiveFiltersByCategory,
-      }}
-    >
-      {children}
-    </FilterContext.Provider>
+  /**
+   * Filter helpers
+   */
+  const isFilterActive = useCallback(
+    (filterId: string): boolean => {
+      return state.activeFilters.some((filter) => filter.id === filterId)
+    },
+    [state.activeFilters],
   )
+
+  const getActiveFiltersByCategory = useCallback(
+    (category: string): ActiveFilter[] => {
+      return state.activeFilters.filter((filter) => filter.category === category)
+    },
+    [state.activeFilters],
+  )
+
+  /**
+   * Filter sheet operations
+   */
+
+  /**
+   * Product filtering logic
+   * This function applies all active filters to a list of products
+   */
+  const filterProducts = useCallback(
+    <T extends FilterableProduct>(products: T[]): T[] => {
+      if (state.activeFilters.length === 0 && !state.searchQuery) {
+        return products
+      }
+
+      return products.filter((product) => {
+        // Apply search query filter
+        if (state.searchQuery) {
+          const query = state.searchQuery.toLowerCase()
+          const nameMatch = product.name?.toLowerCase().includes(query)
+          const typeMatch = product.type?.toLowerCase().includes(query)
+          const brandMatch = product.brand?.toLowerCase().includes(query)
+
+          if (!(nameMatch || typeMatch || brandMatch)) {
+            return false
+          }
+        }
+
+        // Apply all active filters
+        for (const filter of state.activeFilters) {
+          switch (filter.type) {
+            case FilterType.CHECKBOX:
+            case FilterType.TEXT:
+            case FilterType.RADIO:
+              // Text-based filters (exact match or includes)
+              if (filter.category === "type" && product.type !== filter.value) {
+                return false
+              }
+              if (
+                filter.category === "brand" &&
+                !(product.brand?.includes(filter.value as string) || product.name?.includes(filter.value as string))
+              ) {
+                return false
+              }
+              if (
+                filter.category === "package" &&
+                !product.name?.toLowerCase().includes((filter.value as string).toLowerCase())
+              ) {
+                return false
+              }
+              if (filter.category === "size" && !product.size?.includes(filter.value as string)) {
+                return false
+              }
+              break
+
+            case FilterType.TOGGLE:
+              // Boolean filters
+              if (filter.category === "availability") {
+                if (filter.id === "availability-instock" && !product.inStock) {
+                  return false
+                }
+                if (filter.id === "availability-returnable" && !product.returnable) {
+                  return false
+                }
+              }
+              break
+
+            case FilterType.RANGE:
+              // Range filters
+              if (filter.category === "price") {
+                const [min, max] = filter.value as [number, number]
+                if (product.price < min || (max > 0 && product.price > max)) {
+                  return false
+                }
+              }
+              break
+          }
+        }
+
+        return true
+      })
+    },
+    [state.activeFilters, state.searchQuery],
+  )
+
+  // Initialize filter categories
+  useEffect(() => {
+    const defaultCategories: FilterCategory[] = [
+      {
+        id: "brand",
+        label: "Brand",
+        type: FilterType.CHECKBOX,
+        isExpanded: true,
+      },
+      {
+        id: "type",
+        label: "Type",
+        type: FilterType.CHECKBOX,
+        isExpanded: true,
+      },
+      {
+        id: "package",
+        label: "Package",
+        type: FilterType.CHECKBOX,
+        isExpanded: true,
+      },
+      {
+        id: "size",
+        label: "Size",
+        type: FilterType.CHECKBOX,
+        isExpanded: true,
+      },
+      {
+        id: "price",
+        label: "Price",
+        type: FilterType.RANGE,
+        isExpanded: true,
+      },
+      {
+        id: "availability",
+        label: "Availability",
+        type: FilterType.TOGGLE,
+        isExpanded: true,
+      },
+    ]
+
+    dispatch({ type: "SET_FILTER_CATEGORIES", payload: defaultCategories })
+  }, [])
+
+  // Context value
+  const contextValue = useMemo(
+    () => ({
+      // State
+      activeFilters: state.activeFilters,
+      sortOption: state.sortOption,
+      searchQuery: state.searchQuery,
+      categories: state.categories,
+      totalActiveFilters,
+
+      // Filter sheet state
+      isFilterSheetOpen,
+      openFilterSheet,
+      closeFilterSheet,
+
+      // Filter operations
+      addFilter,
+      removeFilter,
+      clearAllFilters,
+      clearCategoryFilters,
+      setSortOption,
+      setSearchQuery,
+      toggleCategoryExpansion,
+
+      // Filter helpers
+      isFilterActive,
+      getActiveFiltersByCategory,
+
+      // Product filtering
+      filterProducts,
+      filteredProductCount,
+      setFilteredProductCount,
+    }),
+    [
+      state.activeFilters,
+      state.sortOption,
+      state.searchQuery,
+      state.categories,
+      totalActiveFilters,
+      isFilterSheetOpen,
+      openFilterSheet,
+      closeFilterSheet,
+      addFilter,
+      removeFilter,
+      clearAllFilters,
+      clearCategoryFilters,
+      setSortOption,
+      setSearchQuery,
+      toggleCategoryExpansion,
+      isFilterActive,
+      getActiveFiltersByCategory,
+      filterProducts,
+      filteredProductCount,
+      setFilteredProductCount,
+    ],
+  )
+
+  return <FilterContext.Provider value={contextValue}>{children}</FilterContext.Provider>
 }
 
+/**
+ * Hook to use the filter context
+ */
 export function useFilter() {
   const context = useContext(FilterContext)
   if (context === undefined) {

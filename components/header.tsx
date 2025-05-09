@@ -19,12 +19,14 @@ import { StoreDropdown } from "@/components/store-selector/store-dropdown"
 import { StoreSheet } from "@/components/store-selector/store-sheet"
 import { CartSheet } from "@/components/cart/cart-sheet"
 import { useRouter } from "next/navigation"
+import { useFilter } from "@/context/filter-context"
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false)
   const [isCartOpen, setIsCartOpen] = useState(false)
   const { totalItems } = useCart()
   const { isSearchOpen, searchQuery, openSearch, setSearchQuery, submitSearch } = useSearch()
+  const { clearAllFilters } = useFilter()
   const isMobile = useMediaQuery("(max-width: 768px)")
   const searchContainerRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
@@ -57,6 +59,17 @@ export default function Header() {
     router.push("/")
   }
 
+  // Handle logo click to clear all filters and show all products
+  const handleLogoClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+
+    // Clear all filters
+    clearAllFilters()
+
+    // Then navigate to home page
+    router.push("/")
+  }
+
   return (
     <>
       <header
@@ -78,7 +91,7 @@ export default function Header() {
                 </SheetTrigger>
                 <SheetContent side="left" className="w-[300px] sm:w-[400px]">
                   <nav className="flex flex-col gap-4 mt-8">
-                    <Link href="/" className="text-lg font-medium">
+                    <Link href="/" className="text-lg font-medium" onClick={handleLogoClick}>
                       Home
                     </Link>
                     <Link href="/categories" className="text-lg font-medium">
@@ -94,9 +107,9 @@ export default function Header() {
                 </SheetContent>
               </Sheet>
 
-              <Link href="/" className="flex items-center">
+              <Button variant="ghost" className="flex items-center p-0 h-auto" onClick={handleLogoClick}>
                 <span className="font-bold text-xl text-white tracking-[-2px]">SodaSupply</span>
-              </Link>
+              </Button>
             </div>
 
             {/* Center section - Search */}
