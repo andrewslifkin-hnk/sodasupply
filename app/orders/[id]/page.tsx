@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
@@ -11,23 +11,87 @@ import { useOrders } from "@/context/orders-context"
 import { formatCurrency } from "@/lib/utils"
 import { ArrowLeft, MapPin, Package, ShoppingCart } from "lucide-react"
 import { useCart } from "@/context/cart-context"
+import { supabase } from "@/lib/supabase"
 
 export default function OrderDetailsPage({ params }: { params: { id: string } }) {
   const router = useRouter()
-  const { getOrderById } = useOrders()
+  const { getOrderById, orders } = useOrders()
   const { addToCart } = useCart()
   const [order, setOrder] = useState<ReturnType<typeof getOrderById>>(undefined)
+  const [isLoading, setIsLoading] = useState(true)
   
-  useEffect(() => {
-    const fetchedOrder = getOrderById(params.id)
-    
-    if (fetchedOrder) {
-      setOrder(fetchedOrder)
-    } else {
-      // Redirect to orders page if order not found
+  // Stabilize the fetch function with useCallback
+  const fetchOrderDetails = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      
+      // First try to get from context
+      const cachedOrder = getOrderById(params.id)
+      
+      if (cachedOrder) {
+        setOrder(cachedOrder)
+        return
+      }
+      
+      // If not in context, fetch directly from database
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*, order_items(*)')
+        .eq('id', params.id)
+        .single()
+      
+      if (error || !data) {
+        console.error("Error fetching order:", error)
+        router.push("/orders")
+        return
+      }
+      
+      // Transform the order to our application format
+      const transformedOrder = {
+        id: data.id.toString(),
+        orderNumber: data.order_number,
+        orderDate: new Date(data.order_date).toLocaleDateString("en-GB", { 
+          day: "numeric", 
+          month: "short", 
+          year: "numeric" 
+        }).replace(",", ""),
+        orderTime: new Date(data.order_date).toLocaleTimeString([], { 
+          hour: "2-digit", 
+          minute: "2-digit" 
+        }),
+        deliveryDate: new Date(data.delivery_date).toLocaleDateString("en-GB", { 
+          day: "numeric", 
+          month: "short", 
+          year: "numeric" 
+        }).replace(",", ""),
+        total: data.total,
+        status: data.status,
+        storeId: data.store_id?.toString(),
+        storeName: data.store_name,
+        storeAddress: data.store_address || "",
+        items: data.order_items.map((item: any) => ({
+          id: item.product_id,
+          name: item.product_name,
+          type: item.product_type,
+          quantity: item.quantity,
+          price: item.price,
+          image: item.image || "/images/no-products-found.png"
+        }))
+      }
+      
+      setOrder(transformedOrder)
+    } catch (error) {
+      console.error("Error fetching order:", error)
       router.push("/orders")
+    } finally {
+      setIsLoading(false)
     }
   }, [params.id, getOrderById, router])
+  
+  // Fetch the order only once when component mounts
+  useEffect(() => {
+    fetchOrderDetails()
+  }, [fetchOrderDetails]) // It's safe to include fetchOrderDetails here because it's memoized
   
   const handleAddAllToCart = () => {
     if (!order) return
@@ -38,7 +102,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
         id: item.id,
         name: item.name,
         price: item.price,
-        image: item.image,
+        image: item.image, // Use the actual image from the item
         type: item.type,
         size: "", // Add appropriate size if available
       })
@@ -49,7 +113,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
     router.push("/")
   }
   
-  if (!order) {
+  if (isLoading || !order) {
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
@@ -107,7 +171,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
                     </div>
                     <div>
                       <div className="font-medium">{order.storeName}</div>
-                      <div className="text-sm text-gray-600">{order.storeAddress}</div>
+                      <div className="text-sm text-gray-600">{order.storeAddress || "No address available"}</div>
                     </div>
                   </div>
                 </section>
@@ -126,12 +190,14 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
                       <div key={item.id} className="p-4 flex items-center gap-4">
                         <div className="relative h-16 w-16 bg-gray-100 rounded">
                           <Image
-                            src={item.image || "/placeholder.svg"}
+                            src={item.image || "/images/no-products-found.png"}
                             alt={item.name}
                             fill
                             className="object-contain p-2"
                             onError={(e) => {
-                              (e.target as HTMLImageElement).src = "/placeholder.svg";
+                              console.error(`Image failed to load: ${item.image}`);
+                              // Use a reliable fallback image that exists in the project
+                              (e.target as HTMLImageElement).src = "/images/no-products-found.png";
                             }}
                           />
                         </div>

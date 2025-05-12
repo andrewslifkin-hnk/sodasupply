@@ -4,6 +4,7 @@ import React from "react"
 import { FilterProvider } from "@/context/filter-context"
 import { StoreProvider } from "@/context/store-context"
 import { CartProvider } from "@/context/cart-context"
+import { OrderProvider } from "@/context/orders-context"
 
 export default function OrderConfirmationLayout({
   children,
@@ -13,9 +14,11 @@ export default function OrderConfirmationLayout({
   return (
     <StoreProvider>
       <CartProvider>
-        <FilterProvider>
-          {children}
-        </FilterProvider>
+        <OrderProvider>
+          <FilterProvider>
+            {children}
+          </FilterProvider>
+        </OrderProvider>
       </CartProvider>
     </StoreProvider>
   )

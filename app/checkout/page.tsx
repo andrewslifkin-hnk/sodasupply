@@ -16,11 +16,12 @@ import { DeliveryDateSheet } from "@/components/checkout/delivery-date-sheet"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
-import { createOrder } from "@/services/order-service"
+import { useOrders } from "@/context/orders-context"
 
 export default function CheckoutPage() {
-  const { items, totalItems } = useCart()
+  const { items, totalItems, clearCart } = useCart()
   const { selectedStore } = useStore()
+  const { getNextOrderNumber } = useOrders()
   const [remarks, setRemarks] = useState("")
   const router = useRouter()
   const isMobile = useMediaQuery("(max-width: 768px)")
@@ -99,35 +100,12 @@ export default function CheckoutPage() {
     try {
       setIsSubmitting(true)
 
-      // Generate a random order number
-      const orderNumber = `SO${Date.now().toString().slice(-8)}`
-
-      const order = {
-        store_id: Number.parseInt(selectedStore.id),
-        order_number: orderNumber,
-        order_date: new Date().toISOString(),
-        delivery_date: getDeliveryDateISO(),
-        subtotal,
-        vat,
-        discount,
-        total,
-        status: "pending",
-        payment_method: "cash_on_delivery",
-        remarks: remarks || undefined,
-      }
-
-      const result = await createOrder(order, items)
-
-      if (result.success) {
-        router.push("/order-confirmation")
-      } else {
-        console.error("Failed to create order:", result.error)
-        alert("There was an error placing your order. Please try again.")
-      }
+      // Prepare order data for navigation
+      // We'll move to order-confirmation page which will save the order in the orders context
+      router.push("/order-confirmation")
     } catch (error) {
       console.error("Error placing order:", error)
       alert("There was an error placing your order. Please try again.")
-    } finally {
       setIsSubmitting(false)
     }
   }

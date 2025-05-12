@@ -159,9 +159,33 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearCart = () => {
     if (!selectedStore) return
-
+    
+    // Update current items immediately
     setCurrentItems([])
-    updateStoreCart([])
+    
+    // Update store carts state with an empty cart for the current store
+    setStoreCarts((prevCarts) => {
+      const existingCartIndex = prevCarts.findIndex((cart) => cart.storeId === selectedStore.id)
+      
+      if (existingCartIndex >= 0) {
+        // Update existing cart with empty items array
+        const updatedCarts = [...prevCarts]
+        updatedCarts[existingCartIndex] = {
+          ...updatedCarts[existingCartIndex],
+          items: [],
+        }
+        return updatedCarts
+      }
+      return prevCarts
+    })
+    
+    // Force update localStorage immediately
+    if (isInitialized && selectedStore) {
+      const updatedCarts = storeCarts.map(cart => 
+        cart.storeId === selectedStore.id ? {...cart, items: []} : cart
+      )
+      localStorage.setItem("storeCarts", JSON.stringify(updatedCarts))
+    }
   }
 
   return (
