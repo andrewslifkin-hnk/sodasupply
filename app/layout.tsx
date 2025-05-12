@@ -5,6 +5,7 @@ import { CartProvider } from "@/context/cart-context"
 import { SearchProvider } from "@/context/search-context"
 import { StoreProvider } from "@/context/store-context"
 import { FilterProvider } from "@/context/filter-context"
+import { OrderProvider } from "@/context/orders-context"
 import { Suspense } from "react"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -19,11 +20,13 @@ export default function RootLayout({
       <body className={inter.className}>
         <StoreProvider>
           <CartProvider>
-            <Suspense>
-              <FilterProvider>
-                <SearchProvider>{children}</SearchProvider>
-              </FilterProvider>
-            </Suspense>
+            <OrderProvider>
+              <Suspense>
+                <FilterProvider>
+                  <SearchProvider>{children}</SearchProvider>
+                </FilterProvider>
+              </Suspense>
+            </OrderProvider>
           </CartProvider>
         </StoreProvider>
       </body>

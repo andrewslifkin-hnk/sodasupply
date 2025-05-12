@@ -9,11 +9,13 @@ import Header from "@/components/header"
 import Footer from "@/components/footer"
 import { useCart } from "@/context/cart-context"
 import { useStore } from "@/context/store-context"
+import { useOrders } from "@/context/orders-context"
 
 export default function OrderConfirmationPage() {
   // Add the cart context and store context
   const { clearCart } = useCart()
   const { selectedStore } = useStore()
+  const { saveOrder } = useOrders()
 
   // Add a loading state to prevent hydration mismatch
   const [isLoading, setIsLoading] = useState(true)
@@ -26,6 +28,8 @@ export default function OrderConfirmationPage() {
   
   // Add a ref to track if cart has been cleared
   const hasCartBeenCleared = useRef(false)
+  // Add a ref to track if order has been saved
+  const hasOrderBeenSaved = useRef(false)
 
   // Clear the current store's cart when the page loads - only once
   useEffect(() => {
@@ -91,6 +95,29 @@ export default function OrderConfirmationPage() {
   const vat = subtotal * 0.21 // 21% VAT
   const delivery = 0 // Free delivery
   const total = subtotal + vat
+
+  // Save the order once data is ready
+  useEffect(() => {
+    if (!isLoading && !hasOrderBeenSaved.current) {
+      try {
+        saveOrder({
+          orderNumber,
+          orderDate,
+          orderTime,
+          deliveryDate,
+          items: orderItems,
+          total,
+          status: "processing",
+          storeId: selectedStore?.id,
+          storeName: selectedStore?.name,
+          storeAddress: selectedStore?.address
+        });
+        hasOrderBeenSaved.current = true;
+      } catch (error) {
+        console.error("Error saving order:", error);
+      }
+    }
+  }, [isLoading, orderNumber, orderDate, orderTime, deliveryDate, orderItems, total, selectedStore, saveOrder]);
 
   // Safe formatCurrency function that handles edge cases
   const safeFormatCurrency = (amount: number | undefined | null) => {
