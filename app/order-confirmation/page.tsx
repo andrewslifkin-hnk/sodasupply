@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import { Check, MapPin, Package, ShoppingCart, HelpCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -23,50 +23,58 @@ export default function OrderConfirmationPage() {
   const [deliveryDate, setDeliveryDate] = useState<string>("")
   const [editDeadline, setEditDeadline] = useState<string>("")
   const [phoneNumber, setPhoneNumber] = useState<string>("•••••••987")
+  
+  // Add a ref to track if cart has been cleared
+  const hasCartBeenCleared = useRef(false)
 
-  // Clear the current store's cart when the page loads
+  // Clear the current store's cart when the page loads - only once
   useEffect(() => {
-    try {
-      clearCart()
-    } catch (error) {
-      console.error("Error clearing cart:", error)
+    if (!hasCartBeenCleared.current) {
+      try {
+        clearCart()
+        hasCartBeenCleared.current = true
+      } catch (error) {
+        console.error("Error clearing cart:", error)
+      }
     }
   }, [clearCart])
 
-  // Generate a random order number on page load
+  // Generate a random order number on page load - separate from cart clearing
   useEffect(() => {
-    try {
-      const randomNum = Math.floor(10000 + Math.random() * 90000)
-      setOrderNumber(`CO2024-${randomNum}`)
+    if (isLoading) {
+      try {
+        const randomNum = Math.floor(10000 + Math.random() * 90000)
+        setOrderNumber(`CO2024-${randomNum}`)
 
-      // Set current time for order placed
-      const now = new Date()
-      setOrderTime(now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }))
+        // Set current time for order placed
+        const now = new Date()
+        setOrderTime(now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }))
 
-      // Set current date for order placed
-      setOrderDate(now.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }).replace(",", ""))
+        // Set current date for order placed
+        setOrderDate(now.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }).replace(",", ""))
 
-      // Set delivery date (next day)
-      const tomorrow = new Date()
-      tomorrow.setDate(now.getDate() + 1)
-      setDeliveryDate(
-        tomorrow.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }).replace(",", ""),
-      )
+        // Set delivery date (next day)
+        const tomorrow = new Date()
+        tomorrow.setDate(now.getDate() + 1)
+        setDeliveryDate(
+          tomorrow.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }).replace(",", ""),
+        )
 
-      // Set edit deadline (2 hours from now)
-      const deadline = new Date()
-      deadline.setHours(deadline.getHours() + 2)
-      setEditDeadline(deadline.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }))
-      
-      // Set loading to false after all data is prepared
-      setIsLoading(false)
-    } catch (error) {
-      console.error("Error setting order details:", error)
-      setIsLoading(false)
+        // Set edit deadline (2 hours from now)
+        const deadline = new Date()
+        deadline.setHours(deadline.getHours() + 2)
+        setEditDeadline(deadline.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }))
+        
+        // Set loading to false after all data is prepared
+        setIsLoading(false)
+      } catch (error) {
+        console.error("Error setting order details:", error)
+        setIsLoading(false)
+      }
     }
-  }, [])
+  }, [isLoading]) // Only depend on isLoading, not on other state variables
 
-  // Mock order data
+  // Mock order data - define outside the component or memoize if needed
   const orderItems = [
     {
       id: 1,
