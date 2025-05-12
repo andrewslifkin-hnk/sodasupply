@@ -15,41 +15,55 @@ export default function OrderConfirmationPage() {
   const { clearCart } = useCart()
   const { selectedStore } = useStore()
 
-  const [orderNumber, setOrderNumber] = useState("CO2024-00234")
-  const [orderTime, setOrderTime] = useState("3:38PM")
-  const [orderDate, setOrderDate] = useState("7 Oct 2024")
-  const [deliveryDate, setDeliveryDate] = useState("8 Oct 2024")
-  const [editDeadline, setEditDeadline] = useState("12:30")
-  const [phoneNumber, setPhoneNumber] = useState("•••••••987")
+  // Add a loading state to prevent hydration mismatch
+  const [isLoading, setIsLoading] = useState(true)
+  const [orderNumber, setOrderNumber] = useState<string>("")
+  const [orderTime, setOrderTime] = useState<string>("")
+  const [orderDate, setOrderDate] = useState<string>("")
+  const [deliveryDate, setDeliveryDate] = useState<string>("")
+  const [editDeadline, setEditDeadline] = useState<string>("")
+  const [phoneNumber, setPhoneNumber] = useState<string>("•••••••987")
 
   // Clear the current store's cart when the page loads
   useEffect(() => {
-    clearCart()
+    try {
+      clearCart()
+    } catch (error) {
+      console.error("Error clearing cart:", error)
+    }
   }, [clearCart])
 
   // Generate a random order number on page load
   useEffect(() => {
-    const randomNum = Math.floor(10000 + Math.random() * 90000)
-    setOrderNumber(`CO2024-${randomNum}`)
+    try {
+      const randomNum = Math.floor(10000 + Math.random() * 90000)
+      setOrderNumber(`CO2024-${randomNum}`)
 
-    // Set current time for order placed
-    const now = new Date()
-    setOrderTime(now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }))
+      // Set current time for order placed
+      const now = new Date()
+      setOrderTime(now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }))
 
-    // Set current date for order placed
-    setOrderDate(now.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }).replace(",", ""))
+      // Set current date for order placed
+      setOrderDate(now.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }).replace(",", ""))
 
-    // Set delivery date (next day)
-    const tomorrow = new Date()
-    tomorrow.setDate(now.getDate() + 1)
-    setDeliveryDate(
-      tomorrow.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }).replace(",", ""),
-    )
+      // Set delivery date (next day)
+      const tomorrow = new Date()
+      tomorrow.setDate(now.getDate() + 1)
+      setDeliveryDate(
+        tomorrow.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }).replace(",", ""),
+      )
 
-    // Set edit deadline (2 hours from now)
-    const deadline = new Date()
-    deadline.setHours(deadline.getHours() + 2)
-    setEditDeadline(deadline.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }))
+      // Set edit deadline (2 hours from now)
+      const deadline = new Date()
+      deadline.setHours(deadline.getHours() + 2)
+      setEditDeadline(deadline.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }))
+      
+      // Set loading to false after all data is prepared
+      setIsLoading(false)
+    } catch (error) {
+      console.error("Error setting order details:", error)
+      setIsLoading(false)
+    }
   }, [])
 
   // Mock order data
@@ -70,6 +84,33 @@ export default function OrderConfirmationPage() {
   const delivery = 0 // Free delivery
   const total = subtotal + vat
 
+  // Safe formatCurrency function that handles edge cases
+  const safeFormatCurrency = (amount: number | undefined | null) => {
+    if (amount === undefined || amount === null) {
+      return "€0.00"
+    }
+    try {
+      return formatCurrency(amount)
+    } catch (error) {
+      console.error("Error formatting currency:", error)
+      return "€0.00"
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 container mx-auto px-4 py-8 md:py-12">
+          <div className="flex justify-center items-center h-full">
+            <p>Loading your order confirmation...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -82,7 +123,7 @@ export default function OrderConfirmationPage() {
             <Check className="w-8 h-8 text-black" />
           </div>
           <h1 className="text-2xl md:text-3xl font-bold mb-2">Your order was successfully placed.</h1>
-          <p className="text-gray-600">The distributor will send a confirmation shortly to {phoneNumber}.</p>
+          <p className="text-gray-600">The distributor will send a confirmation shortly to {phoneNumber}</p>
         </div>
 
         {/* Order status and edit sections */}
@@ -178,10 +219,14 @@ export default function OrderConfirmationPage() {
                     <div key={item.id} className="p-4 flex items-center gap-4">
                       <div className="relative h-16 w-16 bg-gray-100 rounded">
                         <Image
-                          src={item.image || "/placeholder.svg?height=64&width=64&query=soda crate"}
+                          src={item.image || "/placeholder.svg"}
                           alt={item.name}
                           fill
                           className="object-contain p-2"
+                          onError={(e) => {
+                            console.log("Image failed to load, falling back to placeholder");
+                            (e.target as HTMLImageElement).src = "/placeholder.svg";
+                          }}
                         />
                       </div>
                       <div className="flex-1">
@@ -189,7 +234,7 @@ export default function OrderConfirmationPage() {
                         <div className="text-sm text-gray-600">{item.type}</div>
                         <div className="text-sm text-gray-600">Quantity: {item.quantity}</div>
                       </div>
-                      <div className="font-bold">{formatCurrency(item.price)}</div>
+                      <div className="font-bold">{safeFormatCurrency(item.price)}</div>
                     </div>
                   ))}
                 </div>
@@ -205,11 +250,11 @@ export default function OrderConfirmationPage() {
               <div className="space-y-2 mb-4">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal</span>
-                  <span className="font-medium">{formatCurrency(subtotal)}</span>
+                  <span className="font-medium">{safeFormatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">VAT 21%</span>
-                  <span className="font-medium">{formatCurrency(vat)}</span>
+                  <span className="font-medium">{safeFormatCurrency(vat)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Delivery</span>
@@ -219,7 +264,7 @@ export default function OrderConfirmationPage() {
 
               <div className="flex justify-between font-bold text-lg border-t pt-4">
                 <span>Total</span>
-                <span>{formatCurrency(total)}</span>
+                <span>{safeFormatCurrency(total)}</span>
               </div>
             </div>
 

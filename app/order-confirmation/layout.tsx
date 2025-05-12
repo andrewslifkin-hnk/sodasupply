@@ -2,6 +2,8 @@
 
 import React from "react"
 import { FilterProvider } from "@/context/filter-context"
+import { StoreProvider } from "@/context/store-context"
+import { CartProvider } from "@/context/cart-context"
 
 export default function OrderConfirmationLayout({
   children,
@@ -9,8 +11,12 @@ export default function OrderConfirmationLayout({
   children: React.ReactNode
 }) {
   return (
-    <FilterProvider>
-      {children}
-    </FilterProvider>
+    <StoreProvider>
+      <CartProvider>
+        <FilterProvider>
+          {children}
+        </FilterProvider>
+      </CartProvider>
+    </StoreProvider>
   )
 } 
