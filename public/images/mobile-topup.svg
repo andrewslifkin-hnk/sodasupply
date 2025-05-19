@@ -1,0 +1,8 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <rect width="200" height="200" fill="#f9f9f9"/>
+  <rect x="60" y="40" width="80" height="120" rx="10" fill="black" fill-opacity="0.1" stroke="black" stroke-width="2"/>
+  <rect x="70" y="50" width="60" height="80" rx="2" fill="#fff" stroke="black" stroke-width="1"/>
+  <rect x="85" y="140" width="30" height="10" rx="5" fill="black" fill-opacity="0.3"/>
+  <text x="100" y="90" font-family="Arial, sans-serif" font-size="18" text-anchor="middle" fill="black">MMK</text>
+  <text x="100" y="110" font-family="Arial, sans-serif" font-weight="bold" font-size="16" text-anchor="middle" fill="black">TopUp</text>
+</svg> 
