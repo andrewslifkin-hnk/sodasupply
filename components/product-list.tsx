@@ -212,7 +212,7 @@ const defaultProducts = [
     type: "Prebiotic",
     size: "4 x 12 fl oz",
     price: 11.99,
-    image: "/products/OLIPOP-Prebiotic-Soda-Cream-Soda-12-fl-oz-4-Pack-Pantry-Packs_522a6251-8f10-4fa5-9753-ef1e4c0b700d.ef6cbd1cbbd0a4e019695cab9402a461 (1).jpeg",
+    image: "/products/OLIPOP-Prebiotic-Soda-Cream-Soda-12-fl-oz-4-Pack-Pantry-Packs_522a6251-8f10-4fa5-9753-ef1e4c0b700d.ef6cbd1cbbd0a4e019695cab9402a461.jpeg",
     returnable: true,
     inStock: true,
     brand: "Olipop",
