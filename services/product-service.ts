@@ -13,6 +13,11 @@ export interface Product {
 }
 
 export async function getProducts(searchQuery?: string): Promise<Product[]> {
+  // Return empty array to force using the default products
+  return []
+  
+  // Original implementation commented out
+  /*
   let query = supabase.from("products").select("*")
 
   // Only apply search filter if searchQuery is not empty
@@ -28,6 +33,7 @@ export async function getProducts(searchQuery?: string): Promise<Product[]> {
   }
 
   return data || []
+  */
 }
 
 export async function getProductById(id: number): Promise<Product | null> {

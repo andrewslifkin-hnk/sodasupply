@@ -36,22 +36,35 @@ export function FilterSheet() {
 
   // Define filter options for each category
   const getBrandOptions = (): CheckboxFilterOption[] => [
-    { id: "brand-heineken", label: "Heineken®", category: "brand", type: FilterType.CHECKBOX, value: "Heineken" },
-    { id: "brand-cola", label: "Cola", category: "brand", type: FilterType.CHECKBOX, value: "Cola" },
+    // Only include brands that have products in the inventory
+    { id: "brand-olipop", label: "Olipop", category: "brand", type: FilterType.CHECKBOX, value: "Olipop" },
+    { id: "brand-poppi", label: "Poppi", category: "brand", type: FilterType.CHECKBOX, value: "Poppi" },
+    { id: "brand-cocacola", label: "Coca-Cola", category: "brand", type: FilterType.CHECKBOX, value: "Coca-Cola" },
     { id: "brand-sprite", label: "Sprite", category: "brand", type: FilterType.CHECKBOX, value: "Sprite" },
-    { id: "brand-fanta", label: "Fanta", category: "brand", type: FilterType.CHECKBOX, value: "Fanta" },
+    { id: "brand-assorted", label: "Assorted", category: "brand", type: FilterType.CHECKBOX, value: "Assorted" },
+    { id: "brand-citrus", label: "Citrus", category: "brand", type: FilterType.CHECKBOX, value: "Citrus" },
+    { id: "brand-cherry", label: "Cherry", category: "brand", type: FilterType.CHECKBOX, value: "Cherry" },
+    { id: "brand-orange", label: "Orange", category: "brand", type: FilterType.CHECKBOX, value: "Orange" },
+    { id: "brand-raspberry", label: "Raspberry", category: "brand", type: FilterType.CHECKBOX, value: "Raspberry" },
     { id: "brand-energy", label: "Energy", category: "brand", type: FilterType.CHECKBOX, value: "Energy" },
-    { id: "brand-water", label: "Water", category: "brand", type: FilterType.CHECKBOX, value: "Water" },
-    { id: "brand-tea", label: "Tea", category: "brand", type: FilterType.CHECKBOX, value: "Tea" },
-    { id: "brand-ginger", label: "Ginger", category: "brand", type: FilterType.CHECKBOX, value: "Ginger" },
+    // Sports drink brands
+    { id: "brand-gatorade", label: "Gatorade", category: "brand", type: FilterType.CHECKBOX, value: "Gatorade" },
+    { id: "brand-bodyarmor", label: "BODYARMOR", category: "brand", type: FilterType.CHECKBOX, value: "BODYARMOR" },
+    { id: "brand-powerade", label: "POWERADE", category: "brand", type: FilterType.CHECKBOX, value: "POWERADE" },
+    { id: "brand-vitaminwater", label: "vitaminwater", category: "brand", type: FilterType.CHECKBOX, value: "vitaminwater" },
+    { id: "brand-propel", label: "Propel", category: "brand", type: FilterType.CHECKBOX, value: "Propel" },
   ]
 
   const getTypeOptions = (): CheckboxFilterOption[] => [
-    { id: "type-carbonated", label: "Carbonated", category: "type", type: FilterType.CHECKBOX, value: "Carbonated" },
-    { id: "type-water", label: "Water", category: "type", type: FilterType.CHECKBOX, value: "Water" },
-    { id: "type-energy", label: "Energy", category: "type", type: FilterType.CHECKBOX, value: "Energy" },
-    { id: "type-tea", label: "Tea", category: "type", type: FilterType.CHECKBOX, value: "Tea" },
-    { id: "type-beer", label: "Beer", category: "type", type: FilterType.CHECKBOX, value: "Beer" },
+    // Only include types that have products in the inventory
+    { id: "type-prebiotic", label: "Prebiotic", category: "type", type: FilterType.CHECKBOX, value: "Prebiotic" },
+    { id: "type-soda", label: "Soda", category: "type", type: FilterType.CHECKBOX, value: "Soda" },
+    { id: "type-sparklingwater", label: "Sparkling Water", category: "type", type: FilterType.CHECKBOX, value: "Sparkling Water" },
+    { id: "type-energydrink", label: "Energy Drink", category: "type", type: FilterType.CHECKBOX, value: "Energy Drink" },
+    // Sports drink product types
+    { id: "type-sportsdrink", label: "Sports Drink", category: "type", type: FilterType.CHECKBOX, value: "Sports Drink" },
+    { id: "type-enhancedwater", label: "Enhanced Water", category: "type", type: FilterType.CHECKBOX, value: "Enhanced Water" },
+    { id: "type-fitnesswater", label: "Fitness Water", category: "type", type: FilterType.CHECKBOX, value: "Fitness Water" },
   ]
 
   const getPackageOptions = (): CheckboxFilterOption[] => [
@@ -70,6 +83,12 @@ export function FilterSheet() {
     { id: "size-6-x", label: "6-Pack", category: "size", type: FilterType.CHECKBOX, value: "6 x" },
     { id: "size-12-x", label: "12-Pack", category: "size", type: FilterType.CHECKBOX, value: "12 x" },
     { id: "size-24-x", label: "24-Pack", category: "size", type: FilterType.CHECKBOX, value: "24 x" },
+    // Add more common sizes found in the sports drinks
+    { id: "size-8-x", label: "8-Pack", category: "size", type: FilterType.CHECKBOX, value: "8 x" },
+    { id: "size-18-x", label: "18-Pack", category: "size", type: FilterType.CHECKBOX, value: "18 x" },
+    { id: "size-16-fl-oz", label: "16 fl oz", category: "size", type: FilterType.CHECKBOX, value: "16 fl oz" },
+    { id: "size-20-fl-oz", label: "20 fl oz", category: "size", type: FilterType.CHECKBOX, value: "20 fl oz" },
+    { id: "size-28-fl-oz", label: "28 fl oz", category: "size", type: FilterType.CHECKBOX, value: "28 fl oz" },
   ]
 
   const getPriceOptions = (): RangeFilterOption[] => [

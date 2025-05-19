@@ -6,7 +6,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose, SheetFooter }
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { useFilter, type FilterOption, type SortOption, type FilterCategory } from "@/context/filter-context"
+import { useFilter, FilterType, type FilterOption, type SortOption, type FilterCategory } from "@/context/filter-context"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -61,45 +61,52 @@ export function FilterBar() {
 
   // Filter options based on actual product attributes
   const typeOptions = [
-    { id: "type-carbonated", label: "Carbonated", category: "type", value: "Carbonated" },
-    { id: "type-water", label: "Water", category: "type", value: "Water" },
-    { id: "type-energy", label: "Energy", category: "type", value: "Energy" },
-    { id: "type-tea", label: "Tea", category: "type", value: "Tea" },
-    { id: "type-beer", label: "Beer", category: "type", value: "Beer" },
+    { id: "type-prebiotic", label: "Prebiotic", category: "type", type: FilterType.CHECKBOX, value: "Prebiotic" },
+    { id: "type-probiotic", label: "Probiotic", category: "type", type: FilterType.CHECKBOX, value: "Probiotic" },
+    { id: "type-soda", label: "Soda", category: "type", type: FilterType.CHECKBOX, value: "Soda" },
+    { id: "type-functional", label: "Functional", category: "type", type: FilterType.CHECKBOX, value: "Functional" },
+    { id: "type-adaptogenic", label: "Adaptogenic", category: "type", type: FilterType.CHECKBOX, value: "Adaptogenic" },
+    { id: "type-lowsugar", label: "Low Sugar", category: "type", type: FilterType.CHECKBOX, value: "Low Sugar" },
+    { id: "type-sparklingwater", label: "Sparkling Water", category: "type", type: FilterType.CHECKBOX, value: "Sparkling Water" },
+    { id: "type-energydrink", label: "Energy Drink", category: "type", type: FilterType.CHECKBOX, value: "Energy Drink" },
   ]
 
   const packageOptions = [
-    { id: "package-bottle", label: "Bottle", category: "package", value: "Bottle" },
-    { id: "package-pack", label: "Pack", category: "package", value: "Pack" },
-    { id: "package-cans", label: "Cans", category: "package", value: "Cans" },
-    { id: "package-case", label: "Case", category: "package", value: "Case" },
-    { id: "package-crate", label: "Crate", category: "package", value: "Crate" },
+    { id: "package-bottle", label: "Bottle", category: "package", type: FilterType.CHECKBOX, value: "Bottle" },
+    { id: "package-pack", label: "Pack", category: "package", type: FilterType.CHECKBOX, value: "Pack" },
+    { id: "package-cans", label: "Cans", category: "package", type: FilterType.CHECKBOX, value: "Cans" },
+    { id: "package-case", label: "Case", category: "package", type: FilterType.CHECKBOX, value: "Case" },
+    { id: "package-crate", label: "Crate", category: "package", type: FilterType.CHECKBOX, value: "Crate" },
   ]
 
   const sizeOptions = [
-    { id: "size-330ml", label: "330ml", category: "size", value: "330ml" },
-    { id: "size-500ml", label: "500ml", category: "size", value: "500ml" },
-    { id: "size-1.5l", label: "1.5L", category: "size", value: "1.5L" },
-    { id: "size-2l", label: "2L", category: "size", value: "2L" },
-    { id: "size-6-x", label: "6-Pack", category: "size", value: "6 x" },
-    { id: "size-12-x", label: "12-Pack", category: "size", value: "12 x" },
-    { id: "size-24-x", label: "24-Pack", category: "size", value: "24 x" },
+    { id: "size-250ml", label: "250ml", category: "size", type: FilterType.CHECKBOX, value: "250ml" },
+    { id: "size-355ml", label: "355ml", category: "size", type: FilterType.CHECKBOX, value: "355ml" },
+    { id: "size-4-x", label: "4-Pack", category: "size", type: FilterType.CHECKBOX, value: "4 x" },
+    { id: "size-6-x", label: "6-Pack", category: "size", type: FilterType.CHECKBOX, value: "6 x" },
+    { id: "size-8-x", label: "8-Pack", category: "size", type: FilterType.CHECKBOX, value: "8 x" },
+    { id: "size-12-x", label: "12-Pack", category: "size", type: FilterType.CHECKBOX, value: "12 x" },
+    { id: "size-24-x", label: "24-Pack", category: "size", type: FilterType.CHECKBOX, value: "24 x" },
+    { id: "size-2l", label: "2 Liter", category: "size", type: FilterType.CHECKBOX, value: "2 Liter" },
   ]
 
   const brandOptions = [
-    { id: "brand-heineken", label: "Heineken®", category: "brand", value: "Heineken" },
-    { id: "brand-cola", label: "Cola", category: "brand", value: "Cola" },
-    { id: "brand-sprite", label: "Sprite", category: "brand", value: "Sprite" },
-    { id: "brand-fanta", label: "Fanta", category: "brand", value: "Fanta" },
-    { id: "brand-energy", label: "Energy", category: "brand", value: "Energy" },
-    { id: "brand-water", label: "Water", category: "brand", value: "Water" },
-    { id: "brand-tea", label: "Tea", category: "brand", value: "Tea" },
-    { id: "brand-ginger", label: "Ginger", category: "brand", value: "Ginger" },
+    { id: "brand-olipop", label: "Olipop", category: "brand", type: FilterType.CHECKBOX, value: "Olipop" },
+    { id: "brand-poppi", label: "Poppi", category: "brand", type: FilterType.CHECKBOX, value: "Poppi" },
+    { id: "brand-cocacola", label: "Coca-Cola", category: "brand", type: FilterType.CHECKBOX, value: "Coca-Cola" },
+    { id: "brand-sprite", label: "Sprite", category: "brand", type: FilterType.CHECKBOX, value: "Sprite" },
+    { id: "brand-recess", label: "Recess", category: "brand", type: FilterType.CHECKBOX, value: "Recess" },
+    { id: "brand-dram", label: "DRAM", category: "brand", type: FilterType.CHECKBOX, value: "DRAM" },
+    { id: "brand-unitedsodas", label: "United Sodas", category: "brand", type: FilterType.CHECKBOX, value: "United Sodas" },
+    { id: "brand-culturepop", label: "Culture Pop", category: "brand", type: FilterType.CHECKBOX, value: "Culture Pop" },
+    { id: "brand-sanzo", label: "Sanzo", category: "brand", type: FilterType.CHECKBOX, value: "Sanzo" },
+    { id: "brand-ghia", label: "Ghia", category: "brand", type: FilterType.CHECKBOX, value: "Ghia" },
+    { id: "brand-assorted", label: "Assorted", category: "brand", type: FilterType.CHECKBOX, value: "Assorted" },
   ]
 
   const availabilityOptions = [
-    { id: "availability-instock", label: "In stock", category: "availability", value: "instock" },
-    { id: "availability-returnable", label: "Returnable", category: "availability", value: "returnable" },
+    { id: "availability-instock", label: "In stock", category: "availability", type: FilterType.TOGGLE, value: false },
+    { id: "availability-returnable", label: "Returnable", category: "availability", type: FilterType.TOGGLE, value: false },
   ]
 
   // Render filter tags
