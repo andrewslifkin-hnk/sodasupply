@@ -141,6 +141,7 @@ export default function Header() {
                         value={searchQuery}
                         onChange={handleSearchChange}
                         onFocus={openSearch}
+                        inputMode="search"
                         className="pl-10 pr-10 bg-gray-800 border-gray-700 text-white placeholder:text-gray-400 w-full rounded-full focus-visible:ring-gray-600"
                       />
                       {searchQuery && (
@@ -197,6 +198,7 @@ export default function Header() {
                 value={searchQuery}
                 onChange={handleSearchChange}
                 onClick={openSearch}
+                inputMode="search"
               />
               {searchQuery && (
                 <Button

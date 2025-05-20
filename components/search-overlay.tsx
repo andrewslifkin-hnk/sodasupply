@@ -107,6 +107,7 @@ export function SearchOverlay() {
               placeholder="Search products"
               value={searchQuery}
               onChange={handleSearchChange}
+              inputMode="search"
               className="pl-4 pr-10 border-gray-200 rounded-full w-full"
             />
             <Button
