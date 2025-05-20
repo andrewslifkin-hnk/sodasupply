@@ -96,7 +96,8 @@ class FeatureFlagClient {
         // Fallback to hardcoded values if Statsig is not available
         const fallbackFlags: Record<string, boolean> = {
           'my_first_gate': true,
-          'my_test_gate': false
+          'my_test_gate': false,
+          'banner_carousel': true  // Added the banner flag with default=true
         };
         result = fallbackFlags[key] || false;
       }

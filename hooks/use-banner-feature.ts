@@ -5,13 +5,9 @@ import { createFeatureGate, identify } from '@/flags';
 import type { StatsigUser } from '@/flags';
 
 export function useBannerFeature() {
-  const [enabled, setEnabled] = useState<boolean>(true);
-  const [loading, setLoading] = useState(false);
+  const [enabled, setEnabled] = useState<boolean>(false);
+  const [loading, setLoading] = useState(true);
   
-  // For testing, we'll immediately return with the feature enabled
-  // Remove or comment out the effect below when you want to use actual feature flags
-  
-  /*
   useEffect(() => {
     async function checkBannerFlag() {
       try {
@@ -31,7 +27,6 @@ export function useBannerFeature() {
     
     checkBannerFlag();
   }, []);
-  */
 
   return { enabled, loading };
 } 
