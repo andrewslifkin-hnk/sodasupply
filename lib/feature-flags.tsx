@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getHypertune } from './hypertune';
 
-// Define client-side flags without using server-only modules
+// Define client-side flags
 type FlagDefinition<T> = {
   key: string;
   defaultValue: T;
@@ -27,35 +26,25 @@ export function useFeatureFlags(userId?: string) {
     [newNavigation.key]: newNavigation.defaultValue,
     [checkoutExperiment.key]: checkoutExperiment.defaultValue,
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    async function loadFlags() {
-      try {
-        // Attempt to load the flags from Hypertune
-        const hypertuneClient = await getHypertune({
-          userId,
-        });
-
-        if (hypertuneClient) {
-          // In a real implementation, we would get real flags here
-          // For now, just use the defaults
-          setFlags({
-            [newNavigation.key]: hypertuneClient.getFlag(newNavigation.key) || newNavigation.defaultValue,
-            [checkoutExperiment.key]: hypertuneClient.getFlag(checkoutExperiment.key) || checkoutExperiment.defaultValue,
-          });
-        }
-
-        setLoading(false);
-      } catch (err: any) {
-        console.error('Error loading feature flags:', err);
-        setError(err);
-        setLoading(false);
-      }
+    // Using a simple approach without Hypertune
+    // In a real app, you could fetch from an API endpoint or local storage
+    
+    // Simulate some user-specific flags
+    if (userId) {
+      // This is just a simple example - you would replace with real flag logic
+      const isTestUser = userId.includes('test') || userId.includes('admin');
+      
+      setFlags({
+        [newNavigation.key]: isTestUser, // Enable new navigation for test users
+        [checkoutExperiment.key]: isTestUser ? 'variant_a' : 'control',
+      });
     }
-
-    loadFlags();
+    
+    setLoading(false);
   }, [userId]);
 
   return {
