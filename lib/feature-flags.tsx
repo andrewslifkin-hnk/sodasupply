@@ -1,101 +1,90 @@
 'use client';
 
-import { flag } from 'flags/next';
 import { useEffect, useState } from 'react';
 import { getHypertune } from './hypertune';
 
-// Define some example feature flags using Vercel Flags
-export const newNavigation = flag<boolean>({
+// Define client-side flags without using server-only modules
+type FlagDefinition<T> = {
+  key: string;
+  defaultValue: T;
+};
+
+// Simple client feature flags
+export const newNavigation: FlagDefinition<boolean> = {
   key: 'new-navigation',
-  decide() {
-    return false; // Default value
-  },
-});
+  defaultValue: false,
+};
 
-export const checkoutExperiment = flag<string>({
+export const checkoutExperiment: FlagDefinition<string> = {
   key: 'checkout-experiment',
-  decide() {
-    return 'control'; // Default value (could be 'control', 'variantA', 'variantB')
-  },
-});
+  defaultValue: 'control',
+};
 
-// A hook for accessing Hypertune flags in client components
-export function useHypertune(userId?: string) {
-  const [flags, setFlags] = useState<any>(null);
+// A hook for accessing feature flags in client components
+export function useFeatureFlags(userId?: string) {
+  const [flags, setFlags] = useState<Record<string, any>>({
+    // Set defaults directly
+    [newNavigation.key]: newNavigation.defaultValue,
+    [checkoutExperiment.key]: checkoutExperiment.defaultValue,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    async function loadHypertune() {
+    async function loadFlags() {
       try {
-        setLoading(true);
+        // Attempt to load the flags from Hypertune
         const hypertuneClient = await getHypertune({
           userId,
-          environment: process.env.NODE_ENV,
         });
-        
-        setFlags(hypertuneClient);
-      } catch (err) {
-        console.error('Failed to load Hypertune flags:', err);
-        setError(err instanceof Error ? err : new Error(String(err)));
-      } finally {
+
+        if (hypertuneClient) {
+          // In a real implementation, we would get real flags here
+          // For now, just use the defaults
+          setFlags({
+            [newNavigation.key]: hypertuneClient.getFlag(newNavigation.key) || newNavigation.defaultValue,
+            [checkoutExperiment.key]: hypertuneClient.getFlag(checkoutExperiment.key) || checkoutExperiment.defaultValue,
+          });
+        }
+
+        setLoading(false);
+      } catch (err: any) {
+        console.error('Error loading feature flags:', err);
+        setError(err);
         setLoading(false);
       }
     }
 
-    loadHypertune();
+    loadFlags();
   }, [userId]);
 
-  return { flags, loading, error };
+  return {
+    flags,
+    loading,
+    error,
+  };
 }
 
-// Example component using the feature flags
+// Export a sample component to demonstrate flag usage
 export function FeatureFlagExample({ userId }: { userId?: string }) {
-  // Using Vercel Flags
-  const [isNewNavEnabled, setIsNewNavEnabled] = useState(false);
-  const [checkoutVariant, setCheckoutVariant] = useState('control');
-  
-  // Using Hypertune
-  const { flags: hypertuneFlags, loading } = useHypertune(userId);
+  const { flags, loading, error } = useFeatureFlags(userId);
 
-  useEffect(() => {
-    // Load Vercel Flags
-    async function loadFlags() {
-      const navEnabled = await newNavigation();
-      const checkout = await checkoutExperiment();
-      
-      setIsNewNavEnabled(navEnabled);
-      setCheckoutVariant(checkout);
-    }
-    
-    loadFlags();
-  }, []);
-
-  if (loading) {
-    return <div>Loading feature flags...</div>;
-  }
+  if (loading) return <div>Loading flags...</div>;
+  if (error) return <div>Error loading flags: {error.message}</div>;
 
   return (
-    <div className="p-4 border rounded">
-      <h2 className="text-lg font-bold">Feature Flag Status</h2>
+    <div className="p-4 border rounded shadow-sm">
+      <h2 className="text-xl font-bold mb-4">Feature Flags</h2>
       
-      <div className="mt-4">
-        <h3 className="font-medium">Vercel Flags:</h3>
-        <ul className="mt-2 space-y-1">
-          <li>New Navigation: {isNewNavEnabled ? 'Enabled ✅' : 'Disabled ❌'}</li>
-          <li>Checkout Experiment: {checkoutVariant}</li>
-        </ul>
-      </div>
-      
-      {hypertuneFlags && (
-        <div className="mt-4">
-          <h3 className="font-medium">Hypertune Flags:</h3>
-          <div className="mt-2 text-sm opacity-75">
-            <p>Check your Hypertune schema for available flags</p>
-            {/* Example: {hypertuneFlags.yourFlag({ fallback: false }) ? 'Enabled' : 'Disabled'} */}
-          </div>
+      <div className="space-y-2">
+        <div>
+          <strong>New Navigation:</strong> {flags[newNavigation.key] ? 'Enabled' : 'Disabled'}
         </div>
-      )}
+        
+        <div>
+          <strong>Checkout Experiment:</strong> {flags[checkoutExperiment.key]}
+        </div>
+      </div>
     </div>
   );
 } 
