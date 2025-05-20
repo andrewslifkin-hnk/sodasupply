@@ -7,6 +7,7 @@ import { StoreProvider } from "@/context/store-context"
 import { FilterProvider } from "@/context/filter-context"
 import { OrderProvider } from "@/context/orders-context"
 import { Suspense } from "react"
+import { Analytics } from "@vercel/analytics/next"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -29,6 +30,7 @@ export default function RootLayout({
             </OrderProvider>
           </CartProvider>
         </StoreProvider>
+        <Analytics />
       </body>
     </html>
   )
