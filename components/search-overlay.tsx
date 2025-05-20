@@ -25,6 +25,7 @@ interface SearchProduct {
 export function SearchOverlay() {
   const { isSearchOpen, searchQuery, closeSearch, setSearchQuery, submitSearch } = useSearch()
   const inputRef = useRef<HTMLInputElement>(null)
+  const resultsRef = useRef<HTMLDivElement>(null)
   const [results, setResults] = useState<SearchProduct[]>([])
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -90,6 +91,19 @@ export function SearchOverlay() {
     router.push("/")
   }
 
+  // Prevent default touch behavior to avoid closing the overlay when scrolling
+  const handleTouchMove = (e: React.TouchEvent) => {
+    // Allow scrolling in the results area
+    if (resultsRef.current && resultsRef.current.contains(e.target as Node)) {
+      e.stopPropagation()
+    }
+  }
+
+  const handleProductClick = (productId: number) => {
+    closeSearch()
+    router.push(`/products/${productId}`)
+  }
+
   if (!isSearchOpen) return null
 
   return (
@@ -126,14 +140,18 @@ export function SearchOverlay() {
       {!searchQuery ? (
         <div className="p-4 text-gray-500">Type to search for products</div>
       ) : (
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto" ref={resultsRef} onTouchMove={handleTouchMove}>
           <div className="p-3 border-b text-sm text-gray-500">
             {loading ? "Searching..." : `${results.length} results`}
           </div>
 
           <div className="divide-y">
             {results.map((product) => (
-              <div key={product.id} className="p-3 flex items-center gap-3 hover:bg-gray-50 cursor-pointer">
+              <div 
+                key={product.id} 
+                className="p-3 flex items-center gap-3 hover:bg-gray-50 cursor-pointer"
+                onClick={() => handleProductClick(product.id)}
+              >
                 <div className="relative h-16 w-16 bg-gray-100 rounded">
                   <Image
                     src={product.image || "/placeholder.svg"}
