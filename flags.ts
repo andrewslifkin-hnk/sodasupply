@@ -1,7 +1,7 @@
 // flags.ts
 // Feature flag implementation using Statsig
 
-import Statsig from 'statsig-node';
+import Statsig from 'statsig-js';
 
 export type StatsigUser = {
   userID: string;
@@ -50,8 +50,8 @@ class FeatureFlagClient {
     
     this.initializing = (async () => {
       try {
-        // Get API key from environment variables
-        const apiKey = process.env.NEXT_PUBLIC_STATSIG_CLIENT_KEY || process.env.STATSIG_SERVER_API_KEY;
+        // Get API key from environment variables - only use client key for client-side SDK
+        const apiKey = process.env.NEXT_PUBLIC_STATSIG_CLIENT_KEY;
         
         if (!apiKey) {
           console.warn('Statsig API key not found in environment variables. Using fallback values.');
@@ -60,8 +60,8 @@ class FeatureFlagClient {
           return;
         }
         
-        // Initialize Statsig
-        await Statsig.initialize(apiKey);
+        // Initialize Statsig client SDK
+        await Statsig.initialize(apiKey, getUserInfo());
         this.initialized = true;
         this.usingFallback = false;
         console.log('✅ Statsig initialized successfully with API key');
@@ -90,12 +90,9 @@ class FeatureFlagClient {
       
       let result = false;
       
-      // Use the provided user or get default user
-      const statsigUser = user || getUserInfo();
-      
       if (this.initialized && !this.usingFallback) {
-        // Check the feature gate using Statsig SDK
-        result = await Statsig.checkGate(statsigUser, key);
+        // Check the feature gate using client-side Statsig SDK
+        result = Statsig.checkGate(key);
         console.log(`✅ Statsig gate ${key} checked from Statsig service: ${result}`);
       } else {
         // Fallback to hardcoded values if Statsig is not available
