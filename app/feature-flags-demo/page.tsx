@@ -1,17 +1,24 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createFeatureGate } from '../../flags';
+import { createFeatureGate, identify } from '../../flags';
+import type { StatsigUser } from '../../flags';
 
 // Custom hook to handle the async feature flag
 function useFeatureFlag(flagKey: string) {
   const [enabled, setEnabled] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<StatsigUser | null>(null);
 
   useEffect(() => {
     async function checkFlag() {
       try {
-        const flagEnabled = await createFeatureGate(flagKey)();
+        // Get user identity
+        const userInfo = await identify();
+        setUser(userInfo);
+        
+        // Check feature flag with user context
+        const flagEnabled = await createFeatureGate(flagKey)(userInfo);
         setEnabled(flagEnabled);
       } catch (error) {
         console.error('Error checking feature flag:', error);
@@ -24,11 +31,11 @@ function useFeatureFlag(flagKey: string) {
     checkFlag();
   }, [flagKey]);
 
-  return { enabled, loading };
+  return { enabled, loading, user };
 }
 
 export default function FeatureFlagsDemo() {
-  const { enabled: myFeatureGateEnabled, loading } = useFeatureFlag("my_first_gate");
+  const { enabled: myFeatureGateEnabled, loading, user } = useFeatureFlag("my_first_gate");
   
   return (
     <div className="container mx-auto p-8">
@@ -42,9 +49,16 @@ export default function FeatureFlagsDemo() {
           {loading ? (
             <p>Loading feature flag status...</p>
           ) : (
-            <div className="flex items-center space-x-2">
-              <span className={`inline-block w-3 h-3 rounded-full ${myFeatureGateEnabled ? 'bg-green-500' : 'bg-red-500'}`}></span>
-              <span>Status: {myFeatureGateEnabled ? 'Enabled' : 'Disabled'}</span>
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className={`inline-block w-3 h-3 rounded-full ${myFeatureGateEnabled ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                <span>Status: {myFeatureGateEnabled ? 'Enabled' : 'Disabled'}</span>
+              </div>
+              {user && (
+                <div className="mt-2 text-sm text-gray-500">
+                  Checking for user: {user.userID}
+                </div>
+              )}
             </div>
           )}
         </div>

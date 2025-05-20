@@ -1,20 +1,14 @@
 // flags.ts
-// Simple feature flag implementation compatible with Vercel Edge
+// Feature flag implementation using Statsig
 
-type StatsigUser = {
+import Statsig from 'statsig-node';
+
+export type StatsigUser = {
   userID: string;
   email?: string;
   country?: string;
   userType?: string;
   [key: string]: any;
-};
-
-// Event data structure
-type EventData = {
-  eventName: string;
-  userId: string;
-  metadata?: Record<string, any>;
-  timestamp?: number;
 };
 
 // Function to get user info - in a real app, this might come from authentication
@@ -31,20 +25,14 @@ const getUserInfo = (): StatsigUser => {
   };
 };
 
-// Simple feature flag client with analytics
+// Improved feature flag client with actual Statsig integration
 class FeatureFlagClient {
   private static instance: FeatureFlagClient;
   private cache: Record<string, boolean> = {};
-  private events: EventData[] = [];
-  private flushInterval: NodeJS.Timeout | null = null;
-  private flushIntervalMs = 10000; // 10 seconds
+  private initialized: boolean = false;
+  private initializing: Promise<void> | null = null;
   
-  private constructor() {
-    // Set up periodic event flushing if in a browser environment
-    if (typeof window !== 'undefined') {
-      this.flushInterval = setInterval(() => this.flushEvents(), this.flushIntervalMs);
-    }
-  }
+  private constructor() {}
   
   public static getInstance(): FeatureFlagClient {
     if (!FeatureFlagClient.instance) {
@@ -53,29 +41,70 @@ class FeatureFlagClient {
     return FeatureFlagClient.instance;
   }
   
-  // Simplified feature gate check
-  public async checkFeatureGate(key: string): Promise<boolean> {
+  // Initialize Statsig with the API key
+  private async initialize() {
+    if (this.initialized || this.initializing) {
+      return this.initializing;
+    }
+    
+    this.initializing = (async () => {
+      try {
+        // Get API key from environment variables
+        const apiKey = process.env.STATSIG_SERVER_API_KEY;
+        
+        if (!apiKey) {
+          console.warn('STATSIG_SERVER_API_KEY not found in environment variables. Using fallback values.');
+          this.initialized = true;
+          return;
+        }
+        
+        // Initialize Statsig
+        await Statsig.initialize(apiKey);
+        this.initialized = true;
+        console.log('Statsig initialized successfully');
+      } catch (error) {
+        console.error('Failed to initialize Statsig:', error);
+        // Still mark as initialized to prevent repeated attempts
+        this.initialized = true;
+      }
+    })();
+    
+    return this.initializing;
+  }
+  
+  // Feature gate check using Statsig
+  public async checkFeatureGate(key: string, user?: StatsigUser): Promise<boolean> {
     // If we've already checked this flag, return the cached value
-    if (this.cache[key] !== undefined) {
-      return this.cache[key];
+    const cacheKey = `${key}:${user?.userID || 'default'}`;
+    if (this.cache[cacheKey] !== undefined) {
+      return this.cache[cacheKey];
     }
     
     try {
-      // In a real implementation, this would call to Statsig's API
-      // For demo purposes, we'll just return true for specific gate keys
-      const knownFlags: Record<string, boolean> = {
-        'my_first_gate': true,
-        'my_test_gate': false
-      };
+      // Make sure Statsig is initialized
+      await this.initialize();
       
-      // Default to false if the flag isn't defined
-      const result = knownFlags[key] || false;
+      let result = false;
+      
+      // Use the provided user or get default user
+      const statsigUser = user || getUserInfo();
+      
+      if (this.initialized && process.env.STATSIG_SERVER_API_KEY) {
+        // Check the feature gate using Statsig SDK
+        result = await Statsig.checkGate(statsigUser, key);
+      } else {
+        // Fallback to hardcoded values if Statsig is not available
+        const fallbackFlags: Record<string, boolean> = {
+          'my_first_gate': true,
+          'my_test_gate': false
+        };
+        result = fallbackFlags[key] || false;
+      }
       
       // Cache the result
-      this.cache[key] = result;
+      this.cache[cacheKey] = result;
       
-      // Log exposure
-      this.logExposure(key, result);
+      console.log(`Feature flag ${key} evaluated to ${result} for user ${statsigUser.userID}`);
       
       return result;
     } catch (error) {
@@ -89,119 +118,31 @@ class FeatureFlagClient {
     this.cache = {};
   }
   
-  // Log exposure to a feature flag
-  private logExposure(key: string, value: boolean) {
-    const user = getUserInfo();
-    this.trackEvent('exposure', user.userID, {
-      featureKey: key,
-      value: value,
-      reason: 'cached',
-    });
-  }
-  
-  // Track a custom event
-  public trackEvent(eventName: string, userId: string, metadata?: Record<string, any>) {
-    const event: EventData = {
-      eventName,
-      userId,
-      metadata,
-      timestamp: Date.now()
-    };
-    
-    this.events.push(event);
-    
-    // If we have too many events, flush immediately
-    if (this.events.length >= 100) {
-      this.flushEvents();
-    }
-    
-    // Log to console for debugging
-    console.log(`Event tracked: ${eventName}`, metadata);
-  }
-  
-  // Flush events to server
-  public async flushEvents() {
-    if (this.events.length === 0) return;
-    
-    // Copy events and clear the queue
-    const eventsToSend = [...this.events];
-    this.events = [];
-    
+  // Shutdown Statsig client
+  public async shutdown() {
     try {
-      // In a production system, you'd send these to your analytics endpoint
-      console.log(`Flushing ${eventsToSend.length} events`);
-      
-      // Example implementation (commented out)
-      // const response = await fetch('/api/analytics', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ events: eventsToSend })
-      // });
-      
-      // For now, just log to console in a formatted way
-      eventsToSend.forEach(event => {
-        console.log(`[ANALYTICS] ${event.timestamp} | ${event.userId} | ${event.eventName}`, event.metadata);
-      });
+      if (this.initialized && process.env.STATSIG_SERVER_API_KEY) {
+        await Statsig.shutdown();
+      }
     } catch (error) {
-      console.error('Failed to send events:', error);
-      // Add events back to the queue
-      this.events = [...eventsToSend, ...this.events];
+      console.error('Error shutting down Statsig:', error);
     }
-  }
-  
-  // Clean up resources
-  public cleanup() {
-    if (this.flushInterval) {
-      clearInterval(this.flushInterval);
-      this.flushInterval = null;
-    }
-    // Flush any remaining events
-    this.flushEvents();
   }
 }
 
-// Simplified implementation of the feature gate function
+// Feature gate function
 export const createFeatureGate = (key: string) => {
-  return async (): Promise<boolean> => {
+  return async (user?: StatsigUser): Promise<boolean> => {
     const client = FeatureFlagClient.getInstance();
-    return await client.checkFeatureGate(key);
+    return await client.checkFeatureGate(key, user);
   };
 };
 
-// Export user identification function (similar API to before)
+// Export user identification function
 export const identify = async (): Promise<StatsigUser> => {
   const userInfo = getUserInfo();
   return {
     ...userInfo,
     userID: userInfo.userID || "default-user-id" // Fallback if userID is empty
   };
-};
-
-// Function to track custom events
-export const trackEvent = (
-  eventName: string, 
-  metadata?: Record<string, any>
-) => {
-  const user = getUserInfo();
-  const client = FeatureFlagClient.getInstance();
-  client.trackEvent(eventName, user.userID, metadata);
-};
-
-// Function to log a conversion event
-export const logConversion = (
-  eventName: string, 
-  value?: number, 
-  metadata?: Record<string, any>
-) => {
-  trackEvent(eventName, {
-    ...metadata,
-    value: value,
-    conversion: true
-  });
-};
-
-// Force flush events immediately
-export const flushEvents = async () => {
-  const client = FeatureFlagClient.getInstance();
-  await client.flushEvents();
 }; 

@@ -1,8 +1,11 @@
-import { createFeatureGate } from '../../../flags';
+import { createFeatureGate, identify } from '../../../flags';
 
 export default async function ServerFeatureFlagsDemo() {
-  // Use the feature gate directly in a server component
-  const myFeatureGateEnabled = await createFeatureGate("my_first_gate")();
+  // Get user information
+  const user = await identify();
+  
+  // Use the feature gate directly in a server component with user context
+  const myFeatureGateEnabled = await createFeatureGate("my_first_gate")(user);
   
   return (
     <div className="container mx-auto p-8">
@@ -16,6 +19,9 @@ export default async function ServerFeatureFlagsDemo() {
           <div className="flex items-center space-x-2">
             <span className={`inline-block w-3 h-3 rounded-full ${myFeatureGateEnabled ? 'bg-green-500' : 'bg-red-500'}`}></span>
             <span>Status: {myFeatureGateEnabled ? 'Enabled' : 'Disabled'}</span>
+          </div>
+          <div className="mt-2 text-sm text-gray-500">
+            Checking for user: {user.userID}
           </div>
         </div>
 
