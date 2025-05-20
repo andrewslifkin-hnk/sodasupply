@@ -42,13 +42,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         setLoading(true)
         const storesData = await getStores()
 
-        if (storesData.length > 0) {
+        if (storesData && Array.isArray(storesData) && storesData.length > 0) {
           const mappedStores = storesData.map((store, index) => ({
-            id: store.id.toString(),
-            name: store.name,
-            address: store.address,
-            city: store.city,
-            region: store.region,
+            id: store.id?.toString() || `unknown-${index}`,
+            name: store.name || `Unknown Store ${index + 1}`,
+            address: store.address || "No address available",
+            city: store.city || "Unknown city",
+            region: store.region || "Unknown region",
             isSelected: index === 0, // Select the first store by default
           }))
 
