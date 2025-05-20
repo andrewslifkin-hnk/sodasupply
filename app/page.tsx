@@ -8,7 +8,7 @@ import { ProductListSkeleton } from "@/components/skeletons"
 import { FilterProvider } from "@/context/filter-context"
 import { FilterBar } from "@/components/filters/filter-bar"
 import { FilterSheet } from "@/components/filters/filter-sheet"
-import { BannerCarouselFeature } from "@/components/banner-carousel-feature"
+import { PromotionalBanner } from "@/components/ui/promotional-banner"
 
 export default function Home() {
   return (
@@ -17,9 +17,6 @@ export default function Home() {
         <Header />
         <main className="flex-1 max-w-site py-6">
           <div className="content-container">
-            {/* Banner Carousel (Feature Flagged) */}
-            <BannerCarouselFeature />
-            
             <div className="space-y-2 mb-6">
               <h1 className="text-2xl font-bold tracking-tight text-[#202020]">All products</h1>
               <p className="text-[#202020]/80">
@@ -29,6 +26,8 @@ export default function Home() {
                 </span>
               </p>
             </div>
+            
+            <PromotionalBanner />
 
             <FilterBar />
             <FilterSheet />

@@ -31,6 +31,7 @@ class FeatureFlagClient {
   private cache: Record<string, boolean> = {};
   private initialized: boolean = false;
   private initializing: Promise<void> | null = null;
+  private usingFallback: boolean = false;
   
   private constructor() {}
   
@@ -50,22 +51,25 @@ class FeatureFlagClient {
     this.initializing = (async () => {
       try {
         // Get API key from environment variables
-        const apiKey = process.env.STATSIG_SERVER_API_KEY;
+        const apiKey = process.env.NEXT_PUBLIC_STATSIG_CLIENT_KEY || process.env.STATSIG_SERVER_API_KEY;
         
         if (!apiKey) {
-          console.warn('STATSIG_SERVER_API_KEY not found in environment variables. Using fallback values.');
+          console.warn('Statsig API key not found in environment variables. Using fallback values.');
           this.initialized = true;
+          this.usingFallback = true;
           return;
         }
         
         // Initialize Statsig
         await Statsig.initialize(apiKey);
         this.initialized = true;
-        console.log('Statsig initialized successfully');
+        this.usingFallback = false;
+        console.log('✅ Statsig initialized successfully with API key');
       } catch (error) {
-        console.error('Failed to initialize Statsig:', error);
+        console.error('❌ Failed to initialize Statsig:', error);
         // Still mark as initialized to prevent repeated attempts
         this.initialized = true;
+        this.usingFallback = true;
       }
     })();
     
@@ -89,27 +93,29 @@ class FeatureFlagClient {
       // Use the provided user or get default user
       const statsigUser = user || getUserInfo();
       
-      if (this.initialized && process.env.STATSIG_SERVER_API_KEY) {
+      if (this.initialized && !this.usingFallback) {
         // Check the feature gate using Statsig SDK
         result = await Statsig.checkGate(statsigUser, key);
+        console.log(`✅ Statsig gate ${key} checked from Statsig service: ${result}`);
       } else {
         // Fallback to hardcoded values if Statsig is not available
         const fallbackFlags: Record<string, boolean> = {
           'my_first_gate': true,
           'my_test_gate': false,
-          'banner_carousel': true  // Added the banner flag with default=true
+          'promo_banner': true,
+          'product_discount_badge': true
+          // banner_carousel flag removed
         };
         result = fallbackFlags[key] || false;
+        console.log(`ℹ️ Using fallback value for ${key}: ${result}`);
       }
       
       // Cache the result
       this.cache[cacheKey] = result;
       
-      console.log(`Feature flag ${key} evaluated to ${result} for user ${statsigUser.userID}`);
-      
       return result;
     } catch (error) {
-      console.error(`Error checking feature flag ${key}:`, error);
+      console.error(`❌ Error checking feature flag ${key}:`, error);
       return false;
     }
   }
@@ -119,10 +125,15 @@ class FeatureFlagClient {
     this.cache = {};
   }
   
+  // Check if we're using fallback values
+  public isUsingFallback(): boolean {
+    return this.usingFallback;
+  }
+  
   // Shutdown Statsig client
   public async shutdown() {
     try {
-      if (this.initialized && process.env.STATSIG_SERVER_API_KEY) {
+      if (this.initialized && !this.usingFallback) {
         await Statsig.shutdown();
       }
     } catch (error) {
@@ -137,6 +148,12 @@ export const createFeatureGate = (key: string) => {
     const client = FeatureFlagClient.getInstance();
     return await client.checkFeatureGate(key, user);
   };
+};
+
+// Check if Statsig is using fallback values
+export const isUsingFallbackValues = (): boolean => {
+  const client = FeatureFlagClient.getInstance();
+  return client.isUsingFallback();
 };
 
 // Export user identification function

@@ -1,10 +1,37 @@
 "use client"
 
 import Image from "next/image"
-import { Bell } from "lucide-react"
+import { Bell, BadgePercent } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { AddToCartButton } from "./add-to-cart-button"
+import { useState, useEffect } from "react"
+import { StatsigUser, createFeatureGate, identify } from "../flags"
+
+// Feature flag hook for product card elements
+function useFeatureFlag(flagKey: string) {
+  const [enabled, setEnabled] = useState<boolean | null>(null)
+  const [loading, setLoading] = useState(true)
+  
+  useEffect(() => {
+    async function checkFlag() {
+      try {
+        const userInfo = await identify()
+        const flagEnabled = await createFeatureGate(flagKey)(userInfo)
+        setEnabled(flagEnabled)
+      } catch (error) {
+        console.error('Error checking feature flag:', error)
+        setEnabled(false)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    checkFlag()
+  }, [flagKey])
+
+  return { enabled, loading }
+}
 
 interface Product {
   id: number
@@ -22,12 +49,21 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
+  const { enabled: discountBadgeEnabled, loading: flagLoading } = useFeatureFlag("product_discount_badge")
+  
   return (
     <div className="bg-white rounded-lg overflow-hidden">
       <div className="relative">
         <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
           <div className="bg-gray-100 text-[#202020] text-xs font-medium px-2 py-1 rounded">{product.type}</div>
           <div className="bg-gray-100 text-[#202020] text-xs font-medium px-2 py-1 rounded">{product.size}</div>
+          
+          {!flagLoading && discountBadgeEnabled && (
+            <div className="bg-red-500 text-white text-xs font-medium px-2 py-1 rounded flex items-center gap-1">
+              <BadgePercent className="h-3 w-3" />
+              10% OFF
+            </div>
+          )}
         </div>
 
         <div className="relative h-48 bg-gray-50">
