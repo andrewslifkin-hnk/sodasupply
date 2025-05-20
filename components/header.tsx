@@ -194,9 +194,22 @@ export default function Header() {
                 type="text"
                 placeholder="Search products"
                 className="pl-10 bg-gray-800 border-gray-700 text-white placeholder:text-gray-400 w-full rounded-full focus-visible:ring-gray-600"
+                value={searchQuery}
+                onChange={handleSearchChange}
                 onClick={openSearch}
-                readOnly
               />
+              {searchQuery && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleClearSearch}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 rounded-full hover:bg-gray-700 transition-colors"
+                >
+                  <X className="h-4 w-4 text-gray-400 hover:text-white" />
+                  <span className="sr-only">Clear search</span>
+                </Button>
+              )}
             </div>
           </div>
         </div>

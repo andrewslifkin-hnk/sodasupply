@@ -19,7 +19,7 @@ interface SearchProduct {
 }
 
 export function SearchDropdown() {
-  const { isSearchOpen, searchQuery, closeSearch } = useSearch()
+  const { isSearchOpen, searchQuery, closeSearch, submitSearch } = useSearch()
   const dropdownRef = useRef<HTMLDivElement>(null)
   const [results, setResults] = useState<SearchProduct[]>([])
   const [loading, setLoading] = useState(false)
@@ -93,7 +93,10 @@ export function SearchDropdown() {
       </div>
 
       {results.length > 0 && (
-        <div className="p-3 border-t flex items-center gap-2 hover:bg-gray-50 cursor-pointer">
+        <div 
+          className="p-3 border-t flex items-center gap-2 hover:bg-gray-50 cursor-pointer"
+          onClick={submitSearch}
+        >
           <Search className="h-4 w-4" />
           <span className="text-sm">View all results for "{searchQuery}"</span>
         </div>

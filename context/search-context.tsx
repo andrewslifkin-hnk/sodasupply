@@ -36,10 +36,10 @@ export function SearchProvider({ children }: { children: ReactNode }) {
       // Close the search dropdown/overlay
       setIsSearchOpen(false)
 
-      // Navigate to the product listing page with the search query
-      router.push(`${pathname}?q=${encodeURIComponent(searchQuery.trim())}`)
+      // Always navigate to the home page with the search query
+      router.push(`/?q=${encodeURIComponent(searchQuery.trim())}`)
     }
-  }, [searchQuery, router, pathname])
+  }, [searchQuery, router])
 
   const clearSearch = useCallback(() => {
     // Clear the search query
