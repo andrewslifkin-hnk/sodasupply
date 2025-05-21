@@ -13,7 +13,7 @@ async function ensureStatsigInitialized() {
     if (!statsigInitPromise) {
       statsigInitPromise = Statsig.initialize(
         process.env.NEXT_PUBLIC_STATSIG_CLIENT_KEY!,
-        { userID: "test-user-123" }
+        {}
       );
     }
     await statsigInitPromise;
