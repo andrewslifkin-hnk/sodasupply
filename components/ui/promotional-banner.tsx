@@ -1,46 +1,29 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { StatsigUser, createFeatureGate, identify } from "../../flags"
+import Statsig from "statsig-js"
 import { Button } from "@/components/ui/button"
 import { Tag } from "lucide-react"
 
-// Custom hook to handle the async feature flag
-function useFeatureFlag(flagKey: string) {
-  const [enabled, setEnabled] = useState<boolean | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<StatsigUser | null>(null)
+export function PromotionalBanner() {
+  const [showBanner, setShowBanner] = useState(false)
 
   useEffect(() => {
-    async function checkFlag() {
-      try {
-        // Get user identity
-        const userInfo = await identify()
-        setUser(userInfo)
-        
-        // Check feature flag with user context
-        const flagEnabled = await createFeatureGate(flagKey)(userInfo)
-        setEnabled(flagEnabled)
-      } catch (error) {
-        console.error('Error checking feature flag:', error)
-        setEnabled(false)
-      } finally {
-        setLoading(false)
-      }
+    // Assume Statsig is already initialized elsewhere in the app
+    const experiment = Statsig.getExperiment("promo_banner_experiment")
+    const shouldShow = experiment.get("show_banner", false)
+    setShowBanner(shouldShow)
+    if (shouldShow) {
+      Statsig.logEvent("promo_banner_exposed")
     }
-    
-    checkFlag()
-  }, [flagKey])
+  }, [])
 
-  return { enabled, loading, user }
-}
+  const handleShopNowClick = () => {
+    Statsig.logEvent("promo_banner_shop_now_clicked")
+  }
 
-export function PromotionalBanner() {
-  const { enabled, loading } = useFeatureFlag("promo_banner")
-  
-  // Don't render anything while loading or if the flag is disabled
-  if (loading || !enabled) return null
-  
+  if (!showBanner) return null
+
   return (
     <div className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white p-4 mb-6 rounded-lg shadow-md">
       <div className="flex flex-col md:flex-row items-center justify-between">
@@ -54,6 +37,7 @@ export function PromotionalBanner() {
         <Button 
           variant="secondary" 
           className="bg-white text-teal-600 hover:bg-gray-100 whitespace-nowrap"
+          onClick={handleShopNowClick}
         >
           Shop Now
         </Button>
