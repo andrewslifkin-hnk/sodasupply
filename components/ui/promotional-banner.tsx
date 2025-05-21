@@ -9,15 +9,22 @@ let statsigInitialized = false;
 let statsigInitPromise: Promise<void> | null = null;
 
 async function ensureStatsigInitialized() {
-  if (!statsigInitialized) {
-    if (!statsigInitPromise) {
-      statsigInitPromise = Statsig.initialize(
-        process.env.NEXT_PUBLIC_STATSIG_CLIENT_KEY!,
-        {}
-      );
+  if (typeof window !== "undefined") {
+    if (!statsigInitialized) {
+      if (!statsigInitPromise) {
+        let sessionId = sessionStorage.getItem("statsigDisplaySessionId");
+        if (!sessionId) {
+          sessionId = Math.random().toString(36).substring(2) + Date.now().toString(36);
+          sessionStorage.setItem("statsigDisplaySessionId", sessionId);
+        }
+        statsigInitPromise = Statsig.initialize(
+          process.env.NEXT_PUBLIC_STATSIG_CLIENT_KEY!,
+          { userID: sessionId }
+        );
+      }
+      await statsigInitPromise;
+      statsigInitialized = true;
     }
-    await statsigInitPromise;
-    statsigInitialized = true;
   }
 }
 
