@@ -50,6 +50,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const { enabled: discountBadgeEnabled, loading: flagLoading } = useFeatureFlag("product_discount_badge")
+  const [imgSrc, setImgSrc] = useState(product.image || '/placeholder_fallback.png')
   
   return (
     <div className="bg-white rounded-lg overflow-hidden">
@@ -68,13 +69,14 @@ export function ProductCard({ product }: ProductCardProps) {
 
         <div className="relative h-48 bg-gray-50">
           <Image
-            src={product.image || `/placeholder.svg?height=200&width=200&query=${encodeURIComponent(product.name)}`}
+            src={imgSrc}
             alt={product.name}
             fill
             className="object-contain p-4"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             priority={false}
             loading="lazy"
+            onError={() => setImgSrc('/placeholder_fallback.png')}
           />
         </div>
 
