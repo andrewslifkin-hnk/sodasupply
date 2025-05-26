@@ -9,7 +9,7 @@ import { OrderProvider } from "@/context/orders-context"
 import { Suspense, useEffect } from "react"
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
-import Clarity from '@microsoft/clarity'
+import ClarityInit from '@/components/ClarityInit'
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -29,10 +29,7 @@ export default function RootLayout({
         <script defer src="/_vercel/insights/script.js"></script>
       </head>
       <body className={inter.className}>
-        {/* Initialize Clarity only on the client side */}
-        {typeof window !== 'undefined' && (
-          <ClientClarityInit />
-        )}
+        <ClarityInit />
         <StoreProvider>
           <CartProvider>
             <OrderProvider>
@@ -49,11 +46,4 @@ export default function RootLayout({
       </body>
     </html>
   )
-}
-
-function ClientClarityInit() {
-  useEffect(() => {
-    Clarity.init('rnyldrncy4');
-  }, []);
-  return null;
 }
