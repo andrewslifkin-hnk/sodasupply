@@ -6,9 +6,10 @@ import { SearchProvider } from "@/context/search-context"
 import { StoreProvider } from "@/context/store-context"
 import { FilterProvider } from "@/context/filter-context"
 import { OrderProvider } from "@/context/orders-context"
-import { Suspense } from "react"
+import { Suspense, useEffect } from "react"
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import Clarity from '@microsoft/clarity'
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -25,18 +26,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <script type="text/javascript">
-          {`
-            (function(c,l,a,r,i,t,y){
-                c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-                t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-                y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-            })(window, document, "clarity", "script", "rnyldrncy4");
-          `}
-        </script>
         <script defer src="/_vercel/insights/script.js"></script>
       </head>
       <body className={inter.className}>
+        {/* Initialize Clarity only on the client side */}
+        {typeof window !== 'undefined' && (
+          <ClientClarityInit />
+        )}
         <StoreProvider>
           <CartProvider>
             <OrderProvider>
@@ -53,4 +49,11 @@ export default function RootLayout({
       </body>
     </html>
   )
+}
+
+function ClientClarityInit() {
+  useEffect(() => {
+    Clarity.init('rnyldrncy4');
+  }, []);
+  return null;
 }
