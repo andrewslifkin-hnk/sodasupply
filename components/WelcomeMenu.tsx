@@ -86,18 +86,6 @@ export default function WelcomeMenu() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [expanded, isMobile])
 
-  // Expand when scrolled to top
-  useEffect(() => {
-    if (!isMobile) return
-    const handleScroll = () => {
-      if (window.scrollY < 10 && !expanded) {
-        setExpanded(true)
-      }
-    }
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [expanded, isMobile])
-
   // Animation: slide/opacity for expanded content only
   const expandedStyle: React.CSSProperties = {
     transition:
