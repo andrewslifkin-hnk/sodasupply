@@ -9,7 +9,6 @@ import { OrderProvider } from "@/context/orders-context"
 import { Suspense, useEffect } from "react"
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
-import ClarityInit from '@/components/ClarityInit'
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -27,9 +26,21 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <script defer src="/_vercel/insights/script.js"></script>
+        {/* Microsoft Clarity script */}
+        <script
+          type="text/javascript"
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function(c,l,a,r,i,t,y){
+                c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+                t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/rnyldrncy4";
+                y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+              })(window, document, "clarity", "script", "rnyldrncy4");
+            `
+          }}
+        />
       </head>
       <body className={inter.className}>
-        <ClarityInit />
         <StoreProvider>
           <CartProvider>
             <OrderProvider>
