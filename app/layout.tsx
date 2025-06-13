@@ -6,10 +6,10 @@ import { SearchProvider } from "@/context/search-context"
 import { StoreProvider } from "@/context/store-context"
 import { FilterProvider } from "@/context/filter-context"
 import { OrderProvider } from "@/context/orders-context"
-import { Suspense, useEffect } from "react"
+import { Suspense } from "react"
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
-import { usePathname } from "next/navigation"
+import { UmamiPageView } from "@/components/umami-pageview"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -23,12 +23,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const pathname = typeof window !== 'undefined' ? window.location.pathname : undefined;
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.umami && pathname) {
-      window.umami.track('page_view', { pathname })
-    }
-  }, [pathname])
   return (
     <html lang="en">
       <head>
@@ -50,6 +44,7 @@ export default function RootLayout({
         <script defer src="https://cloud.umami.is/script.js" data-website-id="f448018b-f910-4286-b445-b5ecac344275"></script>
       </head>
       <body className={inter.className}>
+        <UmamiPageView />
         <StoreProvider>
           <CartProvider>
             <OrderProvider>
