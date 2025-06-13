@@ -40,14 +40,29 @@ export interface ButtonProps
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, onClick, children, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
+    // Enhanced click handler for Umami
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+      if (typeof window !== 'undefined' && window.umami) {
+        const label = (typeof children === 'string' ? children : undefined) || ((props as any)['data-umami-label'] as string) || ''
+        window.umami.track('button_click', {
+          label,
+          variant,
+          size,
+        })
+      }
+      if (onClick) onClick(e)
+    }
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
+        onClick={handleClick}
         {...props}
-      />
+      >
+        {children}
+      </Comp>
     )
   }
 )

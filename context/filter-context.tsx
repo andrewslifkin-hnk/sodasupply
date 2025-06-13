@@ -441,10 +441,16 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
 
   const addFilter = useCallback((filter: ActiveFilter) => {
     dispatch({ type: "ADD_FILTER", payload: filter })
+    if (typeof window !== 'undefined' && window.umami) {
+      window.umami.track('filter_change', { action: 'add', filter })
+    }
   }, [])
 
   const removeFilter = useCallback((filterId: string) => {
     dispatch({ type: "REMOVE_FILTER", payload: filterId })
+    if (typeof window !== 'undefined' && window.umami) {
+      window.umami.track('filter_change', { action: 'remove', filterId })
+    }
   }, [])
 
   const clearAllFilters = useCallback(() => {
@@ -464,6 +470,10 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
     if (isFilterSheetOpen) {
       closeFilterSheet()
     }
+
+    if (typeof window !== 'undefined' && window.umami) {
+      window.umami.track('filter_change', { action: 'clear_all' })
+    }
   }, [pathname, router, isFilterSheetOpen, closeFilterSheet])
 
   const clearCategoryFilters = useCallback((category: string) => {
@@ -472,6 +482,9 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
 
   const setSortOption = useCallback((option: SortOption) => {
     dispatch({ type: "SET_SORT_OPTION", payload: option })
+    if (typeof window !== 'undefined' && window.umami) {
+      window.umami.track('sort_change', { sortOption: option })
+    }
   }, [])
 
   const setSearchQuery = useCallback((query: string | null) => {
@@ -704,4 +717,13 @@ export function useFilter() {
     throw new Error("useFilter must be used within a FilterProvider")
   }
   return context
+}
+
+// Add Umami to the Window type (if not already present)
+declare global {
+  interface Window {
+    umami?: {
+      track: (event: string, data?: Record<string, any>) => void
+    }
+  }
 }
