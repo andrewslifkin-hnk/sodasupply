@@ -20,7 +20,7 @@ import {
  * Filter sheet component
  * Displays all filter options in a slide-out sheet
  */
-export function FilterSheet() {
+export function FilterSheet({ staticSidebar = false }: { staticSidebar?: boolean } = {}) {
   const {
     isFilterSheetOpen,
     closeFilterSheet,
@@ -115,24 +115,94 @@ export function FilterSheet() {
   ]
 
   // Add options to each category
-  const categoriesWithOptions = categories.map((category) => {
+  let categoriesWithOptions = categories.map((category) => {
     switch (category.id) {
       case "brand":
-        return { ...category, options: getBrandOptions() }
+        return { ...category, options: getBrandOptions(), isExpanded: staticSidebar ? true : category.isExpanded }
       case "type":
-        return { ...category, options: getTypeOptions() }
+        return { ...category, options: getTypeOptions(), isExpanded: staticSidebar ? true : category.isExpanded }
       case "package":
-        return { ...category, options: getPackageOptions() }
+        return { ...category, options: getPackageOptions(), isExpanded: staticSidebar ? true : category.isExpanded }
       case "size":
-        return { ...category, options: getSizeOptions() }
+        return { ...category, options: getSizeOptions(), isExpanded: staticSidebar ? true : category.isExpanded }
       case "price":
-        return { ...category, options: getPriceOptions() }
+        return { ...category, options: getPriceOptions(), isExpanded: staticSidebar ? true : category.isExpanded }
       case "availability":
-        return { ...category, options: getAvailabilityOptions() }
+        return { ...category, options: getAvailabilityOptions(), isExpanded: staticSidebar ? true : category.isExpanded }
       default:
         return category
     }
   })
+
+  if (staticSidebar) {
+    return (
+      <div className="flex flex-col h-full">
+        {/* Header */}
+        <div className="px-4 py-3 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
+        </div>
+        <div className="px-4 flex-1 overflow-auto">
+          <div className="flex flex-col h-full">
+            <div className="overflow-y-auto flex-1">
+              {/* Sort by section */}
+              <div className="py-4 border-b border-gray-200">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-base font-medium">Sort by</h3>
+                </div>
+                <RadioGroup value={sortOption} onValueChange={(value) => setSortOption(value as SortOption)}>
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="featured" id="featured" />
+                      <Label htmlFor="featured">Featured</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="price-low" id="price-low" />
+                      <Label htmlFor="price-low">Price: Low to High</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="price-high" id="price-high" />
+                      <Label htmlFor="price-high">Price: High to Low</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="newest" id="newest" />
+                      <Label htmlFor="newest">Newest</Label>
+                    </div>
+                  </div>
+                </RadioGroup>
+              </div>
+              {/* Filter categories */}
+              {categoriesWithOptions.map((category) => (
+                <FilterCategory key={category.id} category={category} />
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="p-4 border-t border-gray-200 mt-auto">
+          <div className="space-y-2 w-full">
+            <Button
+              className="w-full bg-[#004851] hover:bg-[#004851]/90 text-white rounded-full text-sm py-3"
+              onClick={() => {}}
+            >
+              {activeFilters.length > 0
+                ? `View ${filteredProductCount} product${filteredProductCount !== 1 ? "s" : ""}`
+                : "View all products"}
+            </Button>
+            {activeFilters.length > 0 && (
+              <Button
+                variant="outline"
+                className="w-full rounded-full text-sm py-3"
+                onClick={() => {
+                  clearAllFilters()
+                }}
+              >
+                Clear filters
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <Sheet open={isFilterSheetOpen} onOpenChange={closeFilterSheet}>
