@@ -3,6 +3,15 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { useStore } from "@/context/store-context"
 
+// Add Umami to the Window type
+declare global {
+  interface Window {
+    umami?: {
+      track: (event: string, data?: Record<string, any>) => void
+    }
+  }
+}
+
 export interface CartItem {
   id: number
   name: string
@@ -128,14 +137,39 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
     setCurrentItems(updatedItems)
     updateStoreCart(updatedItems)
+
+    // Umami event tracking
+    if (typeof window !== 'undefined' && window.umami) {
+      window.umami.track('add_to_cart', {
+        product_id: product.id,
+        product_name: product.name,
+        product_type: product.type,
+        product_price: product.price,
+        store_id: selectedStore.id,
+        store_name: selectedStore.name,
+      })
+    }
   }
 
   const removeFromCart = (productId: number) => {
     if (!selectedStore) return
 
+    const removedItem = currentItems.find((item) => item.id === productId)
     const updatedItems = currentItems.filter((item) => item.id !== productId)
     setCurrentItems(updatedItems)
     updateStoreCart(updatedItems)
+
+    // Umami event tracking
+    if (removedItem && typeof window !== 'undefined' && window.umami) {
+      window.umami.track('remove_from_cart', {
+        product_id: removedItem.id,
+        product_name: removedItem.name,
+        product_type: removedItem.type,
+        product_price: removedItem.price,
+        store_id: selectedStore.id,
+        store_name: selectedStore.name,
+      })
+    }
   }
 
   const updateQuantity = (productId: number, quantity: number) => {

@@ -189,6 +189,19 @@ export default function OrderConfirmationPage() {
     saveOrderData();
   }, [isLoading, orderDate, orderTime, deliveryDate, savedCartItems, selectedStore, saveOrder, clearCart]);
 
+  // Track conversion event with Umami after order is saved and not loading
+  useEffect(() => {
+    if (!isLoading && orderNumber && savedCartItems.length > 0 && typeof window !== 'undefined' && window.umami) {
+      window.umami.track('conversion', {
+        order_number: orderNumber,
+        total: savedCartItems.reduce((total, item) => total + ((typeof item.price === 'number' ? item.price : 0) * (item.quantity || 1)), 0),
+        items_count: savedCartItems.length,
+        store_id: selectedStore?.id,
+        store_name: selectedStore?.name,
+      })
+    }
+  }, [isLoading, orderNumber, savedCartItems, selectedStore])
+
   // Helper function to safely render items when they might be empty
   const getSafeItems = () => {
     return savedCartItems && savedCartItems.length > 0 ? savedCartItems : [];

@@ -22,6 +22,15 @@ export function CartSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () =>
   const total = subtotal + vat
 
   const handleCheckout = () => {
+    // Umami event tracking
+    if (typeof window !== 'undefined' && window.umami) {
+      window.umami.track('begin_checkout', {
+        total,
+        items_count: items.length,
+        store_id: selectedStore?.id,
+        store_name: selectedStore?.name,
+      })
+    }
     onClose()
     router.push("/checkout")
   }
