@@ -14,7 +14,7 @@ import type { SortOption } from "@/types/filter-types"
  * Displays filter button, sort dropdown, and active filter tags
  */
 export function FilterBar() {
-  const { sortOption, setSortOption, openFilterSheet, totalActiveFilters } = useFilter()
+  const { sortOption, setSortOption, openFilterSheet, totalActiveFilters, staticSidebarEnabled } = useFilter()
 
   const isMobile = useMediaQuery("(max-width: 768px)")
 
@@ -27,23 +27,25 @@ export function FilterBar() {
     <div className="mb-6">
       <div className="flex items-center justify-between">
         {/* Filter button */}
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2 text-[#202020] rounded-full border-gray-300"
-          onClick={openFilterSheet}
-        >
-          <SlidersHorizontal className="h-4 w-4" />
-          <span>Filter products</span>
-          {totalActiveFilters > 0 && (
-            <Badge className="h-5 w-5 p-0 flex items-center justify-center rounded-full bg-black text-white text-xs">
-              {totalActiveFilters}
-            </Badge>
-          )}
-        </Button>
+        {!staticSidebarEnabled && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 text-[#202020] rounded-full border-gray-300"
+            onClick={openFilterSheet}
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            <span>Filter products</span>
+            {totalActiveFilters > 0 && (
+              <Badge className="h-5 w-5 p-0 flex items-center justify-center rounded-full bg-black text-white text-xs">
+                {totalActiveFilters}
+              </Badge>
+            )}
+          </Button>
+        )}
 
         {/* Sort dropdown (desktop only) */}
-        {!isMobile && (
+        {!staticSidebarEnabled && !isMobile && (
           <div className="w-[220px]">
             <Select value={sortOption} onValueChange={handleSortChange}>
               <SelectTrigger className="rounded-full border-gray-300">

@@ -182,6 +182,10 @@ interface FilterContextType {
   filterProducts: <T extends FilterableProduct>(products: T[]) => T[]
   filteredProductCount: number
   setFilteredProductCount: (count: number) => void
+
+  // --- Static sidebar ---
+  staticSidebarEnabled: boolean
+  setStaticSidebarEnabled: (enabled: boolean) => void
 }
 
 /**
@@ -284,6 +288,31 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
 
   // Calculate total active filters
   const totalActiveFilters = state.activeFilters.length + (state.searchQuery ? 1 : 0)
+
+  // --- Static sidebar state ---
+  const [staticSidebarEnabled, setStaticSidebarEnabledState] = useState<boolean>(false)
+
+  // Helper to set and persist static sidebar state
+  const setStaticSidebarEnabled = useCallback((enabled: boolean) => {
+    setStaticSidebarEnabledState(enabled)
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem('filters_static_sidebar', enabled ? 'on' : 'off')
+    }
+  }, [])
+
+  // On mount: check URL param and sessionStorage
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    const urlValue = params.get('filters_static_sidebar')
+    const sessionValue = window.sessionStorage.getItem('filters_static_sidebar')
+    if (urlValue === 'on' || urlValue === 'off') {
+      setStaticSidebarEnabled(urlValue === 'on')
+    } else if (sessionValue === 'on' || sessionValue === 'off') {
+      setStaticSidebarEnabled(sessionValue === 'on')
+    }
+    // If neither, default is false
+  }, [setStaticSidebarEnabled])
 
   /**
    * Parse URL parameters into filter state
@@ -680,6 +709,10 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
       filterProducts,
       filteredProductCount,
       setFilteredProductCount,
+
+      // --- Static sidebar ---
+      staticSidebarEnabled,
+      setStaticSidebarEnabled,
     }),
     [
       state.activeFilters,
@@ -702,6 +735,8 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
       filterProducts,
       filteredProductCount,
       setFilteredProductCount,
+      staticSidebarEnabled,
+      setStaticSidebarEnabled,
     ],
   )
 
