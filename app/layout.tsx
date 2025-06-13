@@ -39,6 +39,8 @@ export default function RootLayout({
             `
           }}
         />
+        {/* Umami analytics */}
+        <script defer src="https://cloud.umami.is/script.js" data-website-id="f448018b-f910-4286-b445-b5ecac344275"></script>
       </head>
       <body className={inter.className}>
         <StoreProvider>
