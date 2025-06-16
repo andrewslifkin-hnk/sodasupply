@@ -7,13 +7,14 @@ import { FilterType, type ToggleFilterOption, type ActiveFilter } from "@/types/
 
 interface FilterToggleProps {
   option: ToggleFilterOption
+  hideLabel?: boolean
 }
 
 /**
  * Toggle filter component
  * Used for boolean filtering
  */
-export function FilterToggle({ option }: FilterToggleProps) {
+export function FilterToggle({ option, hideLabel = false }: FilterToggleProps) {
   const { isFilterActive, addFilter, removeFilter } = useFilter()
 
   const isActive = isFilterActive(option.id)
@@ -35,9 +36,11 @@ export function FilterToggle({ option }: FilterToggleProps) {
 
   return (
     <div className="flex items-center justify-between space-x-2">
-      <Label htmlFor={option.id} className="cursor-pointer">
-        {option.label}
-      </Label>
+      {!hideLabel && (
+        <Label htmlFor={option.id} className="cursor-pointer">
+          {option.label}
+        </Label>
+      )}
       <Switch id={option.id} checked={isActive} onCheckedChange={handleChange} />
     </div>
   )

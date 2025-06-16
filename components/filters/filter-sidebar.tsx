@@ -1,12 +1,15 @@
-import React from "react"
+import React, { useEffect, useState } from "react"
 import { useFilter } from "@/context/filter-context"
-import { FilterCategory } from "./filter-category"
+import { FilterCategory as FilterCategoryComponent } from "./filter-category"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { Button } from "@/components/ui/button"
 import { RefreshCw } from "lucide-react"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
-import { FilterType } from "@/types/filter-types"
+import { FilterType, CheckboxFilterOption, ToggleFilterOption, RangeFilterOption } from "@/types/filter-types"
+import type { FilterCategory } from "@/types/filter-types"
+import { FilterToggle } from "./filter-toggle"
+import { getProducts } from "@/services/product-service"
 
 export function FilterSidebar() {
   const {
@@ -19,8 +22,24 @@ export function FilterSidebar() {
   } = useFilter()
   const isMobile = useMediaQuery("(max-width: 768px)")
 
+  // State to hold available brands
+  const [availableBrands, setAvailableBrands] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    getProducts().then((products) => {
+      // Extract brand from product.name (first word)
+      const brands = new Set<string>()
+      products.forEach((product) => {
+        if (product.name) {
+          brands.add(product.name.split(" ")[0])
+        }
+      })
+      setAvailableBrands(brands)
+    })
+  }, [])
+
   // --- Filter options logic (copied from FilterSheet) ---
-  const getBrandOptions = () => [
+  const allBrandOptions = [
     { id: "brand-olipop", label: "Olipop", category: "brand", type: FilterType.CHECKBOX, value: "Olipop" },
     { id: "brand-poppi", label: "Poppi", category: "brand", type: FilterType.CHECKBOX, value: "Poppi" },
     { id: "brand-cocacola", label: "Coca-Cola", category: "brand", type: FilterType.CHECKBOX, value: "Coca-Cola" },
@@ -37,6 +56,10 @@ export function FilterSidebar() {
     { id: "brand-vitaminwater", label: "vitaminwater", category: "brand", type: FilterType.CHECKBOX, value: "vitaminwater" },
     { id: "brand-propel", label: "Propel", category: "brand", type: FilterType.CHECKBOX, value: "Propel" },
   ]
+
+  const getBrandOptions = () =>
+    allBrandOptions.filter((option) => availableBrands.has(option.value))
+
   const getTypeOptions = () => [
     { id: "type-prebiotic", label: "Prebiotic", category: "type", type: FilterType.CHECKBOX, value: "Prebiotic" },
     { id: "type-soda", label: "Soda", category: "type", type: FilterType.CHECKBOX, value: "Soda" },
@@ -83,21 +106,21 @@ export function FilterSidebar() {
     { id: "availability-returnable", label: "Returnable", category: "availability", type: FilterType.TOGGLE, value: false },
   ]
 
-  // Add options to each category
-  const categoriesWithOptions = categories.map((category) => {
+  // Add options to each category, strictly typed
+  const categoriesWithOptions: FilterCategory[] = categories.map((category) => {
     switch (category.id) {
       case "brand":
-        return { ...category, options: getBrandOptions() }
+        return { ...category, options: getBrandOptions() as CheckboxFilterOption[] }
       case "type":
-        return { ...category, options: getTypeOptions() }
+        return { ...category, options: getTypeOptions() as CheckboxFilterOption[] }
       case "package":
-        return { ...category, options: getPackageOptions() }
+        return { ...category, options: getPackageOptions() as CheckboxFilterOption[] }
       case "size":
-        return { ...category, options: getSizeOptions() }
+        return { ...category, options: getSizeOptions() as CheckboxFilterOption[] }
       case "price":
-        return { ...category, options: getPriceOptions() }
+        return { ...category, options: getPriceOptions() as RangeFilterOption[] }
       case "availability":
-        return { ...category, options: getAvailabilityOptions() }
+        return { ...category, options: getAvailabilityOptions() as ToggleFilterOption[], isExpanded: true }
       default:
         return category
     }
@@ -105,8 +128,14 @@ export function FilterSidebar() {
 
   if (isMobile) return null
 
+  // Reorder: Brand, then the rest (exclude availability)
+  const brand = categoriesWithOptions.find(c => c.id === "brand")
+  const rest = categoriesWithOptions.filter(c => c.id !== "brand" && c.id !== "availability")
+  const orderedCategories = [brand, ...rest].filter(Boolean)
+  const availabilityToggles = getAvailabilityOptions()
+
   return (
-    <aside className="w-72 min-w-[16rem] max-w-xs bg-white border-r border-gray-200 p-6 flex flex-col h-full sticky top-0 overflow-y-auto">
+    <aside className="w-72 min-w-[16rem] max-w-xs bg-white flex flex-col">
       {/* Sort by section */}
       <div className="py-4 border-b border-gray-200">
         <div className="flex items-center justify-between px-1 mb-4">
@@ -133,10 +162,29 @@ export function FilterSidebar() {
           </div>
         </RadioGroup>
       </div>
-      {/* All filter categories, all expanded by default */}
-      <div className="flex-1 overflow-y-auto space-y-6 mt-4">
-        {categoriesWithOptions.map((category) => (
-          <FilterCategory key={category.id} category={{ ...category, isExpanded: true } as any} />
+      {/* All filter categories, with compact spacing */}
+      <div className="flex-1 overflow-y-auto space-y-3 mt-4">
+        {/* Brand section first */}
+        {brand && <FilterCategoryComponent key={brand.id} category={brand as FilterCategory} />}
+        {/* Availability toggles next, with h3 for In stock and Returnable */}
+        {availabilityToggles.map((option, idx) => {
+          const isSpecial = option.id === "availability-instock" || option.id === "availability-returnable";
+          return (
+            <div key={option.id} className="py-3 border-b border-gray-200 last:border-b-0">
+              {isSpecial ? (
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-medium mb-0">{option.label}</h3>
+                  <FilterToggle option={option as ToggleFilterOption} hideLabel={true} />
+                </div>
+              ) : (
+                <FilterToggle option={option as ToggleFilterOption} />
+              )}
+            </div>
+          );
+        })}
+        {/* The rest of the filter categories */}
+        {rest.filter(Boolean).map((category) => (
+          <FilterCategoryComponent key={category.id} category={category as FilterCategory} />
         ))}
       </div>
       <div className="mt-6 text-sm text-gray-500">

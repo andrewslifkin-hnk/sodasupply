@@ -41,7 +41,6 @@ function HomeContent() {
               </div>
               {/* Product count */}
               <div className="mb-2 text-gray-700 font-medium">{filteredProductCount} products</div>
-              <div className="h-px w-full bg-gray-200 my-4"></div>
               <Suspense fallback={<ProductListSkeleton />}>
                 <ProductList />
               </Suspense>

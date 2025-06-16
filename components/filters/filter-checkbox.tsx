@@ -34,7 +34,7 @@ export function FilterCheckbox({ option }: FilterCheckboxProps) {
   }
 
   return (
-    <div className="flex items-center space-x-2">
+    <div className="flex flex-row-reverse items-center justify-between space-x-reverse space-x-2">
       <Checkbox
         id={option.id}
         checked={isActive}

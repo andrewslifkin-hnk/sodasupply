@@ -58,6 +58,7 @@ export async function getProducts(searchQuery?: string): Promise<Product[]> {
     // If Supabase is not configured, return mock data
     if (!isSupabaseConfigured()) {
       console.warn("Supabase not configured. Using mock product data.");
+      // NOTE: If you want every image in /public/products to have a product, use a Node.js script to generate missing product entries and import them into Supabase or your mock data.
       return Promise.resolve(mockProducts);
     }
 

@@ -51,7 +51,7 @@ export function FilterRadioGroup({ options, groupId, groupLabel }: FilterRadioGr
     <RadioGroup value={selectedValue} onValueChange={handleChange}>
       <div className="space-y-3">
         {options.map((option) => (
-          <div key={option.id} className="flex items-center space-x-2">
+          <div key={option.id} className="flex flex-row-reverse items-center justify-between space-x-reverse space-x-2">
             <RadioGroupItem value={option.id} id={option.id} />
             <Label htmlFor={option.id}>{option.label}</Label>
           </div>
