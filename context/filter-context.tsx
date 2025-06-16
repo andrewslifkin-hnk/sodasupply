@@ -186,6 +186,7 @@ interface FilterContextType {
   // --- Static sidebar ---
   staticSidebarEnabled: boolean
   setStaticSidebarEnabled: (enabled: boolean) => void
+  clearAndSetTypeFilter: (type: string) => void
 }
 
 /**
@@ -290,29 +291,18 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
   const totalActiveFilters = state.activeFilters.length + (state.searchQuery ? 1 : 0)
 
   // --- Static sidebar state ---
-  const [staticSidebarEnabled, setStaticSidebarEnabledState] = useState<boolean>(false)
+  const [staticSidebarEnabled, setStaticSidebarEnabled] = useState<boolean>(true)
 
-  // Helper to set and persist static sidebar state
-  const setStaticSidebarEnabled = useCallback((enabled: boolean) => {
-    setStaticSidebarEnabledState(enabled)
-    if (typeof window !== 'undefined') {
-      window.sessionStorage.setItem('filters_static_sidebar', enabled ? 'on' : 'off')
-    }
-  }, [])
-
-  // On mount: check URL param and sessionStorage
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const params = new URLSearchParams(window.location.search)
-    const urlValue = params.get('filters_static_sidebar')
-    const sessionValue = window.sessionStorage.getItem('filters_static_sidebar')
-    if (urlValue === 'on' || urlValue === 'off') {
-      setStaticSidebarEnabled(urlValue === 'on')
-    } else if (sessionValue === 'on' || sessionValue === 'off') {
-      setStaticSidebarEnabled(sessionValue === 'on')
-    }
-    // If neither, default is false
-  }, [setStaticSidebarEnabled])
+  const clearAndSetTypeFilter = useCallback((type: string) => {
+    const newFilter = {
+      id: `type-${type.toLowerCase().replace(/\s+/g, "-")}`,
+      label: type,
+      category: "type",
+      type: FilterType.CHECKBOX,
+      value: type,
+    };
+    dispatch({ type: "SET_ACTIVE_FILTERS", payload: [newFilter] });
+  }, []);
 
   /**
    * Parse URL parameters into filter state
@@ -713,6 +703,7 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
       // --- Static sidebar ---
       staticSidebarEnabled,
       setStaticSidebarEnabled,
+      clearAndSetTypeFilter,
     }),
     [
       state.activeFilters,
@@ -737,6 +728,7 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
       setFilteredProductCount,
       staticSidebarEnabled,
       setStaticSidebarEnabled,
+      clearAndSetTypeFilter,
     ],
   )
 

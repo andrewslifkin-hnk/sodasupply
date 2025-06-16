@@ -18,18 +18,32 @@ import { useMediaQuery } from "@/hooks/use-media-query"
 import { StoreDropdown } from "@/components/store-selector/store-dropdown"
 import { StoreSheet } from "@/components/store-selector/store-sheet"
 import { CartSheet } from "@/components/cart/cart-sheet"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { useFilter } from "@/context/filter-context"
+import { getProductsByType } from "@/services/product-service"
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false)
   const [isCartOpen, setIsCartOpen] = useState(false)
   const { totalItems } = useCart()
   const { isSearchOpen, searchQuery, openSearch, setSearchQuery, submitSearch } = useSearch()
-  const { clearAllFilters } = useFilter()
+  const { clearAllFilters, clearAndSetTypeFilter } = useFilter()
   const isMobile = useMediaQuery("(max-width: 768px)")
   const searchContainerRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const currentCategory = searchParams.get("type") || ""
+
+  // Dynamic product categories for the sub-menu
+  const [categories, setCategories] = useState<string[]>([])
+  const [loadingCategories, setLoadingCategories] = useState(true)
+  useEffect(() => {
+    getProductsByType().then((grouped) => {
+      setCategories(Object.keys(grouped))
+      setLoadingCategories(false)
+    })
+  }, [])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -77,6 +91,8 @@ export default function Header() {
   const goToHomePage = () => {
     router.push("/")
   }
+
+  const showProductSubMenu = pathname.startsWith("/products");
 
   return (
     <>
@@ -252,6 +268,66 @@ export default function Header() {
           </div>
         </div>
       </div>
+
+      {/* Product Categories Sub-Menu - Desktop Only, now always visible and dynamic */}
+      {showProductSubMenu && (
+        <div className="hidden md:block w-full bg-white border-b border-gray-200 shadow-sm">
+          <div className="max-w-site">
+            <div className="content-container">
+              <nav className="flex items-center h-12">
+                {loadingCategories ? (
+                  <div className="text-gray-400 text-sm">Loading categories...</div>
+                ) : categories.length === 0 ? (
+                  <div className="text-gray-400 text-sm">No categories found</div>
+                ) : (
+                  <ul className="flex space-x-6 w-full">
+                    <li>
+                      <a
+                        href="/products"
+                        onClick={e => {
+                          e.preventDefault();
+                          clearAllFilters();
+                        }}
+                        className={
+                          cn(
+                            "text-sm font-medium px-1 pb-2 border-b-2 transition-colors",
+                            !currentCategory
+                              ? "text-green-700 border-green-700 font-semibold"
+                              : "text-gray-800 hover:text-black border-transparent hover:border-gray-400"
+                          )
+                        }
+                      >
+                        All products
+                      </a>
+                    </li>
+                    {categories.map((cat) => (
+                      <li key={cat}>
+                        <a
+                          href={`/products?type=${encodeURIComponent(cat)}`}
+                          onClick={e => {
+                            e.preventDefault();
+                            clearAndSetTypeFilter(cat);
+                          }}
+                          className={
+                            cn(
+                              "text-sm font-medium px-1 pb-2 border-b-2 transition-colors",
+                              currentCategory.toLowerCase() === cat.toLowerCase()
+                                ? "text-green-700 border-green-700 font-semibold"
+                                : "text-gray-800 hover:text-black border-transparent hover:border-gray-400"
+                            )
+                          }
+                        >
+                          {cat}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </nav>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Mobile search overlay */}
       {isMobile && <SearchOverlay />}

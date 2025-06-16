@@ -76,7 +76,7 @@ export default function ProductList() {
     }
   }, [searchQuery])
 
-  // Apply filters to products
+  // Apply filters to products (now solely from context)
   const filteredProducts = filterProducts(products)
 
   // Update the filtered product count in the context
