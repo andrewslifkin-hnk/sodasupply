@@ -52,18 +52,6 @@ export function ProductCard({ product }: ProductCardProps) {
   const { enabled: discountBadgeEnabled, loading: flagLoading } = useFeatureFlag("product_discount_badge")
   const [imgSrc, setImgSrc] = useState(product.image || '/placeholder_fallback.png')
   
-  // Umami event tracking for product view
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.umami) {
-      window.umami.track('product_view', {
-        product_id: product.id,
-        product_name: product.name,
-        product_type: product.type,
-        product_price: product.price,
-      })
-    }
-  }, [product])
-
   return (
     <div className="bg-white rounded-lg overflow-hidden">
       <div className="relative">
