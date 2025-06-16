@@ -3,6 +3,7 @@
 import type React from "react"
 import { createContext, useContext, useReducer, useCallback, useEffect, useMemo, useState, useRef } from "react"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
+import { getProducts, type Product } from "@/services/product-service"
 
 /**
  * Defines the types of filters supported by the system
@@ -109,17 +110,9 @@ export interface FilterCategory {
 }
 
 /**
- * Interface for a product to be filtered
- */
-export interface FilterableProduct {
-  id: number
-  [key: string]: any
-}
-
-/**
  * Type for filter predicate functions
  */
-export type FilterPredicate = (product: FilterableProduct) => boolean
+export type FilterPredicate = (product: Product) => boolean
 
 /**
  * Interface for filter state
@@ -170,6 +163,7 @@ interface FilterContextType {
   removeFilter: (filterId: string) => void
   clearAllFilters: () => void
   clearCategoryFilters: (category: string) => void
+  clearAndSetTypeFilter: (type: string) => void
   setSortOption: (option: SortOption) => void
   setSearchQuery: (query: string | null) => void
   toggleCategoryExpansion: (categoryId: string) => void
@@ -179,14 +173,13 @@ interface FilterContextType {
   getActiveFiltersByCategory: (category: string) => ActiveFilter[]
 
   // Product filtering
-  filterProducts: <T extends FilterableProduct>(products: T[]) => T[]
+  filterProducts: <T extends Product>(products: T[]) => T[]
   filteredProductCount: number
   setFilteredProductCount: (count: number) => void
 
   // --- Static sidebar ---
   staticSidebarEnabled: boolean
   setStaticSidebarEnabled: (enabled: boolean) => void
-  clearAndSetTypeFilter: (type: string) => void
 }
 
 /**
@@ -293,16 +286,89 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
   // --- Static sidebar state ---
   const [staticSidebarEnabled, setStaticSidebarEnabled] = useState<boolean>(true)
 
-  const clearAndSetTypeFilter = useCallback((type: string) => {
-    const newFilter = {
-      id: `type-${type.toLowerCase().replace(/\s+/g, "-")}`,
-      label: type,
-      category: "type",
-      type: FilterType.CHECKBOX,
-      value: type,
-    };
-    dispatch({ type: "SET_ACTIVE_FILTERS", payload: [newFilter] });
-  }, []);
+  // Initialize filter categories from product data
+  useEffect(() => {
+    const initializeFilters = async () => {
+      const products = await getProducts()
+      if (!products || products.length === 0) return
+
+      const brands = new Set<string>()
+      const sizes = new Set<string>()
+      let minPrice = Infinity
+      let maxPrice = 0
+
+      products.forEach(product => {
+        if (product.name) brands.add(product.name.split(" ")[0])
+        if (product.size) sizes.add(product.size)
+        if (product.price < minPrice) minPrice = product.price
+        if (product.price > maxPrice) maxPrice = product.price
+      })
+
+      const dynamicCategories: FilterCategory[] = [
+        {
+          id: "brand",
+          label: "Brand",
+          type: FilterType.CHECKBOX,
+          isExpanded: true,
+          options: Array.from(brands)
+            .sort()
+            .map(brand => ({
+              id: `brand-${brand.toLowerCase().replace(/\s+/g, "-")}`,
+              label: brand,
+              category: "brand",
+              type: FilterType.CHECKBOX,
+              value: brand,
+            })),
+        },
+        {
+          id: "size",
+          label: "Size",
+          type: FilterType.CHECKBOX,
+          isExpanded: true,
+          options: Array.from(sizes)
+            .sort()
+            .map(size => ({
+              id: `size-${size.toLowerCase().replace(/\s+/g, "-")}`,
+              label: size,
+              category: "size",
+              type: FilterType.CHECKBOX,
+              value: size,
+            })),
+        },
+        {
+          id: "price",
+          label: "Price",
+          type: FilterType.RANGE,
+          isExpanded: true,
+          options: [
+            {
+              id: "price-range",
+              label: "Price Range",
+              category: "price",
+              type: FilterType.RANGE,
+              min: Math.floor(minPrice),
+              max: Math.ceil(maxPrice),
+              step: 1,
+            },
+          ],
+        },
+        {
+          id: "availability",
+          label: "Availability",
+          type: FilterType.TOGGLE,
+          isExpanded: true,
+          options: [
+            { id: "availability-instock", label: "In stock", category: "availability", type: FilterType.TOGGLE, value: false },
+            { id: "availability-returnable", label: "Returnable", category: "availability", type: FilterType.TOGGLE, value: false },
+          ],
+        },
+      ]
+
+      dispatch({ type: "SET_FILTER_CATEGORIES", payload: dynamicCategories })
+    }
+
+    initializeFilters()
+  }, [])
 
   /**
    * Parse URL parameters into filter state
@@ -321,9 +387,9 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
       const searchQuery = searchParams.get("q")
 
       // Parse checkbox filters (can have multiple values per category)
-      for (const category of ["type", "package", "size", "brand"]) {
+      for (const category of ["brand", "size"]) {
         const values = searchParams.getAll(category)
-        values.forEach((value) => {
+        values.forEach(value => {
           activeFilters.push({
             id: `${category}-${value.toLowerCase().replace(/\s+/g, "-")}`,
             label: value,
@@ -364,8 +430,8 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
           label: "Price",
           category: "price",
           type: FilterType.RANGE,
-          value: [minPrice ? Number.parseFloat(minPrice) : 0, maxPrice ? Number.parseFloat(maxPrice) : 100],
-          displayValue: `€${minPrice || "0"} - €${maxPrice || "100+"}`,
+          value: [minPrice ? Number.parseFloat(minPrice) : 0, maxPrice ? Number.parseFloat(maxPrice) : 9999],
+          displayValue: `€${minPrice || "0"} - €${maxPrice || "9999+"}`,
         })
       }
 
@@ -499,6 +565,30 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: "CLEAR_CATEGORY_FILTERS", payload: category })
   }, [])
 
+  const clearAndSetTypeFilter = useCallback((type: string) => {
+    // Clear all filters first
+    dispatch({ type: "CLEAR_ALL_FILTERS" })
+    
+    // Add a new type filter
+    const typeFilter: ActiveFilter = {
+      id: `type-${type}`,
+      label: type,
+      category: "type",
+      type: FilterType.TEXT,
+      value: type,
+      displayValue: type
+    }
+    
+    dispatch({ type: "ADD_FILTER", payload: typeFilter })
+    
+    // Update the URL with the type parameter
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href)
+      url.searchParams.set('type', type)
+      window.history.pushState({}, '', url.toString())
+    }
+  }, [])
+
   const setSortOption = useCallback((option: SortOption) => {
     dispatch({ type: "SET_SORT_OPTION", payload: option })
     if (typeof window !== 'undefined' && window.umami) {
@@ -540,27 +630,26 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
    * This function applies all active filters to a list of products
    */
   const filterProducts = useCallback(
-    <T extends FilterableProduct>(products: T[]): T[] => {
+    <T extends Product>(products: T[]): T[] => {
       if (state.activeFilters.length === 0 && !state.searchQuery) {
         return products
       }
 
-      return products.filter((product) => {
+      return products.filter(product => {
         // Apply search query filter
         if (state.searchQuery) {
           const query = state.searchQuery.toLowerCase()
           const nameMatch = product.name?.toLowerCase().includes(query)
-          const typeMatch = product.type?.toLowerCase().includes(query)
-          const brandMatch = product.brand?.toLowerCase().includes(query)
+          const descriptionMatch = product.description?.toLowerCase().includes(query)
 
-          if (!(nameMatch || typeMatch || brandMatch)) {
+          if (!(nameMatch || descriptionMatch)) {
             return false
           }
         }
 
         // Group filters by category
         const filtersByCategory: Record<string, ActiveFilter[]> = {}
-        state.activeFilters.forEach((filter) => {
+        state.activeFilters.forEach(filter => {
           if (!filtersByCategory[filter.category]) {
             filtersByCategory[filter.category] = []
           }
@@ -569,51 +658,41 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
 
         // Apply filters grouped by category
         return Object.entries(filtersByCategory).every(([category, filters]) => {
+          if (filters.length === 0) {
+            return true
+          }
+
           switch (category) {
-            case "type":
-              // For type category, check if ANY filter matches (OR condition)
-              return filters.some(filter => 
-                product.type === filter.value
-              )
-              
             case "brand":
-              // For brand category, check if ANY filter matches (OR condition)
-              return filters.some(filter => 
-                product.brand?.includes(filter.value as string) || 
-                product.name?.includes(filter.value as string)
-              )
-              
-            case "package":
-              // For package category, check if ANY filter matches (OR condition)
-              return filters.some(filter => 
-                product.name?.toLowerCase().includes((filter.value as string).toLowerCase())
-              )
-              
+              return filters.some(filter => product.name.startsWith(filter.value as string))
+
             case "size":
               // For size category, check if ANY filter matches (OR condition)
-              return filters.some(filter => 
-                product.size?.includes(filter.value as string)
-              )
-              
+              return filters.some(filter => product.size === filter.value)
+
             case "availability":
-              // For availability toggles, use OR condition
+              // For availability toggles, use AND condition
               return filters.every(filter => {
                 if (filter.id === "availability-instock") {
-                  return product.inStock
+                  return product.in_stock
                 }
                 if (filter.id === "availability-returnable") {
                   return product.returnable
                 }
                 return true
               })
-              
+
             case "price":
               // For price range filter
               return filters.every(filter => {
                 const [min, max] = filter.value as [number, number]
-                return !(product.price < min || (max > 0 && product.price > max))
+                return product.price >= min && product.price <= max
               })
-              
+
+            case "type":
+              // For type category, check if ANY filter matches (OR condition)
+              return filters.some(filter => product.type === filter.value)
+
             default:
               return true
           }
@@ -622,50 +701,6 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
     },
     [state.activeFilters, state.searchQuery],
   )
-
-  // Initialize filter categories
-  useEffect(() => {
-    const defaultCategories: FilterCategory[] = [
-      {
-        id: "brand",
-        label: "Brand",
-        type: FilterType.CHECKBOX,
-        isExpanded: true,
-      },
-      {
-        id: "type",
-        label: "Type",
-        type: FilterType.CHECKBOX,
-        isExpanded: true,
-      },
-      {
-        id: "package",
-        label: "Package",
-        type: FilterType.CHECKBOX,
-        isExpanded: true,
-      },
-      {
-        id: "size",
-        label: "Size",
-        type: FilterType.CHECKBOX,
-        isExpanded: true,
-      },
-      {
-        id: "price",
-        label: "Price",
-        type: FilterType.RANGE,
-        isExpanded: true,
-      },
-      {
-        id: "availability",
-        label: "Availability",
-        type: FilterType.TOGGLE,
-        isExpanded: true,
-      },
-    ]
-
-    dispatch({ type: "SET_FILTER_CATEGORIES", payload: defaultCategories })
-  }, [])
 
   // Context value
   const contextValue = useMemo(
@@ -687,6 +722,7 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
       removeFilter,
       clearAllFilters,
       clearCategoryFilters,
+      clearAndSetTypeFilter,
       setSortOption,
       setSearchQuery,
       toggleCategoryExpansion,
@@ -703,7 +739,6 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
       // --- Static sidebar ---
       staticSidebarEnabled,
       setStaticSidebarEnabled,
-      clearAndSetTypeFilter,
     }),
     [
       state.activeFilters,
@@ -718,6 +753,7 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
       removeFilter,
       clearAllFilters,
       clearCategoryFilters,
+      clearAndSetTypeFilter,
       setSortOption,
       setSearchQuery,
       toggleCategoryExpansion,
@@ -728,7 +764,6 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
       setFilteredProductCount,
       staticSidebarEnabled,
       setStaticSidebarEnabled,
-      clearAndSetTypeFilter,
     ],
   )
 
