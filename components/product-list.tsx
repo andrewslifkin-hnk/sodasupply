@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { ProductCard } from "@/components/product-card"
 import { motion } from "framer-motion"
-import { getProducts, type Product } from "@/services/product-service"
+import { getProducts, type LocalizedProduct } from "@/services/product-service"
 import { ProductListSkeleton } from "@/components/skeletons"
 import { useFilter } from "@/context/filter-context"
 import { useI18n } from "@/context/i18n-context"
@@ -21,7 +21,7 @@ interface ProductCardData {
 }
 
 export default function ProductList() {
-  const [products, setProducts] = useState<ProductCardData[]>([])
+  const [products, setProducts] = useState<LocalizedProduct[]>([])
   const [loading, setLoading] = useState(true)
   const { searchQuery, sortOption, filterProducts, setFilteredProductCount } = useFilter()
   const { t, locale } = useI18n()
@@ -36,35 +36,14 @@ export default function ProductList() {
         // Pass the current locale to get translated products
         const productsData = await getProducts(searchQuery || "", locale)
 
-        if (productsData.length > 0) {
-          const mappedProducts: ProductCardData[] = productsData.map((product) => ({
-            id: product.id,
-            name: product.name,
-            type: product.type,
-            size: product.size,
-            price: product.price,
-            image:
-              product.image_url || `/placeholder.svg?height=200&width=200&query=${encodeURIComponent(product.name)}`,
-            returnable: product.returnable,
-            inStock: product.in_stock,
-            brand: product.name.split(" ")[0], // Extract brand from name for demo purposes
-          }))
-
-          if (isMounted) {
-            setProducts(mappedProducts)
-            setLoading(false)
-          }
-        } else {
-          // Fallback to default products if none are found in the database
-          if (isMounted) {
-            setProducts(defaultProducts)
-            setLoading(false)
-          }
+        if (isMounted) {
+          setProducts(productsData)
+          setLoading(false)
         }
       } catch (error) {
         console.error("Error fetching products:", error)
         if (isMounted) {
-          setProducts(defaultProducts)
+          setProducts([])
           setLoading(false)
         }
       }
@@ -78,18 +57,7 @@ export default function ProductList() {
   }, [searchQuery, locale]) // Add locale as dependency
 
   // Apply filters to products (now solely from context)
-  const productDataForFiltering = products.map(p => ({
-    ...p,
-    image_url: p.image,
-    in_stock: p.inStock,
-    description: '', // Add empty description for filter compatibility
-  }))
-  
-  const filteredProducts = filterProducts(productDataForFiltering).map(p => ({
-    ...p,
-    image: p.image_url,
-    inStock: p.in_stock,
-  }))
+  const filteredProducts = filterProducts(products)
 
   // Update the filtered product count in the context
   useEffect(() => {
@@ -118,8 +86,8 @@ export default function ProductList() {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {sortedProducts.length === 0 ? (
         <div className="col-span-full text-center py-12">
-          <p className="text-lg text-gray-500">{t('products.no_products_found')}</p>
-          <p className="text-sm text-gray-400 mt-2">{t('products.try_adjusting_filters')}</p>
+          <p className="text-lg text-gray-500">{t("products.no_products_found")}</p>
+          <p className="text-sm text-gray-400 mt-2">{t("products.try_adjusting_filters")}</p>
         </div>
       ) : (
         sortedProducts.map((product) => (
@@ -131,7 +99,20 @@ export default function ProductList() {
             whileHover={{ y: -5 }}
             className="transition-all duration-300"
           >
-            <ProductCard product={product} />
+            <ProductCard
+              product={{
+                id: product.id,
+                name: product.localized.name,
+                type: product.localized.type,
+                size: product.size,
+                price: product.price,
+                image:
+                  product.image_url || `/placeholder.svg?height=200&width=200&query=${encodeURIComponent(product.name)}`,
+                returnable: product.returnable,
+                inStock: product.in_stock,
+                brand: product.name.split(" ")[0], // Extract brand from original name
+              }}
+            />
           </motion.div>
         ))
       )}
@@ -147,7 +128,7 @@ const defaultProducts: ProductCardData[] = [
     type: "Soda",
     size: "12 x 12 fl oz",
     price: 14.99,
-    image: "/products/04b0220b-def5-4481-b727-00d6c55d6234.c306a466de3157600795cc1064b62953.jpeg",
+    image: "/products/04b0220b-def5-4481-b27-00d6c55d6234.c306a466de3157600795cc1064b62953.jpeg",
     returnable: true,
     inStock: true,
     brand: "Assorted",

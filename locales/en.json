@@ -216,7 +216,10 @@
     "products_found": "{count} products found",
     "brand_label": "Brand",
     "size_label": "Size",
-    "price_label": "Price"
+    "price_label": "Price",
+    "brands": "Brands",
+    "sizes": "Sizes",
+    "types": "Types"
   },
   "products": {
     "product_added": "Product added to cart",
@@ -254,14 +257,14 @@
   },
   "welcome": {
     "welcome_to": "Welcome to SodaSupply!",
-    "lets_get_started": "Let's get you started",
-    "your_most_purchased": "Your most purchased",
-    "view_your_orders": "View your orders",
-    "check_loyalty_points": "Check your loyalty points"
+    "lets_get_started": "Let's Get Started",
+    "your_most_purchased": "Your Most Purchased",
+    "view_your_orders": "View Your Orders",
+    "check_loyalty_points": "Check Loyalty Points"
   },
   "promo": {
     "limited_time_offer": "Limited Time Offer",
-    "free_shipping_message": "Free shipping on orders over €50! Use code",
+    "free_shipping_message": "Free shipping on orders over $50! Use code",
     "promo_code": "FREESHIP50",
     "at_checkout": "at checkout",
     "shop_now": "Shop Now"
@@ -271,5 +274,41 @@
     "portuguese_brazil": "Português (Brasil)",
     "select_language": "Select Language",
     "language_changed": "Language changed successfully"
+  },
+  "brands": {
+    "BODYARMOR": "BODYARMOR",
+    "COCA-COLA": "Coca-Cola",
+    "DIET": "Diet",
+    "GATORADE": "Gatorade",
+    "VITAMINWATER": "Vitamin Water",
+    "GREAT": "Great Value"
+  },
+  "sizes": {
+    "12_fl_oz": "12 fl oz",
+    "16_fl_oz": "16 fl oz",
+    "2_liters": "2 Liters",
+    "12_fl_oz_12_pack_bottle": "12 fl oz 12 Pack Bottles",
+    "12_fl_oz_12_pack_can": "12 fl oz 12 Pack Cans",
+    "12_fl_oz_18_bottle": "12 fl oz 18 Bottles",
+    "12_fl_oz_18_count_bottle": "12 fl oz 18 Count Bottles",
+    "12_fl_oz_8_pack_bottle": "12 fl oz 8 Pack Bottles",
+    "12_fl_oz_8_pack_can": "12 fl oz 8 Pack Cans",
+    "16_fl_oz_bottle": "16 fl oz Bottle",
+    "16_fl_oz_6_pack_bottle": "16 fl oz 6 Pack Bottles",
+    "355_ml": "355 ml",
+    "473_ml": "473 ml",
+    "2_liters_bottle": "2 Liters Bottle",
+    "12_fl_oz_24_pack_can": "12 fl oz 24 Pack Cans",
+    "12_fl_oz_24_pack_bottle": "12 fl oz 24 Pack Bottles",
+    "12_fl_oz_12_count": "12 fl oz 12 Count",
+    "12_fl_oz_8_count": "12 fl oz 8 Count",
+    "12_fl_oz_6_count": "12 fl oz 6 Count"
+  },
+  "product_types": {
+    "Sports Drink": "Sports Drink",
+    "Enhanced Water": "Enhanced Water",
+    "Soda": "Soda",
+    "Juice": "Juice",
+    "Beverage": "Beverage"
   }
 } 

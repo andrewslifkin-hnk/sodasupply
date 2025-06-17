@@ -4,6 +4,7 @@ import type React from "react"
 import { createContext, useContext, useReducer, useCallback, useEffect, useMemo, useState, useRef } from "react"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { getProducts, type Product } from "@/services/product-service"
+import { useI18n } from "@/context/i18n-context"
 
 /**
  * Defines the types of filters supported by the system
@@ -137,6 +138,7 @@ type FilterAction =
   | { type: "SET_SEARCH_QUERY"; payload: string | null }
   | { type: "SET_FILTER_CATEGORIES"; payload: FilterCategory[] }
   | { type: "TOGGLE_CATEGORY_EXPANSION"; payload: string }
+  | { type: "SET_TYPE_FILTER"; payload: string }
   | {
       type: "SYNC_FROM_URL"
       payload: { activeFilters: ActiveFilter[]; sortOption: SortOption; searchQuery: string | null }
@@ -192,6 +194,52 @@ const initialFilterState: FilterState = {
   categories: [],
 }
 
+// Helper function to normalize product type
+const normalizeType = (type: string): string => {
+  return type.toLowerCase().replace(/\s+/g, '_')
+}
+
+// Helper function to extract brand from product name
+const extractBrand = (product: Product): string => {
+  // Use localized name for brand extraction
+  const name = product.name.toUpperCase()
+  
+  // Common brand mappings
+  if (name.includes('BODYARMOR')) return 'BODYARMOR'
+  if (name.includes('COCA-COLA') || name.includes('COCA COLA')) return 'COCA-COLA'
+  if (name.includes('GATORADE')) return 'GATORADE'
+  if (name.includes('VITAMINWATER')) return 'VITAMINWATER'
+  
+  // Default to first word
+  return name.split(' ')[0]
+}
+
+// Helper function to normalize size for translation key
+const normalizeSize = (size: string): string => {
+  // Extract the base size (e.g., "12 fl oz" from "12 fl oz 12 Pack Cans")
+  const baseSize = size.match(/([\d.]+ fl oz|[\d.]+ Liters?|[\d.]+ ml)/i)?.[0] || size
+  
+  // Extract the package info
+  const packageMatch = size.match(/(\d+)\s*(Pack|Count|Bottles?|Cans?)/i)
+  const packageInfo = packageMatch 
+    ? `${packageMatch[1]}_${packageMatch[2].toLowerCase().replace(/s$/, '')}`
+    : ''
+
+  // Clean and normalize the base size
+  const normalizedBase = baseSize.toLowerCase().replace(/\s+/g, '_')
+
+  // Combine for translation key
+  const key = packageInfo 
+    ? `${normalizedBase}_${packageInfo}`
+    : normalizedBase
+
+  // Further normalize the key
+  return key.replace(/\s+/g, '_')
+    .replace(/-/g, '_')
+    .replace(/\./g, '_')
+    .toLowerCase()
+}
+
 /**
  * Filter reducer function
  */
@@ -202,6 +250,21 @@ function filterReducer(state: FilterState, action: FilterAction): FilterState {
         ...state,
         activeFilters: action.payload,
       }
+    case "SET_TYPE_FILTER": {
+      const otherFilters = state.activeFilters.filter(f => f.category !== 'type')
+      const type = action.payload
+      if (type === "") {
+        return { ...state, activeFilters: otherFilters }
+      }
+      const newFilter: ActiveFilter = {
+        id: `type-${normalizeType(type)}`,
+        label: type,
+        category: 'type',
+        type: FilterType.CHECKBOX,
+        value: type
+      }
+      return { ...state, activeFilters: [...otherFilters, newFilter] }
+    }
     case "ADD_FILTER":
       return {
         ...state,
@@ -264,21 +327,18 @@ const FilterContext = createContext<FilterContextType | undefined>(undefined)
  * Provider component for the filter context
  */
 export function FilterProvider({ children }: { children: React.ReactNode }) {
-  // State management with useReducer
   const [state, dispatch] = useReducer(filterReducer, initialFilterState)
-
-  // Router hooks
+  const { t, locale } = useI18n()
+  const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
-  const searchParams = useSearchParams()
 
   // UI state
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false)
   const [filteredProductCount, setFilteredProductCount] = useState(0)
 
   // Sync flags to prevent infinite loops
-  const isUpdatingFromUrl = useRef(false)
-  const skipNextUrlUpdate = useRef(false)
+  const skipUrlToStateSync = useRef(false);
 
   // Calculate total active filters
   const totalActiveFilters = state.activeFilters.length + (state.searchQuery ? 1 : 0)
@@ -286,200 +346,194 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
   // --- Static sidebar state ---
   const [staticSidebarEnabled, setStaticSidebarEnabled] = useState<boolean>(true)
 
-  // Initialize filter categories from product data
+  // This effect syncs the URL to the state, handling back/forward navigation
+  useEffect(() => {
+    if (skipUrlToStateSync.current) {
+      skipUrlToStateSync.current = false;
+      return;
+    }
+
+    const typeFromUrl = searchParams.get("type") || ""
+    const typeFilterInState = state.activeFilters.find(f => f.category === "type")
+    const typeValueInState = typeFilterInState?.value as string || ""
+
+    if (typeFromUrl !== typeValueInState) {
+      // URL is out of sync with state, so sync the state.
+      // This handles back/forward navigation.
+      dispatch({ type: 'SET_TYPE_FILTER', payload: typeFromUrl })
+    }
+  }, [searchParams, state.activeFilters])
+
   useEffect(() => {
     const initializeFilters = async () => {
-      const products = await getProducts()
+      // Get products with current locale
+      const products = await getProducts(undefined, locale)
       if (!products || products.length === 0) return
 
-      // Helper function to extract brand from product name
-      const extractBrand = (productName: string): string => {
-        const name = productName.toLowerCase()
-        
-        // Handle known multi-word brands
-        if (name.includes('coca cola') || name.includes('coca-cola')) {
-          return 'Coca-Cola'
-        }
-        if (name.includes('body armor') || name.includes('bodyarmor')) {
-          return 'BODYARMOR'
-        }
-        if (name.includes('vitamin water') || name.includes('vitaminwater')) {
-          return 'vitaminwater'
-        }
-        
-        // For other brands, take the first word and capitalize it
-        const firstWord = productName.split(" ")[0]
-        return firstWord.charAt(0).toUpperCase() + firstWord.slice(1).toLowerCase()
-      }
+      // Get unique brands from products
+      const brands = Array.from(new Set(products.map(product => extractBrand(product))))
 
-      const brands = new Set<string>()
-      const sizes = new Set<string>()
-      let minPrice = Infinity
-      let maxPrice = 0
-
-      products.forEach(product => {
-        if (product.name) brands.add(extractBrand(product.name))
-        if (product.size) sizes.add(product.size)
-        if (product.price < minPrice) minPrice = product.price
-        if (product.price > maxPrice) maxPrice = product.price
-      })
-
-      const dynamicCategories: FilterCategory[] = [
-        {
-          id: "brand",
-          label: "filters.brand_label",
+      // Create brand filter options
+      const brandOptions: CheckboxFilterOption[] = brands
+        .sort()
+        .map(brand => ({
+          id: `brand-${brand.toLowerCase()}`,
+          label: t(`brands.${brand}`),
+          value: brand,
           type: FilterType.CHECKBOX,
-          isExpanded: true,
-          options: Array.from(brands)
-            .sort()
-            .map(brand => ({
-              id: `brand-${brand.toLowerCase().replace(/\s+/g, "-")}`,
-              label: brand,
-              category: "brand",
-              type: FilterType.CHECKBOX,
-              value: brand,
-            })),
-        },
+          category: 'brand'
+        }))
+
+      // Get unique sizes and normalize them
+      const sizes = Array.from(new Set(products.map(product => product.size)))
+      
+      // Create size filter options
+      const sizeOptions: CheckboxFilterOption[] = sizes
+        .sort()
+        .map(size => {
+          const normalizedSize = normalizeSize(size)
+          const translationKey = `sizes.${normalizedSize}`
+          const translatedLabel = t(translationKey)
+          return {
+            id: `size-${size.toLowerCase().replace(/\s+/g, '-')}`,
+            label: translatedLabel !== translationKey ? translatedLabel : size,
+            value: size,
+            type: FilterType.CHECKBOX,
+            category: 'size'
+          }
+        })
+
+      // Get unique types from products
+      const types = Array.from(new Set(products.map(product => product.type)))
+
+      // Create type filter options
+      const typeOptions: CheckboxFilterOption[] = types
+        .sort()
+        .map(type => {
+          const translationKey = `product_types.${type}`
+          const translatedLabel = t(translationKey)
+          return {
+            id: `type-${normalizeType(type)}`,
+            label: translatedLabel !== translationKey ? translatedLabel : type,
+            value: type,
+            type: FilterType.CHECKBOX,
+            category: 'type'
+          }
+        })
+
+      // Update filter categories
+      const categories: FilterCategory[] = [
         {
-          id: "size",
-          label: "filters.size_label",
+          id: 'brand',
+          label: t('filters.brands'),
           type: FilterType.CHECKBOX,
-          isExpanded: true,
-          options: Array.from(sizes)
-            .sort()
-            .map(size => ({
-              id: `size-${size.toLowerCase().replace(/\s+/g, "-")}`,
-              label: size,
-              category: "size",
-              type: FilterType.CHECKBOX,
-              value: size,
-            })),
+          options: brandOptions,
+          isExpanded: true
         },
         {
-          id: "price",
-          label: "filters.price_label",
-          type: FilterType.RANGE,
-          isExpanded: true,
-          options: [
-            {
-              id: "price-range",
-              label: "Price Range",
-              category: "price",
-              type: FilterType.RANGE,
-              min: Math.floor(minPrice),
-              max: Math.ceil(maxPrice),
-              step: 1,
-            },
-          ],
+          id: 'size',
+          label: t('filters.sizes'),
+          type: FilterType.CHECKBOX,
+          options: sizeOptions,
+          isExpanded: true
         },
         {
-          id: "availability",
-          label: "Availability",
-          type: FilterType.TOGGLE,
-          isExpanded: true,
-          options: [
-            { id: "availability-instock", label: "In stock", category: "availability", type: FilterType.TOGGLE, value: false },
-            { id: "availability-returnable", label: "Returnable", category: "availability", type: FilterType.TOGGLE, value: false },
-          ],
-        },
+          id: 'type',
+          label: t('filters.types'),
+          type: FilterType.CHECKBOX,
+          options: typeOptions,
+          isExpanded: true
+        }
       ]
 
-      dispatch({ type: "SET_FILTER_CATEGORIES", payload: dynamicCategories })
+      dispatch({ type: 'SET_FILTER_CATEGORIES', payload: categories })
     }
 
     initializeFilters()
-  }, [])
+  }, [t, locale])
 
   /**
    * Parse URL parameters into filter state
    */
   useEffect(() => {
-    if (skipNextUrlUpdate.current) {
-      skipNextUrlUpdate.current = false
-      return
+    if (skipUrlToStateSync.current) {
+      skipUrlToStateSync.current = false;
+      return;
     }
 
-    isUpdatingFromUrl.current = true
+    const activeFilters: ActiveFilter[] = []
+    let sortOption: SortOption = "featured"
+    const searchQuery = searchParams.get("q")
 
-    try {
-      const activeFilters: ActiveFilter[] = []
-      let sortOption: SortOption = "featured"
-      const searchQuery = searchParams.get("q")
-
-      // Parse checkbox filters (can have multiple values per category)
-      for (const category of ["brand", "size"]) {
-        const values = searchParams.getAll(category)
-        values.forEach(value => {
-          activeFilters.push({
-            id: `${category}-${value.toLowerCase().replace(/\s+/g, "-")}`,
-            label: value,
-            category,
-            type: FilterType.CHECKBOX,
-            value,
-          })
-        })
-      }
-
-      // Parse toggle filters
-      if (searchParams.get("instock") === "true") {
+    // Parse checkbox filters (can have multiple values per category)
+    for (const category of ["brand", "size"]) {
+      const values = searchParams.getAll(category)
+      values.forEach(value => {
         activeFilters.push({
-          id: "availability-instock",
-          label: "In stock",
-          category: "availability",
-          type: FilterType.TOGGLE,
-          value: true,
+          id: `${category}-${value.toLowerCase().replace(/\s+/g, "-")}`,
+          label: value,
+          category,
+          type: FilterType.CHECKBOX,
+          value,
         })
-      }
-
-      if (searchParams.get("returnable") === "true") {
-        activeFilters.push({
-          id: "availability-returnable",
-          label: "Returnable",
-          category: "availability",
-          type: FilterType.TOGGLE,
-          value: true,
-        })
-      }
-
-      // Parse range filters
-      const minPrice = searchParams.get("minPrice")
-      const maxPrice = searchParams.get("maxPrice")
-      if (minPrice || maxPrice) {
-        activeFilters.push({
-          id: "price-range",
-          label: "Price",
-          category: "price",
-          type: FilterType.RANGE,
-          value: [minPrice ? Number.parseFloat(minPrice) : 0, maxPrice ? Number.parseFloat(maxPrice) : 9999],
-          displayValue: `€${minPrice || "0"} - €${maxPrice || "9999+"}`,
-        })
-      }
-
-      // Parse sort option
-      const sort = searchParams.get("sort") as SortOption
-      if (sort && ["featured", "price-low", "price-high", "newest"].includes(sort)) {
-        sortOption = sort
-      }
-
-      // Update state from URL
-      dispatch({
-        type: "SYNC_FROM_URL",
-        payload: { activeFilters, sortOption, searchQuery },
       })
-    } catch (error) {
-      console.error("Error parsing URL parameters:", error)
-    } finally {
-      isUpdatingFromUrl.current = false
     }
+
+    // Parse toggle filters
+    if (searchParams.get("instock") === "true") {
+      activeFilters.push({
+        id: "availability-instock",
+        label: "In stock",
+        category: "availability",
+        type: FilterType.TOGGLE,
+        value: true,
+      })
+    }
+
+    if (searchParams.get("returnable") === "true") {
+      activeFilters.push({
+        id: "availability-returnable",
+        label: "Returnable",
+        category: "availability",
+        type: FilterType.TOGGLE,
+        value: true,
+      })
+    }
+
+    // Parse range filters
+    const minPrice = searchParams.get("minPrice")
+    const maxPrice = searchParams.get("maxPrice")
+    if (minPrice || maxPrice) {
+      activeFilters.push({
+        id: "price-range",
+        label: "Price",
+        category: "price",
+        type: FilterType.RANGE,
+        value: [minPrice ? Number.parseFloat(minPrice) : 0, maxPrice ? Number.parseFloat(maxPrice) : 9999],
+        displayValue: `€${minPrice || "0"} - €${maxPrice || "9999+"}`,
+      })
+    }
+
+    // Parse sort option
+    const sort = searchParams.get("sort") as SortOption
+    if (sort && ["featured", "price-low", "price-high", "newest"].includes(sort)) {
+      sortOption = sort
+    }
+
+    // Update state from URL
+    dispatch({
+      type: "SYNC_FROM_URL",
+      payload: { activeFilters, sortOption, searchQuery },
+    })
   }, [searchParams])
 
   /**
    * Update URL based on current filter state
    */
   const updateURL = useCallback(() => {
-    if (isUpdatingFromUrl.current) return
+    if (skipUrlToStateSync.current) return
 
-    skipNextUrlUpdate.current = true
+    skipUrlToStateSync.current = true;
 
     const params = new URLSearchParams()
 
@@ -545,68 +599,45 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
   const closeFilterSheet = useCallback(() => setIsFilterSheetOpen(false), [])
 
   const addFilter = useCallback((filter: ActiveFilter) => {
+    skipUrlToStateSync.current = true;
     dispatch({ type: "ADD_FILTER", payload: filter })
     if (typeof window !== 'undefined' && window.umami) {
-      window.umami.track('filter_change', { action: 'add', filter })
+      window.umami.track('filter-add', { id: filter.id, value: filter.value.toString() })
     }
   }, [])
 
   const removeFilter = useCallback((filterId: string) => {
+    skipUrlToStateSync.current = true;
     dispatch({ type: "REMOVE_FILTER", payload: filterId })
     if (typeof window !== 'undefined' && window.umami) {
-      window.umami.track('filter_change', { action: 'remove', filterId })
+      window.umami.track('filter-remove', { id: filterId })
     }
   }, [])
 
   const clearAllFilters = useCallback(() => {
-    // Clear all filters in the state
+    skipUrlToStateSync.current = true;
     dispatch({ type: "CLEAR_ALL_FILTERS" })
 
     // Reset the search query as well
     dispatch({ type: "SET_SEARCH_QUERY", payload: null })
 
-    // Update URL directly to ensure immediate effect
-    skipNextUrlUpdate.current = true
-
-    // Navigate to the base path without any query parameters
-    router.push(pathname, { scroll: false })
-
     // Close the filter sheet if it's open
     if (isFilterSheetOpen) {
       closeFilterSheet()
     }
-
     if (typeof window !== 'undefined' && window.umami) {
-      window.umami.track('filter_change', { action: 'clear_all' })
+      window.umami.track('filter-clear-all')
     }
-  }, [pathname, router, isFilterSheetOpen, closeFilterSheet])
+  }, [isFilterSheetOpen])
 
   const clearCategoryFilters = useCallback((category: string) => {
+    skipUrlToStateSync.current = true;
     dispatch({ type: "CLEAR_CATEGORY_FILTERS", payload: category })
   }, [])
 
   const clearAndSetTypeFilter = useCallback((type: string) => {
-    // Clear all filters first
-    dispatch({ type: "CLEAR_ALL_FILTERS" })
-    
-    // Add a new type filter
-    const typeFilter: ActiveFilter = {
-      id: `type-${type}`,
-      label: type,
-      category: "type",
-      type: FilterType.TEXT,
-      value: type,
-      displayValue: type
-    }
-    
-    dispatch({ type: "ADD_FILTER", payload: typeFilter })
-    
-    // Update the URL with the type parameter
-    if (typeof window !== 'undefined') {
-      const url = new URL(window.location.href)
-      url.searchParams.set('type', type)
-      window.history.pushState({}, '', url.toString())
-    }
+    skipUrlToStateSync.current = true;
+    dispatch({ type: 'SET_TYPE_FILTER', payload: type })
   }, [])
 
   const setSortOption = useCallback((option: SortOption) => {
@@ -684,7 +715,7 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
 
           switch (category) {
             case "brand":
-              return filters.some(filter => product.name.startsWith(filter.value as string))
+              return filters.some(filter => extractBrand(product) === filter.value)
 
             case "size":
               // For size category, check if ANY filter matches (OR condition)
@@ -721,6 +752,26 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
     },
     [state.activeFilters, state.searchQuery],
   )
+
+  // Sync active filters to URL
+  useEffect(() => {
+    const typeFilter = state.activeFilters.find(f => f.category === 'type')
+    const currentParams = new URLSearchParams(searchParams.toString())
+    
+    if (typeFilter) {
+      currentParams.set('type', typeFilter.value.toString())
+    } else {
+      currentParams.delete('type')
+    }
+
+    // Only update if params actually changed
+    const newSearch = currentParams.toString()
+    const currentSearch = searchParams.toString()
+    
+    if (newSearch !== currentSearch) {
+      router.push(`${pathname}${newSearch ? `?${newSearch}` : ''}`, { scroll: false })
+    }
+  }, [state.activeFilters, pathname, router, searchParams])
 
   // Context value
   const contextValue = useMemo(

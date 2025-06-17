@@ -217,7 +217,19 @@
     "products_found": "{count} produtos encontrados",
     "brand_label": "Marca",
     "size_label": "Tamanho",
-    "price_label": "Preço"
+    "price_label": "Preço",
+    "brands": "Marcas",
+    "sizes": "Tamanhos",
+    "types": "Tipos",
+    "clear_all": "Limpar Todos",
+    "filter_products": "Filtrar Produtos",
+    "no_products_found": "Nenhum produto encontrado",
+    "try_adjusting_filters": "Tente ajustar seus filtros",
+    "sort_by": "Ordenar por",
+    "featured": "Destaques",
+    "price_low_to_high": "Preço: Menor para Maior",
+    "price_high_to_low": "Preço: Maior para Menor",
+    "newest": "Mais Recentes"
   },
   "products": {
     "product_added": "Produto adicionado ao carrinho",
@@ -265,5 +277,42 @@
     "portuguese_brazil": "Português (Brasil)",
     "select_language": "Selecionar Idioma",
     "language_changed": "Idioma alterado com sucesso"
+  },
+  "brands": {
+    "BODYARMOR": "BODYARMOR",
+    "COCA-COLA": "Coca-Cola",
+    "DIET": "Diet",
+    "GATORADE": "Gatorade",
+    "VITAMINWATER": "Vitamin Water",
+    "GREAT": "Great Value"
+  },
+  "sizes": {
+    "12_fl_oz": "355 ml",
+    "16_fl_oz": "473 ml",
+    "2_liters": "2 Litros",
+    "12_fl_oz_12_pack_bottle": "12 Garrafas de 355 ml",
+    "12_fl_oz_12_pack_can": "12 Latas de 355 ml",
+    "12_fl_oz_18_bottle": "18 Garrafas de 355 ml",
+    "12_fl_oz_18_count_bottle": "18 Garrafas de 355 ml",
+    "12_fl_oz_8_pack_bottle": "8 Garrafas de 355 ml",
+    "12_fl_oz_8_pack_can": "8 Latas de 355 ml",
+    "16_fl_oz_bottle": "Garrafa de 473 ml",
+    "16_fl_oz_6_pack_bottle": "6 Garrafas de 473 ml",
+    "355_ml": "355 ml",
+    "473_ml": "473 ml",
+    "2_liters_bottle": "Garrafa de 2 Litros",
+    "12_fl_oz_24_pack_can": "24 Latas de 355 ml",
+    "12_fl_oz_24_pack_bottle": "24 Garrafas de 355 ml",
+    "12_fl_oz_12_count": "12 Unidades de 355 ml",
+    "12_fl_oz_8_count": "8 Unidades de 355 ml",
+    "12_fl_oz_6_count": "6 Unidades de 355 ml",
+    "16 fl oz_6 pack bottles": "6 Garrafas de 473 ml"
+  },
+  "product_types": {
+    "Sports Drink": "Bebida Esportiva",
+    "Enhanced Water": "Água Aprimorada",
+    "Soda": "Refrigerante",
+    "Juice": "Suco",
+    "Beverage": "Bebidas"
   }
 } 

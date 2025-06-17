@@ -11,13 +11,19 @@ import { Suspense } from "react"
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { UmamiPageView } from "@/components/umami-pageview"
+import type { Metadata, Viewport } from "next"
 
 const inter = Inter({ subsets: ["latin"] })
 
-export const metadata = {
+export const metadata: Metadata = {
   generator: 'v0.dev',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1'
 };
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+}
 
 export default function RootLayout({
   children,

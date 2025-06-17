@@ -16,6 +16,14 @@ export interface Product {
   type_pt?: string
 }
 
+export interface LocalizedProduct extends Product {
+  localized: {
+    name: string
+    type: string
+    description?: string
+  }
+}
+
 // Mock products as fallback for when database fails or is not configured
 // This is only used if Supabase connection fails and the database is empty
 const mockProducts: Product[] = [
@@ -50,16 +58,20 @@ const mockProducts: Product[] = [
 ];
 
 // Helper function to get localized product data
-function getLocalizedProduct(product: Product, locale: string): Product {
-  if (locale === 'pt-BR') {
-    return {
-      ...product,
-      name: product.name_pt || product.name,
-      description: product.description_pt || product.description,
-      type: product.type_pt || product.type,
-    }
+function localizeProduct(product: Product, locale: string): LocalizedProduct {
+  const localized = {
+    name: product.name,
+    type: product.type,
+    description: product.description,
   }
-  return product
+
+  if (locale === "pt-BR") {
+    localized.name = product.name_pt || product.name
+    localized.type = product.type_pt || product.type
+    localized.description = product.description_pt || product.description
+  }
+
+  return { ...product, localized }
 }
 
 // Check if Supabase is properly configured
@@ -76,13 +88,13 @@ const isSupabaseConfigured = () => {
   return Boolean(supabaseUrl) && Boolean(supabaseAnonKey);
 }
 
-export async function getProducts(searchQuery?: string, locale: string = 'en'): Promise<Product[]> {
+export async function getProducts(searchQuery?: string, locale: string = 'en'): Promise<LocalizedProduct[]> {
   try {
     // If Supabase is not configured, return mock data
     if (!isSupabaseConfigured()) {
       console.warn("Supabase not configured. Using mock product data.");
       // NOTE: If you want every image in /public/products to have a product, use a Node.js script to generate missing product entries and import them into Supabase or your mock data.
-      return Promise.resolve(mockProducts.map(product => getLocalizedProduct(product, locale)));
+      return Promise.resolve(mockProducts.map(product => localizeProduct(product, locale)));
     }
 
     // Select all fields including translation columns
@@ -103,28 +115,28 @@ export async function getProducts(searchQuery?: string, locale: string = 'en'): 
 
     if (error) {
       console.error("Error fetching products:", error);
-      return mockProducts.map(product => getLocalizedProduct(product, locale));
+      return mockProducts.map(product => localizeProduct(product, locale));
     }
 
     // Return localized database data, only fall back to mock data if no products found
     if (data && data.length > 0) {
-      return data.map(product => getLocalizedProduct(product, locale));
+      return data.map(product => localizeProduct(product, locale));
     } else {
-      return mockProducts.map(product => getLocalizedProduct(product, locale));
+      return mockProducts.map(product => localizeProduct(product, locale));
     }
   } catch (e) {
     console.error("Error fetching products:", e);
-    return mockProducts.map(product => getLocalizedProduct(product, locale));
+    return mockProducts.map(product => localizeProduct(product, locale));
   }
 }
 
-export async function getProductById(id: number, locale: string = 'en'): Promise<Product | null> {
+export async function getProductById(id: number, locale: string = 'en'): Promise<LocalizedProduct | null> {
   try {
     // If Supabase is not configured, return mock data
     if (!isSupabaseConfigured()) {
       console.warn("Supabase not configured. Using mock product data.");
       const product = mockProducts.find(p => p.id === id);
-      return Promise.resolve(product ? getLocalizedProduct(product, locale) : null);
+      return Promise.resolve(product ? localizeProduct(product, locale) : null);
     }
 
     const { data, error } = await supabase.from("products").select("*").eq("id", id).single();
@@ -132,14 +144,14 @@ export async function getProductById(id: number, locale: string = 'en'): Promise
     if (error) {
       console.error("Error fetching product:", error);
       const mockProduct = mockProducts.find(p => p.id === id);
-      return mockProduct ? getLocalizedProduct(mockProduct, locale) : null;
+      return mockProduct ? localizeProduct(mockProduct, locale) : null;
     }
 
-    return data ? getLocalizedProduct(data, locale) : null;
+    return data ? localizeProduct(data, locale) : null;
   } catch (e) {
     console.error("Error fetching product:", e);
     const mockProduct = mockProducts.find(p => p.id === id);
-    return mockProduct ? getLocalizedProduct(mockProduct, locale) : null;
+    return mockProduct ? localizeProduct(mockProduct, locale) : null;
   }
 }
 

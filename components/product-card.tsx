@@ -4,7 +4,7 @@ import Image from "next/image"
 import { Bell, BadgePercent } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { AddToCartButton } from "./add-to-cart-button"
+import { AddToCartButton } from "@/components/add-to-cart-button"
 import { useState, useEffect } from "react"
 import { StatsigUser, createFeatureGate, identify } from "../flags"
 import { useI18n } from "@/context/i18n-context"
@@ -35,28 +35,27 @@ function useFeatureFlag(flagKey: string) {
   return { enabled, loading }
 }
 
-interface Product {
-  id: number
-  name: string
-  type: string
-  size: string
-  price: number
-  image: string
-  returnable: boolean
-  inStock: boolean
-}
-
-interface ProductCardProps {
-  product: Product
-}
-
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({
+  product,
+}: {
+  product: {
+    id: number
+    name: string
+    type: string
+    price: number
+    image: string
+    size: string
+    returnable: boolean
+    inStock: boolean
+    brand?: string
+  }
+}) {
   const { enabled: discountBadgeEnabled, loading: flagLoading } = useFeatureFlag("product_discount_badge")
   const [imgSrc, setImgSrc] = useState(product.image || '/placeholder_fallback.png')
   const { t, locale } = useI18n()
   
   return (
-    <div className="bg-white rounded-lg overflow-hidden">
+    <div className="relative group overflow-hidden rounded-lg shadow-md hover:shadow-lg transition-all duration-300 ease-in-out">
       <div className="relative">
         <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
           <div className="bg-gray-100 text-[#202020] text-xs font-medium px-2 py-1 rounded">{product.type}</div>

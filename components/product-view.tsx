@@ -11,6 +11,7 @@ import { FilterSidebar } from "@/components/filters/filter-sidebar"
 import { useFilter } from "@/context/filter-context"
 import { FilterTags } from "@/components/filters/filter-tags"
 import { useI18n } from "@/context/i18n-context"
+import { ProductSubMenu } from "@/components/product-sub-menu"
 
 export function ProductView({ pageTitle }: { pageTitle?: string }) {
   const { staticSidebarEnabled, filteredProductCount } = useFilter()
@@ -36,10 +37,6 @@ export function ProductView({ pageTitle }: { pageTitle?: string }) {
             <FilterSidebar />
             <div className="flex-1 ml-8 flex flex-col">
               <PromotionalBanner />
-              {/* Applied filters bar */}
-              <div className="mb-4">
-                <FilterTags />
-              </div>
               {/* Product count */}
               <div className="mb-2 text-gray-700 font-medium">{t('products.products_count', { count: filteredProductCount })}</div>
               <Suspense fallback={<ProductListSkeleton />}>
@@ -63,6 +60,8 @@ export function ProductView({ pageTitle }: { pageTitle?: string }) {
                 </span>
               </span>
             </div>
+            {/* Sub menu */}
+            <ProductSubMenu />
             <FilterBar />
             <FilterSheet />
           </div>
