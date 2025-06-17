@@ -292,13 +292,33 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
       const products = await getProducts()
       if (!products || products.length === 0) return
 
+      // Helper function to extract brand from product name
+      const extractBrand = (productName: string): string => {
+        const name = productName.toLowerCase()
+        
+        // Handle known multi-word brands
+        if (name.includes('coca cola') || name.includes('coca-cola')) {
+          return 'Coca-Cola'
+        }
+        if (name.includes('body armor') || name.includes('bodyarmor')) {
+          return 'BODYARMOR'
+        }
+        if (name.includes('vitamin water') || name.includes('vitaminwater')) {
+          return 'vitaminwater'
+        }
+        
+        // For other brands, take the first word and capitalize it
+        const firstWord = productName.split(" ")[0]
+        return firstWord.charAt(0).toUpperCase() + firstWord.slice(1).toLowerCase()
+      }
+
       const brands = new Set<string>()
       const sizes = new Set<string>()
       let minPrice = Infinity
       let maxPrice = 0
 
       products.forEach(product => {
-        if (product.name) brands.add(product.name.split(" ")[0])
+        if (product.name) brands.add(extractBrand(product.name))
         if (product.size) sizes.add(product.size)
         if (product.price < minPrice) minPrice = product.price
         if (product.price > maxPrice) maxPrice = product.price
@@ -307,7 +327,7 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
       const dynamicCategories: FilterCategory[] = [
         {
           id: "brand",
-          label: "Brand",
+          label: "filters.brand_label",
           type: FilterType.CHECKBOX,
           isExpanded: true,
           options: Array.from(brands)
@@ -322,7 +342,7 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
         },
         {
           id: "size",
-          label: "Size",
+          label: "filters.size_label",
           type: FilterType.CHECKBOX,
           isExpanded: true,
           options: Array.from(sizes)
@@ -337,7 +357,7 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
         },
         {
           id: "price",
-          label: "Price",
+          label: "filters.price_label",
           type: FilterType.RANGE,
           isExpanded: true,
           options: [

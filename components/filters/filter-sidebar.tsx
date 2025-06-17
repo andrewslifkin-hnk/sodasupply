@@ -1,3 +1,5 @@
+"use client"
+
 import React from "react"
 import { useFilter } from "@/context/filter-context"
 import { FilterCategory as FilterCategoryComponent } from "./filter-category"
@@ -9,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { FilterType, ToggleFilterOption } from "@/types/filter-types"
 import type { FilterCategory } from "@/types/filter-types"
 import { FilterToggle } from "./filter-toggle"
+import { useI18n } from "@/context/i18n-context"
 
 export function FilterSidebar() {
   const {
@@ -19,6 +22,7 @@ export function FilterSidebar() {
     setSortOption,
   } = useFilter()
   const isMobile = useMediaQuery("(max-width: 768px)")
+  const { t } = useI18n()
 
   if (isMobile) return null
 
@@ -72,7 +76,7 @@ export function FilterSidebar() {
         ))}
       </div>
       <div className="mt-6 text-sm text-gray-500">
-        {filteredProductCount} products found
+        {t('filters.products_found', { count: filteredProductCount })}
       </div>
     </aside>
   )

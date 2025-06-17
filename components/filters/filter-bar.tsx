@@ -4,23 +4,29 @@ import { SlidersHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useFilter } from "@/context/filter-context"
-import { FilterTags } from "./filter-tags"
+import { useFilter, type SortOption } from "@/context/filter-context"
 import { useMediaQuery } from "@/hooks/use-media-query"
-import type { SortOption } from "@/types/filter-types"
+import { FilterTags } from "./filter-tags"
+import { useI18n } from "@/context/i18n-context"
 
 /**
  * Filter bar component
  * Displays filter button, sort dropdown, and active filter tags
  */
 export function FilterBar() {
-  const { sortOption, setSortOption, openFilterSheet, totalActiveFilters, staticSidebarEnabled } = useFilter()
-
+  const { 
+    totalActiveFilters, 
+    openFilterSheet, 
+    sortOption, 
+    setSortOption,
+    staticSidebarEnabled 
+  } = useFilter()
+  const { t } = useI18n()
   const isMobile = useMediaQuery("(max-width: 768px)")
 
   // Handle sort option change
-  const handleSortChange = (value: string) => {
-    setSortOption(value as SortOption)
+  const handleSortChange = (value: SortOption) => {
+    setSortOption(value)
   }
 
   return (
@@ -35,7 +41,7 @@ export function FilterBar() {
             onClick={openFilterSheet}
           >
             <SlidersHorizontal className="h-4 w-4" />
-            <span>Filter products</span>
+            <span>{t('common.filter_products')}</span>
             {totalActiveFilters > 0 && (
               <Badge className="h-5 w-5 p-0 flex items-center justify-center rounded-full bg-black text-white text-xs">
                 {totalActiveFilters}
@@ -49,13 +55,13 @@ export function FilterBar() {
           <div className="w-[220px]">
             <Select value={sortOption} onValueChange={handleSortChange}>
               <SelectTrigger className="rounded-full border-gray-300">
-                <SelectValue placeholder="Sort by" />
+                <SelectValue placeholder={t('common.sort_by')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="featured">Featured</SelectItem>
-                <SelectItem value="price-low">Price: Low to High</SelectItem>
-                <SelectItem value="price-high">Price: High to Low</SelectItem>
-                <SelectItem value="newest">Newest</SelectItem>
+                <SelectItem value="featured">{t('common.featured')}</SelectItem>
+                <SelectItem value="price-low">{t('common.price_low_to_high')}</SelectItem>
+                <SelectItem value="price-high">{t('common.price_high_to_low')}</SelectItem>
+                <SelectItem value="newest">{t('common.newest')}</SelectItem>
               </SelectContent>
             </Select>
           </div>

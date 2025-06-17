@@ -7,6 +7,8 @@ import Image from "next/image"
 import { Search } from "lucide-react"
 import { getProducts } from "@/services/product-service"
 import { useState, useEffect } from "react"
+import { useI18n } from "@/context/i18n-context"
+import { formatCurrency } from "@/lib/i18n-utils"
 
 interface SearchProduct {
   id: number
@@ -23,9 +25,10 @@ export function SearchDropdown() {
   const dropdownRef = useRef<HTMLDivElement>(null)
   const [results, setResults] = useState<SearchProduct[]>([])
   const [loading, setLoading] = useState(false)
+  const { t, locale } = useI18n()
 
   // Close dropdown when clicking outside
-  useOnClickOutside(dropdownRef, closeSearch)
+  useOnClickOutside<HTMLDivElement>(dropdownRef, closeSearch)
 
   // Fetch search results when query changes
   useEffect(() => {
@@ -37,7 +40,7 @@ export function SearchDropdown() {
     async function fetchSearchResults() {
       setLoading(true)
       try {
-        const productsData = await getProducts(searchQuery)
+        const productsData = await getProducts(searchQuery, locale)
         const mappedResults = productsData.map((product) => ({
           id: product.id,
           name: product.name,
@@ -57,7 +60,7 @@ export function SearchDropdown() {
     }
 
     fetchSearchResults()
-  }, [searchQuery])
+  }, [searchQuery, locale])
 
   if (!isSearchOpen || !searchQuery) return null
 
@@ -85,7 +88,7 @@ export function SearchDropdown() {
               <p className="text-sm text-gray-500">
                 {product.type} • {product.size}
               </p>
-              <p className="font-bold mt-1">€ {product.price.toFixed(2)}</p>
+              <p className="font-bold mt-1">{formatCurrency(product.price, locale)}</p>
             </div>
             {!product.inStock && <div className="text-red-500 text-sm font-medium">out of stock</div>}
           </div>

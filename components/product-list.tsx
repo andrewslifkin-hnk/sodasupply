@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react"
 import { ProductCard } from "@/components/product-card"
 import { motion } from "framer-motion"
-import { getProducts } from "@/services/product-service"
+import { getProducts, type Product } from "@/services/product-service"
 import { ProductListSkeleton } from "@/components/skeletons"
 import { useFilter } from "@/context/filter-context"
+import { useI18n } from "@/context/i18n-context"
 
-interface Product {
+interface ProductCardData {
   id: number
   name: string
   type: string
@@ -20,23 +21,23 @@ interface Product {
 }
 
 export default function ProductList() {
-  const [products, setProducts] = useState<Product[]>([])
+  const [products, setProducts] = useState<ProductCardData[]>([])
   const [loading, setLoading] = useState(true)
   const { searchQuery, sortOption, filterProducts, setFilteredProductCount } = useFilter()
+  const { t, locale } = useI18n()
 
-  // Fetch products whenever search query changes
+  // Fetch products whenever search query or locale changes
   useEffect(() => {
     let isMounted = true
 
     async function fetchProducts() {
       try {
         setLoading(true)
-        // In a real app, you would pass the filters to your API
-        // Here we'll fetch all products and filter them client-side
-        const productsData = await getProducts(searchQuery || "")
+        // Pass the current locale to get translated products
+        const productsData = await getProducts(searchQuery || "", locale)
 
         if (productsData.length > 0) {
-          const mappedProducts = productsData.map((product) => ({
+          const mappedProducts: ProductCardData[] = productsData.map((product) => ({
             id: product.id,
             name: product.name,
             type: product.type,
@@ -74,10 +75,21 @@ export default function ProductList() {
     return () => {
       isMounted = false
     }
-  }, [searchQuery])
+  }, [searchQuery, locale]) // Add locale as dependency
 
   // Apply filters to products (now solely from context)
-  const filteredProducts = filterProducts(products)
+  const productDataForFiltering = products.map(p => ({
+    ...p,
+    image_url: p.image,
+    in_stock: p.inStock,
+    description: '', // Add empty description for filter compatibility
+  }))
+  
+  const filteredProducts = filterProducts(productDataForFiltering).map(p => ({
+    ...p,
+    image: p.image_url,
+    inStock: p.in_stock,
+  }))
 
   // Update the filtered product count in the context
   useEffect(() => {
@@ -106,8 +118,8 @@ export default function ProductList() {
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {sortedProducts.length === 0 ? (
         <div className="col-span-full text-center py-12">
-          <p className="text-lg text-gray-500">No products found matching your criteria</p>
-          <p className="text-sm text-gray-400 mt-2">Try adjusting your filters or search term</p>
+          <p className="text-lg text-gray-500">{t('products.no_products_found')}</p>
+          <p className="text-sm text-gray-400 mt-2">{t('products.try_adjusting_filters')}</p>
         </div>
       ) : (
         sortedProducts.map((product) => (
@@ -128,7 +140,7 @@ export default function ProductList() {
 }
 
 // Default products as fallback
-const defaultProducts = [
+const defaultProducts: ProductCardData[] = [
   {
     id: 27,
     name: "Premium Cola Variety Pack",

@@ -8,65 +8,46 @@ import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useOrders, type Order } from "@/context/orders-context"
-import { formatCurrency } from "@/lib/utils"
+import { formatCurrency } from "@/lib/i18n-utils"
 import { Filter, ShoppingCart } from "lucide-react"
 import { useCart } from "@/context/cart-context"
+import { useI18n } from "@/context/i18n-context"
 
 export default function OrdersPage() {
   const router = useRouter()
   const { orders: contextOrders, getAllOrders, isLoading: ordersLoading } = useOrders()
   const { addToCart } = useCart()
+  const { t, locale } = useI18n()
   
   // State for local data handling
   const [localOrders, setLocalOrders] = useState<Order[]>(contextOrders || [])
   const [isLoading, setIsLoading] = useState(true)
   
-  // Fetch orders when component mounts - ensure this only runs once
+  // Initialize data on component mount
   useEffect(() => {
-    // Define the fetch function inside useEffect to avoid dependency issues
-    async function fetchOrders() {
+    const initializeOrders = async () => {
       try {
         setIsLoading(true)
-        
-        // First try to get orders from the context provider (which tries Supabase first)
         const fetchedOrders = await getAllOrders()
-        
         if (fetchedOrders && fetchedOrders.length > 0) {
-          console.log(`Loaded ${fetchedOrders.length} orders`);
           setLocalOrders(fetchedOrders)
-        } else {
-          console.log("No orders found from primary source");
-          
-          // As last resort, try direct localStorage access
-          try {
-            const localOrdersJson = localStorage.getItem('orders');
-            if (localOrdersJson) {
-              const parsedOrders = JSON.parse(localOrdersJson);
-              if (Array.isArray(parsedOrders) && parsedOrders.length > 0) {
-                console.log(`Using ${parsedOrders.length} orders directly from localStorage`);
-                setLocalOrders(parsedOrders)
-              } else {
-                setLocalOrders([])
-              }
-            } else {
-              setLocalOrders([])
-            }
-          } catch (localError) {
-            console.error("Error accessing localStorage directly:", localError);
-            setLocalOrders([])
-          }
         }
       } catch (error) {
-        console.error("Error fetching orders:", error)
-        // If all fetch methods fail, set empty array
-        setLocalOrders([])
+        console.error("Error loading orders:", error)
       } finally {
         setIsLoading(false)
       }
     }
-    
-    fetchOrders()
-  }, []) // Empty dependency array to ensure it only runs once
+
+    initializeOrders()
+  }, [getAllOrders])
+
+  // Update local state when context orders change
+  useEffect(() => {
+    if (contextOrders) {
+      setLocalOrders(contextOrders)
+    }
+  }, [contextOrders])
   
   // Safely group orders by month with defensive programming
   const groupedOrders = (localOrders || []).reduce<Record<string, Order[]>>((acc, order) => {
@@ -186,6 +167,95 @@ export default function OrdersPage() {
            order.items.some(item => item && typeof item.id === 'number');
   };
   
+  // Handle reorder - add all items from an order back to cart
+  const handleReorder = (order: Order) => {
+    if (order.items && order.items.length > 0) {
+      order.items.forEach(item => {
+        // Convert order item to cart item format
+        const cartItem = {
+          id: item.id || Math.random(), // fallback ID if id not available
+          name: item.name,
+          price: item.price,
+          image: item.image || "/images/placeholder.svg",
+          type: item.type || "Product",
+          size: "Standard" // Default size since not available in OrderItem
+        }
+        
+        // Add each item with its quantity
+        for (let i = 0; i < item.quantity; i++) {
+          addToCart(cartItem)
+        }
+      })
+      
+      // Navigate to cart or products page
+      router.push("/")
+    }
+  }
+
+  // Helper function to get order status styling
+  const getOrderStatusStyle = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'delivered':
+        return 'bg-green-100 text-green-800'
+      case 'processing':
+        return 'bg-blue-100 text-blue-800'
+      case 'shipped':
+        return 'bg-purple-100 text-purple-800'
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800'
+      case 'cancelled':
+        return 'bg-red-100 text-red-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  // Helper function to get translated status
+  const getTranslatedStatus = (status: string) => {
+    const statusKey = status.toLowerCase() as 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
+    return t(`orders.status.${statusKey}`)
+  }
+
+  // Helper function to format order date
+  const formatOrderDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString)
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      })
+    } catch {
+      return dateString
+    }
+  }
+
+  // Show a skeleton loading state
+  const renderOrderSkeleton = () => (
+    <div className="animate-pulse">
+      {[1, 2, 3].map(i => (
+        <div key={i} className="bg-white rounded-lg border border-gray-200 p-6 mb-4">
+          <div className="flex justify-between items-start mb-4">
+            <div className="flex-1">
+              <div className="h-4 bg-gray-200 rounded w-32 mb-2"></div>
+              <div className="h-3 bg-gray-200 rounded w-24"></div>
+            </div>
+            <div className="h-6 bg-gray-200 rounded w-16"></div>
+          </div>
+          <div className="space-y-3">
+            <div className="h-4 bg-gray-200 rounded w-full"></div>
+            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+
+  // Helper function to navigate to order details
+  const handleViewOrder = (orderId: string) => {
+    router.push(`/orders/${orderId}`)
+  }
+  
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header />
@@ -193,17 +263,17 @@ export default function OrdersPage() {
       <main className="flex-1 container mx-auto py-8 px-4 md:px-8">
         <div className="w-full max-w-5xl mx-auto">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold">My Orders</h1>
+            <h1 className="text-2xl font-bold">{t('orders.my_orders')}</h1>
             
             <Button variant="outline" size="sm" className="flex items-center gap-2">
               <Filter className="h-4 w-4" />
-              <span>All filters</span>
+              <span>{t('common.all_filters')}</span>
             </Button>
           </div>
           
           {isLoading ? (
             <div className="flex justify-center items-center py-12">
-              <p>Loading your orders...</p>
+              <p>{t('orders.loading_orders')}</p>
             </div>
           ) : localOrders && localOrders.length > 0 ? (
             <div className="space-y-8">
@@ -232,7 +302,7 @@ export default function OrdersPage() {
                           <div className="mb-3">
                             <div className="font-medium">{order.orderNumber || 'Order'}</div>
                             <div className="text-sm text-gray-500">Order placed: {order.orderDate || 'Unknown date'}</div>
-                            <div className="text-sm text-gray-500">Total: {typeof order.total === 'number' ? formatCurrency(order.total) : '€0.00'}</div>
+                            <div className="text-sm text-gray-500">Total: {typeof order.total === 'number' ? formatCurrency(order.total, locale) : formatCurrency(0, locale)}</div>
                           </div>
                           
                           {/* Order items preview */}

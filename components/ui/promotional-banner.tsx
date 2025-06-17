@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import Statsig from "statsig-js"
 import { Button } from "@/components/ui/button"
 import { Tag } from "lucide-react"
+import { useI18n } from "@/context/i18n-context"
 
 let statsigInitialized = false;
 let statsigInitPromise: Promise<void> | null = null;
@@ -31,6 +32,7 @@ async function ensureStatsigInitialized() {
 export function PromotionalBanner() {
   const [showBanner, setShowBanner] = useState(false)
   const [loading, setLoading] = useState(true)
+  const { t } = useI18n()
 
   useEffect(() => {
     async function checkExperiment() {
@@ -57,17 +59,17 @@ export function PromotionalBanner() {
       <div className="flex flex-col md:flex-row items-center justify-between">
         <div className="flex items-center space-x-2 mb-2 md:mb-0">
           <Tag className="h-5 w-5" />
-          <h3 className="font-bold">Limited Time Offer</h3>
+          <h3 className="font-bold">{t('promo.limited_time_offer')}</h3>
         </div>
         <p className="text-sm md:text-base text-center md:text-left flex-1 mx-4">
-          Free shipping on orders over €50! Use code <span className="font-bold">FREESHIP50</span> at checkout.
+          {t('promo.free_shipping_message')} <span className="font-bold">{t('promo.promo_code')}</span> {t('promo.at_checkout')}.
         </p>
         <Button
           variant="secondary"
           className="bg-white text-teal-600 hover:bg-gray-100 whitespace-nowrap"
           onClick={handleShopNowClick}
         >
-          Shop Now
+          {t('promo.shop_now')}
         </Button>
       </div>
     </div>

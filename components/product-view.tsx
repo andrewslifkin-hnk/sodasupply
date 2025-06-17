@@ -10,10 +10,12 @@ import WelcomeMenu from "@/components/WelcomeMenu"
 import { FilterSidebar } from "@/components/filters/filter-sidebar"
 import { useFilter } from "@/context/filter-context"
 import { FilterTags } from "@/components/filters/filter-tags"
+import { useI18n } from "@/context/i18n-context"
 
 export function ProductView({ pageTitle }: { pageTitle?: string }) {
   const { staticSidebarEnabled, filteredProductCount } = useFilter()
-  const title = pageTitle || "All products"
+  const { t } = useI18n()
+  const title = pageTitle || t('products.all_products')
   
   return (
     <div className="content-container">
@@ -23,9 +25,9 @@ export function ProductView({ pageTitle }: { pageTitle?: string }) {
           <div className="flex items-center justify-between w-full mt-2 mb-4">
             <h1 className="text-2xl font-bold tracking-tight text-[#202020]">{title}</h1>
             <span className="text-[#202020]/80">
-              Distributor:{" "}
+              {t('products.distributor')}:{" "}
               <span className="font-medium underline underline-offset-4 decoration-black/30 hover:decoration-black transition-all cursor-pointer">
-                Atlas Beverages
+                {t('products.atlas_beverages')}
               </span>
             </span>
           </div>
@@ -39,7 +41,7 @@ export function ProductView({ pageTitle }: { pageTitle?: string }) {
                 <FilterTags />
               </div>
               {/* Product count */}
-              <div className="mb-2 text-gray-700 font-medium">{filteredProductCount} products</div>
+              <div className="mb-2 text-gray-700 font-medium">{t('products.products_count', { count: filteredProductCount })}</div>
               <Suspense fallback={<ProductListSkeleton />}>
                 <ProductList />
               </Suspense>
@@ -48,27 +50,25 @@ export function ProductView({ pageTitle }: { pageTitle?: string }) {
         </>
       ) : (
         <>
-          <div className="space-y-2 mb-6">
-            <WelcomeMenu />
-            <h1 className="text-2xl font-bold tracking-tight text-[#202020]">{title}</h1>
-            <p className="text-[#202020]/80">
-              Distributor:{" "}
-              <span className="font-medium underline underline-offset-4 decoration-black/30 hover:decoration-black transition-all cursor-pointer">
-                Atlas Beverages
-              </span>
-            </p>
-          </div>
+          {/* Mobile/tablet layout */}
           <PromotionalBanner />
-          <FilterBar />
-          <div className="flex w-full">
-            <div className="flex-1">
-              <FilterSheet />
-              <div className="h-px w-full bg-gray-200 my-4"></div>
-              <Suspense fallback={<ProductListSkeleton />}>
-                <ProductList />
-              </Suspense>
+          <WelcomeMenu />
+          <div className="mb-4">
+            <h1 className="text-2xl font-bold tracking-tight text-[#202020] mb-4">{title}</h1>
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-[#202020]/80">
+                {t('products.distributor')}:{" "}
+                <span className="font-medium underline underline-offset-4 decoration-black/30 hover:decoration-black transition-all cursor-pointer">
+                  {t('products.atlas_beverages')}
+                </span>
+              </span>
             </div>
+            <FilterBar />
+            <FilterSheet />
           </div>
+          <Suspense fallback={<ProductListSkeleton />}>
+            <ProductList />
+          </Suspense>
         </>
       )}
     </div>

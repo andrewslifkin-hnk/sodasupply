@@ -11,6 +11,8 @@ import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { getProducts } from "@/services/product-service"
 import { useState } from "react"
+import { useI18n } from "@/context/i18n-context"
+import { formatCurrency } from "@/lib/i18n-utils"
 
 interface SearchProduct {
   id: number
@@ -29,6 +31,7 @@ export function SearchOverlay() {
   const [results, setResults] = useState<SearchProduct[]>([])
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const { t, locale } = useI18n()
 
   useEffect(() => {
     if (isSearchOpen && inputRef.current) {
@@ -47,7 +50,7 @@ export function SearchOverlay() {
     async function fetchSearchResults() {
       setLoading(true)
       try {
-        const productsData = await getProducts(searchQuery)
+        const productsData = await getProducts(searchQuery, locale)
         const mappedResults = productsData.map((product) => ({
           id: product.id,
           name: product.name,
@@ -67,7 +70,7 @@ export function SearchOverlay() {
     }
 
     fetchSearchResults()
-  }, [searchQuery])
+  }, [searchQuery, locale])
 
   const handleSearchSubmit = (e: FormEvent) => {
     e.preventDefault()
@@ -112,13 +115,13 @@ export function SearchOverlay() {
         <div className="flex items-center p-4 border-b">
           <Button type="button" variant="ghost" size="icon" onClick={closeSearch} className="mr-2">
             <ArrowLeft className="h-5 w-5" />
-            <span className="sr-only">Back</span>
+            <span className="sr-only">{t('common.back')}</span>
           </Button>
           <div className="relative flex-1">
             <Input
               ref={inputRef}
               type="text"
-              placeholder="Search products"
+              placeholder={t('search.search_products_placeholder')}
               value={searchQuery}
               onChange={handleSearchChange}
               inputMode="search"
@@ -138,11 +141,11 @@ export function SearchOverlay() {
       </form>
 
       {!searchQuery ? (
-        <div className="p-4 text-gray-500">Type to search for products</div>
+        <div className="p-4 text-gray-500">{t('search.type_to_search')}</div>
       ) : (
         <div className="flex-1 overflow-auto" ref={resultsRef} onTouchMove={handleTouchMove}>
           <div className="p-3 border-b text-sm text-gray-500">
-            {loading ? "Searching..." : `${results.length} results`}
+            {loading ? t('search.searching') : t('search.results_count', { count: results.length })}
           </div>
 
           <div className="divide-y">
@@ -166,9 +169,9 @@ export function SearchOverlay() {
                   <p className="text-sm text-gray-500">
                     {product.type} • {product.size}
                   </p>
-                  <p className="font-bold mt-1">€ {product.price.toFixed(2)}</p>
+                  <p className="font-bold mt-1">{formatCurrency(product.price, locale)}</p>
                 </div>
-                {!product.inStock && <div className="text-red-500 text-sm font-medium">out of stock</div>}
+                {!product.inStock && <div className="text-red-500 text-sm font-medium">{t('products.out_of_stock')}</div>}
               </div>
             ))}
           </div>
@@ -179,7 +182,7 @@ export function SearchOverlay() {
               onClick={submitSearch}
             >
               <Search className="h-4 w-4" />
-              <span className="text-sm">View all results for "{searchQuery}"</span>
+              <span className="text-sm">{t('search.view_all_results', { query: searchQuery })}</span>
             </div>
           )}
         </div>

@@ -21,6 +21,7 @@ import { CartSheet } from "@/components/cart/cart-sheet"
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { useFilter } from "@/context/filter-context"
 import { getProductsByType } from "@/services/product-service"
+import { useI18n } from "@/context/i18n-context"
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false)
@@ -28,6 +29,7 @@ export default function Header() {
   const { totalItems } = useCart()
   const { isSearchOpen, searchQuery, openSearch, setSearchQuery, submitSearch } = useSearch()
   const { clearAllFilters, clearAndSetTypeFilter } = useFilter()
+  const { t } = useI18n()
   const isMobile = useMediaQuery("(max-width: 768px)")
   const searchContainerRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
@@ -111,7 +113,7 @@ export default function Header() {
                   <SheetTrigger asChild>
                     <Button variant="ghost" size="icon" className="text-white mr-2 md:hidden">
                       <Menu className="h-5 w-5" />
-                      <span className="sr-only">Toggle menu</span>
+                      <span className="sr-only">{t('common.menu')}</span>
                     </Button>
                   </SheetTrigger>
                   <SheetContent side="left" className="w-[300px] sm:w-[400px]">
@@ -123,16 +125,16 @@ export default function Header() {
                         }}
                         className="text-left text-lg font-medium bg-transparent border-0 p-0"
                       >
-                        Home
+                        {t('navigation.home')}
                       </button>
                       <Link href="/categories" className="text-lg font-medium">
-                        Categories
+                        {t('navigation.categories')}
                       </Link>
                       <Link href="/deals" className="text-lg font-medium">
-                        Deals
+                        {t('navigation.deals')}
                       </Link>
                       <Link href="/about" className="text-lg font-medium">
-                        About
+                        {t('footer.about_us')}
                       </Link>
                     </nav>
                   </SheetContent>
@@ -141,7 +143,7 @@ export default function Header() {
                   href="/" 
                   className="font-bold text-xl text-white tracking-[-2px]"
                 >
-                  SodaSupply
+                  {t('footer.company_name')}
                 </Link>
               </div>
               
@@ -153,7 +155,7 @@ export default function Header() {
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <Input
                         type="text"
-                        placeholder="Search products"
+                        placeholder={t('search.search_products')}
                         value={searchQuery}
                         onChange={handleSearchChange}
                         onFocus={openSearch}
@@ -169,7 +171,7 @@ export default function Header() {
                           className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 rounded-full hover:bg-gray-700 transition-colors"
                         >
                           <X className="h-4 w-4 text-gray-400 hover:text-white" />
-                          <span className="sr-only">Clear search</span>
+                          <span className="sr-only">{t('search.clear_search')}</span>
                         </Button>
                       )}
                     </div>
@@ -185,7 +187,7 @@ export default function Header() {
 
                 <Button variant="ghost" size="icon" className="text-white">
                   <Bell className="h-5 w-5" />
-                  <span className="sr-only">Notifications</span>
+                  <span className="sr-only">{t('navigation.notifications')}</span>
                 </Button>
 
                 <Button variant="ghost" size="icon" className="text-white relative" onClick={() => setIsCartOpen(true)}>
@@ -195,7 +197,7 @@ export default function Header() {
                       {totalItems}
                     </Badge>
                   )}
-                  <span className="sr-only">Cart</span>
+                  <span className="sr-only">{t('navigation.cart')}</span>
                 </Button>
               </div>
             </div>
@@ -209,7 +211,7 @@ export default function Header() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 type="text"
-                placeholder="Search products"
+                placeholder={t('search.search_products')}
                 className="pl-10 bg-gray-800 border-gray-700 text-white placeholder:text-gray-400 w-full rounded-full focus-visible:ring-gray-600"
                 value={searchQuery}
                 onChange={handleSearchChange}
@@ -225,7 +227,7 @@ export default function Header() {
                   className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 rounded-full hover:bg-gray-700 transition-colors"
                 >
                   <X className="h-4 w-4 text-gray-400 hover:text-white" />
-                  <span className="sr-only">Clear search</span>
+                  <span className="sr-only">{t('search.clear_search')}</span>
                 </Button>
               )}
             </div>
@@ -243,25 +245,25 @@ export default function Header() {
                   href="/" 
                   className="text-white hover:text-gray-300 font-medium text-sm transition-colors"
                 >
-                  Products
+                  {t('navigation.products')}
                 </Link>
                 <Link 
                   href="/club" 
                   className="text-white hover:text-gray-300 font-medium text-sm transition-colors"
                 >
-                  Club
+                  {t('navigation.club')}
                 </Link>
                 <Link 
                   href="/orders" 
                   className="text-white hover:text-gray-300 font-medium text-sm transition-colors"
                 >
-                  My Orders
+                  {t('navigation.my_orders')}
                 </Link>
                 <Link 
                   href="/account" 
                   className="text-white hover:text-gray-300 font-medium text-sm transition-colors"
                 >
-                  My Account
+                  {t('navigation.my_account')}
                 </Link>
               </div>
             </nav>
@@ -276,9 +278,9 @@ export default function Header() {
             <div className="content-container">
               <nav className="flex items-center h-12">
                 {loadingCategories ? (
-                  <div className="text-gray-400 text-sm">Loading categories...</div>
+                  <div className="text-gray-400 text-sm">{t('common.loading')}</div>
                 ) : categories.length === 0 ? (
-                  <div className="text-gray-400 text-sm">No categories found</div>
+                  <div className="text-gray-400 text-sm">{t('products.no_categories_found')}</div>
                 ) : (
                   <ul className="flex space-x-6 w-full">
                     <li>
@@ -297,27 +299,27 @@ export default function Header() {
                           )
                         }
                       >
-                        All products
+                        {t('footer.all_products')}
                       </a>
                     </li>
-                    {categories.map((cat) => (
-                      <li key={cat}>
+                    {categories.map(category => (
+                      <li key={category}>
                         <a
-                          href={`/products?type=${encodeURIComponent(cat)}`}
+                          href={`/products?type=${encodeURIComponent(category)}`}
                           onClick={e => {
                             e.preventDefault();
-                            clearAndSetTypeFilter(cat);
+                            clearAndSetTypeFilter(category);
                           }}
                           className={
                             cn(
                               "text-sm font-medium px-1 pb-2 border-b-2 transition-colors",
-                              currentCategory.toLowerCase() === cat.toLowerCase()
+                              currentCategory === category
                                 ? "text-green-700 border-green-700 font-semibold"
                                 : "text-gray-800 hover:text-black border-transparent hover:border-gray-400"
                             )
                           }
                         >
-                          {cat}
+                          {category}
                         </a>
                       </li>
                     ))}
@@ -329,12 +331,12 @@ export default function Header() {
         </div>
       )}
 
-      {/* Mobile search overlay */}
-      {isMobile && <SearchOverlay />}
-
+      {/* Search overlay for mobile/desktop */}
+      <SearchOverlay />
+      
       {/* Mobile store sheet */}
-      {isMobile && <StoreSheet />}
-
+      <StoreSheet />
+      
       {/* Cart sheet */}
       <CartSheet isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </>

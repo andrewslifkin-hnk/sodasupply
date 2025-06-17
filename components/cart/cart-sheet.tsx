@@ -1,145 +1,146 @@
 "use client"
 
-import { Trash2, ShoppingBag } from "lucide-react"
-import { useCart } from "@/context/cart-context"
-import { useStore } from "@/context/store-context"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import { useMediaQuery } from "@/hooks/use-media-query"
+import { X, Plus, Minus } from "lucide-react"
+import { useCart } from "@/context/cart-context"
 import Image from "next/image"
-import { CartItemQuantity } from "./cart-item-quantity"
-import { formatCurrency } from "@/lib/utils"
 import { useRouter } from "next/navigation"
+import { useI18n } from "@/context/i18n-context"
+import { formatCurrency } from "@/lib/i18n-utils"
 
-export function CartSheet({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const { items, removeFromCart, totalItems } = useCart()
-  const { selectedStore } = useStore()
-  const isMobile = useMediaQuery("(max-width: 768px)")
+interface CartSheetProps {
+  isOpen: boolean
+  onClose: () => void
+}
+
+export function CartSheet({ isOpen, onClose }: CartSheetProps) {
+  const { items, updateQuantity, removeFromCart, totalItems } = useCart()
   const router = useRouter()
+  const { t, locale } = useI18n()
 
   const subtotal = items.reduce((total, item) => total + item.price * item.quantity, 0)
-  const vat = subtotal * 0.21 // 21% VAT
+  const vat = subtotal * 0.2 // 20% VAT
   const total = subtotal + vat
 
   const handleCheckout = () => {
-    // Umami event tracking
-    if (typeof window !== 'undefined' && window.umami) {
-      window.umami.track('begin_checkout', {
-        total,
-        items_count: items.length,
-        store_id: selectedStore?.id,
-        store_name: selectedStore?.name,
-      })
-    }
     onClose()
     router.push("/checkout")
   }
 
   const handleContinueShopping = () => {
     onClose()
-    router.push("/")
+    router.push("/products")
   }
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent side={isMobile ? "bottom" : "right"} className={isMobile ? "h-[90vh] rounded-t-xl" : "w-[400px]"}>
-        <SheetHeader className="flex flex-row items-center justify-between mb-4">
-          <SheetTitle>Cart</SheetTitle>
+      <SheetContent side="right" className="w-full sm:max-w-lg p-0 flex flex-col">
+        <SheetHeader className="p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <SheetTitle className="text-lg font-semibold">
+              {t('cart.title')} ({t('cart.item_count', { 
+                count: totalItems, 
+                plural: totalItems === 1 ? '' : 's' 
+              })})
+            </SheetTitle>
+            <SheetClose asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <X className="h-4 w-4" />
+              </Button>
+            </SheetClose>
+          </div>
         </SheetHeader>
 
-        {selectedStore && (
-          <div className="flex items-center gap-3 mb-4 pb-4 border-b">
-            <div className="bg-gray-100 p-2 rounded-full">
-              <ShoppingBag className="h-5 w-5 text-gray-700" />
-            </div>
-            <div>
-              <div className="font-medium">{selectedStore.name}</div>
-              <div className="text-sm text-gray-500">
-                {selectedStore.address}, {selectedStore.city}
+        {items.length === 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+            <div className="mb-4">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="text-2xl">🛒</div>
               </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">{t('cart.empty_title')}</h3>
+              <p className="text-gray-500">{t('cart.empty_description')}</p>
             </div>
-          </div>
-        )}
-
-        {totalItems > 0 ? (
-          <div className="text-sm text-gray-500 mb-4">
-            {totalItems} {totalItems === 1 ? "product" : "products"}
+            <Button onClick={handleContinueShopping} className="w-full">
+              {t('cart.continue_shopping')}
+            </Button>
           </div>
         ) : (
-          <div className="text-center py-8">
-            <ShoppingBag className="h-12 w-12 mx-auto text-gray-300 mb-3" />
-            <h3 className="text-lg font-medium mb-1">Your cart is empty</h3>
-            <p className="text-gray-500 mb-4">Add some products to your cart</p>
-            <Button onClick={handleContinueShopping}>Continue shopping</Button>
-          </div>
-        )}
-
-        {totalItems > 0 && (
           <>
-            <div className="space-y-4 overflow-y-auto max-h-[calc(90vh-20rem)]">
-              {items.map((item) => (
-                <div key={item.id} className="flex gap-3 pb-4 border-b">
-                  <div className="relative h-20 w-20 bg-gray-100 rounded">
-                    <Image
-                      src={item.image || `/placeholder.svg?height=80&width=80&query=${encodeURIComponent(item.name)}`}
-                      alt={item.name}
-                      fill
-                      className="object-contain p-2"
-                      sizes="80px"
-                    />
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="space-y-4">
+                {items.map((item) => (
+                  <div key={item.id} className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg">
+                    <div className="relative h-16 w-16 bg-gray-100 rounded overflow-hidden flex-shrink-0">
+                      <Image
+                        src={item.image || `/placeholder.svg?height=80&width=80&query=${encodeURIComponent(item.name)}`}
+                        alt={item.name}
+                        fill
+                        className="object-contain p-2"
+                        sizes="64px"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-sm line-clamp-2">{item.name}</h4>
+                      <p className="text-xs text-gray-500 mt-1">{item.type} · {item.size}</p>
+                      <div className="flex items-center justify-between mt-2">
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => updateQuantity(item.id, Math.max(0, item.quantity - 1))}
+                          >
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                          <span className="text-sm font-medium w-8 text-center">{item.quantity}</span>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          >
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        <div className="font-bold">{formatCurrency(item.price * item.quantity, locale)}</div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between">
-                      <h4 className="font-medium">{item.name}</h4>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-gray-500 hover:text-red-500"
-                        onClick={() => removeFromCart(item.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <div className="text-sm text-gray-500 mb-2">
-                      {item.type} · {item.size}
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <CartItemQuantity item={item} />
-                      <div className="font-bold">{formatCurrency(item.price * item.quantity)}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
 
-            <div className="mt-6">
-              <Button variant="outline" className="w-full mb-6" onClick={handleContinueShopping}>
-                Continue shopping
-              </Button>
-
-              <div className="space-y-2 mb-4">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Subtotal</span>
-                  <span className="font-medium">{formatCurrency(subtotal)}</span>
+            <div className="border-t border-gray-200 p-6 space-y-4">
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>{t('cart.subtotal')}</span>
+                  <span className="font-medium">{formatCurrency(subtotal, locale)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">VAT</span>
-                  <span className="font-medium">{formatCurrency(vat)}</span>
+                <div className="flex justify-between text-sm">
+                  <span>{t('cart.vat')}</span>
+                  <span className="font-medium">{formatCurrency(vat, locale)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Delivery</span>
-                  <span className="text-green-600">Free</span>
+                <div className="flex justify-between text-sm">
+                  <span>{t('cart.delivery')}</span>
+                  <span className="font-medium text-green-600">{t('cart.free')}</span>
+                </div>
+                <div className="border-t pt-2">
+                  <div className="flex justify-between font-semibold">
+                    <span>{t('cart.total')}</span>
+                    <span>{formatCurrency(total, locale)}</span>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex justify-between font-bold text-lg border-t pt-4 mb-6">
-                <span>Total</span>
-                <span>{formatCurrency(total)}</span>
+              <div className="space-y-2">
+                <Button onClick={handleCheckout} className="w-full">
+                  {t('cart.checkout')}
+                </Button>
+                <Button variant="outline" onClick={handleContinueShopping} className="w-full">
+                  {t('cart.continue_shopping')}
+                </Button>
               </div>
-
-              <Button className="w-full bg-black hover:bg-black/90" onClick={handleCheckout}>
-                Checkout
-              </Button>
             </div>
           </>
         )}

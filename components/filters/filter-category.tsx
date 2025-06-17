@@ -1,6 +1,6 @@
 "use client"
 
-import { ChevronUp, ChevronDown } from "lucide-react"
+import { ChevronUp, ChevronDown, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useFilter } from "@/context/filter-context"
 import { type FilterCategory as FilterCategoryType, FilterType, CheckboxFilterOption, ToggleFilterOption, RadioFilterOption, RangeFilterOption, FilterOption } from "@/types/filter-types"
@@ -10,6 +10,7 @@ import { FilterRange } from "./filter-range"
 import { FilterToggle } from "./filter-toggle"
 import { useState } from "react"
 import { Input } from "@/components/ui/input"
+import { useI18n } from "@/context/i18n-context"
 
 interface FilterCategoryProps {
   category: FilterCategoryType
@@ -23,6 +24,7 @@ export function FilterCategory({ category }: FilterCategoryProps) {
   const { toggleCategoryExpansion, clearCategoryFilters, getActiveFiltersByCategory } = useFilter()
   const [showAll, setShowAll] = useState(false)
   const [search, setSearch] = useState("")
+  const { t } = useI18n()
 
   const activeCount = getActiveFiltersByCategory(category.id).length
 
@@ -40,6 +42,28 @@ export function FilterCategory({ category }: FilterCategoryProps) {
     return option.type === FilterType.RANGE
   }
 
+  // Filter options based on search
+  const filteredOptions = category.options?.filter((option) => {
+    if (!search.trim()) return true
+
+    // For brand group, filter by search
+    const searchTerm = search.toLowerCase()
+    if (category.id === "brand" && search.trim()) {
+      return option.label.toLowerCase().includes(searchTerm)
+    }
+
+    return option.label.toLowerCase().includes(searchTerm)
+  })
+
+  // Get translated label - check if it's a translation key or direct text
+  const getTranslatedLabel = (label: string) => {
+    if (label.includes('.')) {
+      // It's a translation key
+      return t(label as any)
+    }
+    return label
+  }
+
   // Render the appropriate filter components based on category type
   const renderFilterOptions = () => {
     if (!category.options || !category.isExpanded) {
@@ -47,15 +71,8 @@ export function FilterCategory({ category }: FilterCategoryProps) {
     }
 
     const maxToShow = 5
-    // For brand group, filter by search
-    let filteredOptions = category.options
-    if (category.id === "brand" && search.trim()) {
-      filteredOptions = category.options.filter(option =>
-        option.label.toLowerCase().includes(search.trim().toLowerCase())
-      )
-    }
-    const visibleOptions = showAll ? filteredOptions : filteredOptions.slice(0, maxToShow)
-    const filteredHasMore = filteredOptions.length > maxToShow
+    const visibleOptions = showAll ? filteredOptions : filteredOptions?.slice(0, maxToShow)
+    const filteredHasMore = (filteredOptions?.length || 0) > maxToShow
 
     switch (category.type) {
       case FilterType.CHECKBOX:
@@ -63,24 +80,27 @@ export function FilterCategory({ category }: FilterCategoryProps) {
           <div className="space-y-3">
             {/* Brand search input */}
             {category.id === "brand" && (
-              <Input
-                type="text"
-                placeholder="Search brands"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="mb-2"
-              />
+              <div className="relative mb-3">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder={t('filters.search_brands')}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-10 h-9 text-sm"
+                />
+              </div>
             )}
-            {visibleOptions.filter(isCheckboxOption).map((option) => (
+            {visibleOptions?.filter(isCheckboxOption).map((option) => (
               <FilterCheckbox key={option.id} option={option} />
             ))}
             {filteredHasMore && (
               <button
-                className="text-xs text-blue-600 hover:underline mt-1"
-                onClick={() => setShowAll((v) => !v)}
+                onClick={() => setShowAll(!showAll)}
+                className="text-sm text-gray-600 hover:text-gray-800 font-medium"
                 type="button"
               >
-                {showAll ? "View less" : `View ${filteredOptions.length - maxToShow} more`}
+                {showAll ? "View less" : `View ${(filteredOptions?.length || 0) - maxToShow} more`}
               </button>
             )}
           </div>
@@ -88,16 +108,16 @@ export function FilterCategory({ category }: FilterCategoryProps) {
       case FilterType.TOGGLE:
         return (
           <div className="space-y-3">
-            {visibleOptions.filter(isToggleOption).map((option) => (
+            {visibleOptions?.filter(isToggleOption).map((option) => (
               <FilterToggle key={option.id} option={option} />
             ))}
             {filteredHasMore && (
               <button
-                className="text-xs text-blue-600 hover:underline mt-1"
-                onClick={() => setShowAll((v) => !v)}
+                onClick={() => setShowAll(!showAll)}
+                className="text-sm text-gray-600 hover:text-gray-800 font-medium"
                 type="button"
               >
-                {showAll ? "View less" : `View ${filteredOptions.length - maxToShow} more`}
+                {showAll ? "View less" : `View ${(filteredOptions?.length || 0) - maxToShow} more`}
               </button>
             )}
           </div>
@@ -141,7 +161,7 @@ export function FilterCategory({ category }: FilterCategoryProps) {
   return (
     <div className="py-4 border-b border-gray-200">
       <div className="flex items-center justify-between px-1 mb-4">
-        <h3 className="text-lg font-medium">{category.label}</h3>
+        <h3 className="text-lg font-medium">{getTranslatedLabel(category.label)}</h3>
         <div className="flex items-center gap-2">
           {activeCount > 0 && (
             <Button

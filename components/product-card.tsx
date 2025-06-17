@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils"
 import { AddToCartButton } from "./add-to-cart-button"
 import { useState, useEffect } from "react"
 import { StatsigUser, createFeatureGate, identify } from "../flags"
+import { useI18n } from "@/context/i18n-context"
+import { formatCurrency } from "@/lib/i18n-utils"
 
 // Feature flag hook for product card elements
 function useFeatureFlag(flagKey: string) {
@@ -51,6 +53,7 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   const { enabled: discountBadgeEnabled, loading: flagLoading } = useFeatureFlag("product_discount_badge")
   const [imgSrc, setImgSrc] = useState(product.image || '/placeholder_fallback.png')
+  const { t, locale } = useI18n()
   
   return (
     <div className="bg-white rounded-lg overflow-hidden">
@@ -62,7 +65,7 @@ export function ProductCard({ product }: ProductCardProps) {
           {!flagLoading && discountBadgeEnabled && (
             <div className="bg-red-500 text-white text-xs font-medium px-2 py-1 rounded flex items-center gap-1">
               <BadgePercent className="h-3 w-3" />
-              10% OFF
+              {t('products.discount_badge')}
             </div>
           )}
         </div>
@@ -90,14 +93,14 @@ export function ProductCard({ product }: ProductCardProps) {
         {product.returnable && (
           <div className="flex items-center gap-1 text-black text-xs font-medium mb-2">
             <span className="inline-block w-3 h-3 bg-black rounded-full"></span>
-            Free Returns
+            {t('products.free_returns')}
           </div>
         )}
 
         {!product.inStock && (
           <div className="flex items-center gap-1 text-red-500 text-xs font-medium mb-2">
             <span className="inline-block w-3 h-3 bg-red-500 rounded-full"></span>
-            Out of stock
+            {t('products.out_of_stock')}
           </div>
         )}
 
@@ -106,12 +109,12 @@ export function ProductCard({ product }: ProductCardProps) {
           {product.type} · {product.size}
         </div>
         <div className="flex items-center justify-between">
-          <div className="font-bold text-[#202020]">€ {product.price.toFixed(2)}</div>
+          <div className="font-bold text-[#202020]">{formatCurrency(product.price, locale)}</div>
 
           {!product.inStock && (
             <Button variant="outline" size="sm" className="text-xs h-8 gap-1">
               <Bell className="h-3 w-3" />
-              Notify me
+              {t('products.notify_me')}
             </Button>
           )}
         </div>

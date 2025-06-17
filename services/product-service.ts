@@ -10,6 +10,10 @@ export interface Product {
   description?: string
   returnable: boolean
   in_stock: boolean
+  // Translation fields
+  name_pt?: string
+  description_pt?: string
+  type_pt?: string
 }
 
 // Mock products as fallback for when database fails or is not configured
@@ -24,7 +28,10 @@ const mockProducts: Product[] = [
     image_url: "/products/Gatorade-Thirst-Quencher-Fruit-Punch-Sports-Drinks-12-fl-oz-12-Count-Bottles_be2b5bf3-06c9-4b53-b2dc-1beab3e8d0e6.080d878747414581e2c57dd14102f909.jpeg",
     description: "Replenish electrolytes with Fruit Punch flavor",
     returnable: true,
-    in_stock: true
+    in_stock: true,
+    name_pt: "Gatorade Thirst Quencher Ponche de Frutas",
+    description_pt: "Reponha eletrólitos com sabor Ponche de Frutas",
+    type_pt: "Bebida Esportiva"
   },
   {
     id: 2,
@@ -35,9 +42,25 @@ const mockProducts: Product[] = [
     image_url: "/products/OLIPOP-Prebiotic-Soda-Vintage-Cola-12-fl-oz-4-Pack-Pantry-Packs_a411ca43-2ff8-4297-bfd8-636c98da5bf6.b571756ee739db94ffcbc24556a21106.jpeg",
     description: "Prebiotic soda with Vintage Cola flavor, low sugar",
     returnable: false,
-    in_stock: true
+    in_stock: true,
+    name_pt: "OLIPOP Refrigerante Prebiótico Cola Vintage",
+    description_pt: "Refrigerante prebiótico com sabor Cola Vintage, baixo açúcar",
+    type_pt: "Refrigerante Prebiótico"
   }
 ];
+
+// Helper function to get localized product data
+function getLocalizedProduct(product: Product, locale: string): Product {
+  if (locale === 'pt-BR') {
+    return {
+      ...product,
+      name: product.name_pt || product.name,
+      description: product.description_pt || product.description,
+      type: product.type_pt || product.type,
+    }
+  }
+  return product
+}
 
 // Check if Supabase is properly configured
 const isSupabaseConfigured = () => {
@@ -53,44 +76,55 @@ const isSupabaseConfigured = () => {
   return Boolean(supabaseUrl) && Boolean(supabaseAnonKey);
 }
 
-export async function getProducts(searchQuery?: string): Promise<Product[]> {
+export async function getProducts(searchQuery?: string, locale: string = 'en'): Promise<Product[]> {
   try {
     // If Supabase is not configured, return mock data
     if (!isSupabaseConfigured()) {
       console.warn("Supabase not configured. Using mock product data.");
       // NOTE: If you want every image in /public/products to have a product, use a Node.js script to generate missing product entries and import them into Supabase or your mock data.
-      return Promise.resolve(mockProducts);
+      return Promise.resolve(mockProducts.map(product => getLocalizedProduct(product, locale)));
     }
 
+    // Select all fields including translation columns
     let query = supabase.from("products").select("*");
 
-    // Only apply search filter if searchQuery is not empty
+    // Apply search filter based on locale
     if (searchQuery && searchQuery.trim() !== "") {
-      query = query.or(`name.ilike.%${searchQuery}%,type.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
+      if (locale === 'pt-BR') {
+        // Search in both original and Portuguese fields
+        query = query.or(`name.ilike.%${searchQuery}%,type.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,name_pt.ilike.%${searchQuery}%,type_pt.ilike.%${searchQuery}%,description_pt.ilike.%${searchQuery}%`);
+      } else {
+        // Search in original fields only
+        query = query.or(`name.ilike.%${searchQuery}%,type.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
+      }
     }
 
     const { data, error } = await query.order("name");
 
     if (error) {
       console.error("Error fetching products:", error);
-      return mockProducts;
+      return mockProducts.map(product => getLocalizedProduct(product, locale));
     }
 
-    // Return database data, only fall back to mock data if no products found
-    return data && data.length > 0 ? data : mockProducts;
+    // Return localized database data, only fall back to mock data if no products found
+    if (data && data.length > 0) {
+      return data.map(product => getLocalizedProduct(product, locale));
+    } else {
+      return mockProducts.map(product => getLocalizedProduct(product, locale));
+    }
   } catch (e) {
     console.error("Error fetching products:", e);
-    return mockProducts;
+    return mockProducts.map(product => getLocalizedProduct(product, locale));
   }
 }
 
-export async function getProductById(id: number): Promise<Product | null> {
+export async function getProductById(id: number, locale: string = 'en'): Promise<Product | null> {
   try {
     // If Supabase is not configured, return mock data
     if (!isSupabaseConfigured()) {
       console.warn("Supabase not configured. Using mock product data.");
       const product = mockProducts.find(p => p.id === id);
-      return Promise.resolve(product || null);
+      return Promise.resolve(product ? getLocalizedProduct(product, locale) : null);
     }
 
     const { data, error } = await supabase.from("products").select("*").eq("id", id).single();
@@ -98,14 +132,14 @@ export async function getProductById(id: number): Promise<Product | null> {
     if (error) {
       console.error("Error fetching product:", error);
       const mockProduct = mockProducts.find(p => p.id === id);
-      return mockProduct || null;
+      return mockProduct ? getLocalizedProduct(mockProduct, locale) : null;
     }
 
-    return data;
+    return data ? getLocalizedProduct(data, locale) : null;
   } catch (e) {
     console.error("Error fetching product:", e);
     const mockProduct = mockProducts.find(p => p.id === id);
-    return mockProduct || null;
+    return mockProduct ? getLocalizedProduct(mockProduct, locale) : null;
   }
 }
 

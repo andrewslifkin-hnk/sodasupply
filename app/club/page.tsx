@@ -13,6 +13,7 @@ import { RewardDetailsSheet } from "@/components/club/reward-details-sheet"
 import { RewardSummarySheet } from "@/components/club/reward-summary-sheet"
 import { RewardConfirmationSheet } from "@/components/club/reward-confirmation-sheet"
 import { useCart } from "@/context/cart-context"
+import { useI18n } from "@/context/i18n-context"
 
 interface RewardItem {
   id: number
@@ -25,6 +26,7 @@ interface RewardItem {
 export default function ClubPage() {
   const { selectedStore } = useStore()
   const { addToCart } = useCart()
+  const { t } = useI18n()
   const [selectedFilter, setSelectedFilter] = useState("All")
   
   // State for the reward flow
@@ -93,21 +95,28 @@ export default function ClubPage() {
     setSelectedReward(null)
   }
 
+  const categoryLabels: Record<string, string> = {
+    "All": t('common.view_all'),
+    "Electronics": t('filters.electronics'),
+    "Home appliance": t('filters.home_appliance'),
+    "Voucher": t('filters.voucher')
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Header />
       
       <main className="flex-1 container max-w-6xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold mb-6">SupplyClub</h1>
+        <h1 className="text-2xl font-bold mb-6">{t('club.supply_club')}</h1>
         
         {/* Points card */}
         <div className="bg-black text-white rounded-lg p-6 mb-8">
           <div className="flex justify-between items-center">
             <div>
               <p className="text-sm mb-1">{selectedStore?.name || "My Store"}</p>
-              <h2 className="text-3xl font-bold text-white">9783 points</h2>
+              <h2 className="text-3xl font-bold text-white">9783 {t('club.points')}</h2>
               <Button variant="link" className="text-white p-0 mt-2 h-auto flex items-center">
-                View Activity <ChevronRight className="h-4 w-4 ml-1" />
+                {t('club.view_activity')} <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             </div>
             <div className="bg-white rounded-full w-16 h-16 flex items-center justify-center">
@@ -122,7 +131,7 @@ export default function ClubPage() {
         </div>
         
         {/* Redeem section */}
-        <h2 className="text-xl font-bold mb-4">Redeem your points</h2>
+        <h2 className="text-xl font-bold mb-4">{t('club.redeem_your_points')}</h2>
         
         {/* Category filters */}
         <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
@@ -136,7 +145,7 @@ export default function ClubPage() {
                   : "bg-white border border-gray-300 text-gray-700"
               }`}
             >
-              {category}
+              {categoryLabels[category] || category}
             </button>
           ))}
         </div>
@@ -145,67 +154,44 @@ export default function ClubPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {filteredItems.map(item => (
             <div key={item.id} className="bg-white rounded-lg overflow-hidden border border-gray-100">
-              <div className="flex md:flex-col">
-                <div className="p-2 md:p-4 flex justify-center items-center h-24 sm:h-32 md:h-48 bg-gray-50 w-1/3 md:w-full">
-                  <div className="w-16 h-16 sm:w-24 sm:h-24 md:w-32 md:h-32 relative">
-                    <Image 
-                      src={item.image}
-                      alt={item.name}
-                      fill
-                      style={{ objectFit: "contain" }}
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = "/images/placeholder.svg";
-                      }}
-                    />
-                  </div>
-                </div>
-                <div className="p-3 md:p-4 flex flex-col justify-center w-2/3 md:w-full">
-                  <h3 className="font-medium text-sm mb-1 md:mb-2">{item.name}</h3>
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm">{item.points} points</p>
-                    <Button 
-                      size="sm" 
-                      variant="ghost" 
-                      className="rounded-full bg-gray-100 p-1 h-6 w-6"
-                      onClick={() => handleRewardClick(item)}
-                    >
-                      <ArrowRight className="h-4 w-4 text-black" />
-                    </Button>
-                  </div>
+              <div className="aspect-square bg-gray-100 flex items-center justify-center p-6">
+                <Image
+                  src={item.image}
+                  alt={item.name}
+                  width={120}
+                  height={120}
+                  className="object-contain"
+                />
+              </div>
+              <div className="p-4">
+                <h3 className="font-medium text-sm mb-2 line-clamp-2">{item.name}</h3>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">{item.category}</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs px-3 py-1 h-auto"
+                    onClick={() => handleRewardClick(item)}
+                  >
+                    {t('club.redeem_points', { points: item.points })}
+                  </Button>
                 </div>
               </div>
             </div>
-          ))}
-        </div>
-        
-        {/* Help section */}
-        <h2 className="text-xl font-bold mb-4">Need help?</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-          {[
-            { title: "Your SupplyClub activity", href: "/club/activity" },
-            { title: "SupplyClub FAQ", href: "/club/faq" },
-            { title: "More about SupplyClub", href: "/club/about" }
-          ].map((link, i) => (
-            <Link key={i} href={link.href} className="p-6 bg-white border border-gray-200 rounded-lg flex justify-between items-center">
-              <span className="font-medium">{link.title}</span>
-              <ChevronRight className="h-5 w-5 text-gray-400" />
-            </Link>
           ))}
         </div>
       </main>
       
       <Footer />
       
-      {/* Reward details sheet */}
-      <RewardDetailsSheet 
+      {/* Reward flow sheets */}
+      <RewardDetailsSheet
         isOpen={isDetailsOpen}
         onClose={() => setIsDetailsOpen(false)}
         item={selectedReward}
         onClaimReward={handleClaimReward}
       />
       
-      {/* Reward summary sheet */}
       <RewardSummarySheet
         isOpen={isSummaryOpen}
         onClose={() => setIsSummaryOpen(false)}
@@ -214,7 +200,6 @@ export default function ClubPage() {
         onCancel={handleCancelClaim}
       />
       
-      {/* Reward confirmation sheet */}
       <RewardConfirmationSheet
         isOpen={isConfirmationOpen}
         onClose={() => setIsConfirmationOpen(false)}
