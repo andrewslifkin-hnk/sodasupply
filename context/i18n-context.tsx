@@ -23,17 +23,25 @@ interface I18nContextType {
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined)
 
-// Helper function to get user's preferred language
+// Helper function to get user's preferred language, now checks URL param first
 function getPreferredLocale(): SupportedLocale {
   if (typeof window === 'undefined') return DEFAULT_LOCALE
 
-  // Check localStorage first
+  // 1. Check URL parameter
+  const urlParams = new URLSearchParams(window.location.search)
+  const urlLocale = urlParams.get('lang') as SupportedLocale
+  if (urlLocale && urlLocale in SUPPORTED_LOCALES) {
+    localStorage.setItem('preferred-locale', urlLocale)
+    return urlLocale
+  }
+
+  // 2. Check localStorage
   const stored = localStorage.getItem('preferred-locale') as SupportedLocale
   if (stored && stored in SUPPORTED_LOCALES) {
     return stored
   }
 
-  // Check browser language
+  // 3. Check browser language
   const browserLang = navigator.language
   if (browserLang.startsWith('pt')) {
     return 'pt-BR'
