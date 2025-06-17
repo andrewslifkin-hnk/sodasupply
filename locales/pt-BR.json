@@ -281,10 +281,17 @@
   "brands": {
     "BODYARMOR": "BODYARMOR",
     "COCA-COLA": "Coca-Cola",
-    "DIET": "Diet",
+    "DIET": "Diet Coke",
     "GATORADE": "Gatorade",
     "VITAMINWATER": "Vitamin Water",
-    "GREAT": "Great Value"
+    "GREAT": "Great Value",
+    "OLIPOP": "Olipop",
+    "PLACEHOLDER": "Placeholder",
+    "POPPI": "Poppi",
+    "POWERADE": "Powerade",
+    "PROPEL": "Propel",
+    "SAVIA": "Savia",
+    "SPRITE": "Sprite"
   },
   "sizes": {
     "12_fl_oz": "355 ml",
