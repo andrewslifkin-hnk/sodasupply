@@ -22,7 +22,6 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { useFilter } from "@/context/filter-context"
 import { getProductsByType } from "@/services/product-service"
 import { useI18n } from "@/context/i18n-context"
-import { LanguageSelector } from "@/components/language-selector"
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false)
@@ -201,7 +200,6 @@ export default function Header() {
                   <span className="sr-only">{t('navigation.cart')}</span>
                 </Button>
 
-                <LanguageSelector />
               </div>
             </div>
           </div>
