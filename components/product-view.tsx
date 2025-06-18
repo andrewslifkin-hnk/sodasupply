@@ -64,6 +64,8 @@ export function ProductView({ pageTitle }: { pageTitle?: string }) {
             <ProductSubMenu />
             <FilterBar />
             <FilterSheet />
+            {/* Product count for mobile/tablet layout */}
+            <div className="mb-2 text-gray-700 font-medium">{t('products.products_count', { count: filteredProductCount })}</div>
           </div>
           <Suspense fallback={<ProductListSkeleton />}>
             <ProductList />

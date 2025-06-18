@@ -12,7 +12,7 @@ import { FilterTags } from "./filters/filter-tags"
 
 // Main products list component
 export default function ProductList() {
-  const { filterProducts, searchQuery } = useFilter()
+  const { filterProducts, searchQuery, setFilteredProductCount } = useFilter()
   const [products, setProducts] = useState<React.ReactNode[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [page, setPage] = useState(1)
@@ -27,6 +27,9 @@ export default function ProductList() {
       setIsLoading(true)
       const allProducts = await getProducts(searchQuery || undefined, locale)
       const filtered = filterProducts(allProducts)
+      
+      // Update the filtered product count in the context
+      setFilteredProductCount(filtered.length)
 
       const paginated = filtered.slice(0, page * PRODUCTS_PER_PAGE)
       setHasMore(filtered.length > paginated.length)
@@ -52,7 +55,7 @@ export default function ProductList() {
       setIsLoading(false)
     }
     loadProducts()
-  }, [page, filterProducts, searchQuery, locale])
+  }, [page, filterProducts, searchQuery, locale, setFilteredProductCount])
 
   useEffect(() => {
     if (inView && !isLoading && hasMore) {
