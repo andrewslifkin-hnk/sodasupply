@@ -127,4 +127,38 @@ export function getBrowserLocale(): SupportedLocale {
  */
 export function isSupportedLocale(locale: string): locale is SupportedLocale {
   return locale === 'en' || locale === 'pt-BR'
+}
+
+// Helper function to normalize size for translation key
+export const normalizeSize = (size: string): string => {
+  // Handle Portuguese sizes that might come from the database
+  if (size.includes('ml') || size.includes('Litros')) {
+    return size.toLowerCase().replace(/\s+/g, '_');
+  }
+  
+  // Extract the base size (e.g., "12 fl oz" from "12 fl oz 12 Pack Cans")
+  const baseSize = size.match(/([\d.]+ fl oz|[\d.]+ Liters?|[\d.]+ ml|[\d.]+ Litros?)/i)?.[0] || size
+  
+  // Extract the package info
+  const packageMatch = size.match(/(\d+)\s*(Pack|Count|Bottles?|Cans?|Garrafas?|Latas?|Unidades?)/i)
+  const packageInfo = packageMatch 
+    ? `${packageMatch[1]}_${packageMatch[2].toLowerCase().replace(/s$/, '').replace(/garrafas?/i, 'bottle').replace(/latas?/i, 'can').replace(/unidades?/i, 'count')}`
+    : ''
+
+  // Clean and normalize the base size
+  const normalizedBase = baseSize.toLowerCase()
+    .replace(/\s+/g, '_')
+    .replace(/litros?/gi, 'liters')
+    .replace(/garrafa/gi, 'bottle')
+
+  // Combine for translation key
+  const key = packageInfo 
+    ? `${normalizedBase}_${packageInfo}`
+    : normalizedBase
+
+  // Further normalize the key
+  return key.replace(/\s+/g, '_')
+    .replace(/-/g, '_')
+    .replace(/\./g, '_')
+    .toLowerCase()
 } 

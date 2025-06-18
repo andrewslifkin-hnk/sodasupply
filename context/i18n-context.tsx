@@ -123,6 +123,19 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       if (result && typeof result === 'object' && k in result) {
         result = result[k]
       } else {
+        // Better fallback logic for missing translations
+        if (key.startsWith('product_types.') || key.startsWith('sizes.') || key.startsWith('brands.')) {
+          // For product-related translations, return the last part (the actual value)
+          const lastPart = keys[keys.length - 1]
+          // If it's already in the target language, return as is
+          if (locale === 'pt-BR' && lastPart && 
+              (lastPart.includes('Bebida') || lastPart.includes('Água') || 
+               lastPart.includes('Refrigerante') || lastPart.includes('Suco') ||
+               lastPart.includes('ml') || lastPart.includes('Litros'))) {
+            return lastPart
+          }
+          return lastPart || key
+        }
         console.warn(`Translation key not found: ${key}`)
         return key // Return key if translation not found
       }
@@ -148,6 +161,10 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     setLocale,
     t,
     isLoading: isLoading || !isHydrated,
+  }
+
+  if (contextValue.isLoading) {
+    return null; // Or a full-page loader
   }
 
   return (

@@ -3,15 +3,18 @@
 import * as React from "react"
 import { useFilter } from "@/context/filter-context"
 import { useI18n } from "@/context/i18n-context"
-
-const productTypeKeys = ["Sports Drink", "Soda", "Beverage", "Enhanced Water", "Juice"]
+import { CheckboxFilterOption } from "@/types/filter-types"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export function ProductSubMenu() {
-  const { clearAndSetTypeFilter, activeFilters } = useFilter()
+  const { categories, clearAndSetTypeFilter, activeFilters, areFiltersInitialized } = useFilter()
   const { t } = useI18n()
 
   const typeFilter = activeFilters.find((f) => f.category === "type")
   const selectedKey = typeFilter ? (typeFilter.value as string) : "All Products"
+
+  const typeCategory = categories.find(c => c.id === 'type')
+  const productTypeOptions = (typeCategory?.options as CheckboxFilterOption[] || [])
 
   const handleTypeSelect = (key: string) => {
     if (key === "All Products") {
@@ -19,6 +22,20 @@ export function ProductSubMenu() {
     } else {
       clearAndSetTypeFilter(key)
     }
+  }
+
+  if (!areFiltersInitialized) {
+    return (
+      <div className="mb-4 border-b border-gray-200">
+        <div className="flex space-x-6 -mb-px">
+          <Skeleton className="h-8 w-24" />
+          <Skeleton className="h-8 w-24" />
+          <Skeleton className="h-8 w-24" />
+          <Skeleton className="h-8 w-24" />
+          <Skeleton className="h-8 w-24" />
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -37,21 +54,20 @@ export function ProductSubMenu() {
         >
           {t("products.all_products")}
         </button>
-        {productTypeKeys.map((key) => {
-          const translatedLabel = t(`product_types.${key}`)
+        {productTypeOptions.map((option) => {
           return (
             <button
-              key={key}
-              onClick={() => handleTypeSelect(key)}
+              key={option.id}
+              onClick={() => handleTypeSelect(option.value)}
               className={`whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors
                 ${
-                  selectedKey === key
+                  selectedKey === option.value
                     ? "border-black text-black"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 }
               `}
             >
-              {translatedLabel}
+              {option.label}
             </button>
           )
         })}

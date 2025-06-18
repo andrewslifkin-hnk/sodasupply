@@ -129,7 +129,11 @@
     "about": "Sobre",
     "terms": "Termos",
     "privacy": "Privacidade",
-    "filter_functionality_coming_soon": "Funcionalidade de filtro em breve"
+    "filter_functionality_coming_soon": "Funcionalidade de filtro em breve",
+    "back_to_shopping": "Voltar às compras",
+    "change": "Alterar",
+    "order_error": "Ocorreu um erro ao fazer seu pedido. Por favor, tente novamente.",
+    "on": "em"
   },
   "account": {
     "hi_there": "Olá,",
@@ -194,7 +198,21 @@
       "shipped": "enviado",
       "delivered": "entregue",
       "cancelled": "cancelado"
-    }
+    },
+    "order_confirmed": "Pedido confirmado!",
+    "order_placed_successfully": "Seu pedido foi feito com sucesso.",
+    "order_no": "Pedido Nº:",
+    "placed_at": "Feito às",
+    "delivery_date_label": "Data de entrega",
+    "driver_will_call": "O motorista ligará para você no número",
+    "to_confirm_delivery": "para confirmar a entrega.",
+    "edit_order_until": "Editar pedido até",
+    "what_happens_next": "O que acontece a seguir?",
+    "email_confirmation_message": "Você receberá um e-mail com os detalhes do seu pedido.",
+    "distributor_prepares_order": "O distribuidor irá preparar o seu pedido.",
+    "track_on_my_orders": "Você pode acompanhar o status do seu pedido na página 'Meus Pedidos'.",
+    "delivery_fee": "Taxa de entrega",
+    "help_center_contact": "Visite nossa Central de Ajuda ou entre em contato conosco"
   },
   "filters": {
     "clear_all_filters": "Limpar todos os filtros",
@@ -229,7 +247,10 @@
     "featured": "Destaques",
     "price_low_to_high": "Preço: Menor para Maior",
     "price_high_to_low": "Preço: Maior para Menor",
-    "newest": "Mais Recentes"
+    "newest": "Mais Recentes",
+    "view_less": "Ver menos",
+    "view_more": "Ver mais {count}",
+    "clear_count": "Limpar {count}"
   },
   "products": {
     "product_added": "Produto adicionado ao carrinho",
@@ -256,7 +277,14 @@
     "try_adjusting_filters": "Tente ajustar seus filtros ou termo de pesquisa",
     "distributor": "Distribuidor",
     "atlas_beverages": "Atlas Beverages",
-    "products_count": "{count} produtos"
+    "products_count": "{count} produtos",
+    "product_description": "Descrição do Produto",
+    "specifications": "Especificações",
+    "related_products": "Produtos Relacionados",
+    "price": "Preço",
+    "size": "Tamanho",
+    "flavor": "Sabor",
+    "brand": "Marca"
   },
   "welcome": {
     "welcome_to": "Bem-vindo ao SodaSupply!",
@@ -313,13 +341,40 @@
     "12_fl_oz_12_count": "12 Unidades de 355 ml",
     "12_fl_oz_8_count": "8 Unidades de 355 ml",
     "12_fl_oz_6_count": "6 Unidades de 355 ml",
-    "16 fl oz_6 pack bottles": "6 Garrafas de 473 ml"
+    "16 fl oz_6 pack bottles": "6 Garrafas de 473 ml",
+    "473_ml": "473 ml",
+    "355_ml": "355 ml",
+    "2_litros": "2 Litros",
+    "garrafa_de_473_ml": "Garrafa de 473 ml",
+    "garrafa_de_355_ml": "Garrafa de 355 ml",
+    "8_garrafas_de_355_ml": "8 Garrafas de 355 ml"
   },
   "product_types": {
     "Sports Drink": "Bebida Esportiva",
-    "Enhanced Water": "Água Aprimorada",
+    "Enhanced Water": "Água Enriquecida",
     "Soda": "Refrigerante",
     "Juice": "Suco",
-    "Beverage": "Bebidas"
+    "Beverage": "Bebidas",
+    "Bebida Esportiva": "Bebida Esportiva",
+    "Água Enriquecida": "Água Enriquecida",
+    "Refrigerante": "Refrigerante",
+    "Refrigerante Prebiótico": "Refrigerante Prebiótico",
+    "Prebiotic Soda": "Refrigerante Prebiótico"
+  },
+  "checkout": {
+    "preferred_delivery_date": "Data de entrega preferida",
+    "earliest_delivery": "Opção mais próxima disponível. Gratuito.",
+    "payment_details": "Detalhes de pagamento",
+    "payment_on_delivery": "Pagamento na entrega",
+    "pay_driver_in_cash": "Pague ao motorista em dinheiro",
+    "order_remarks": "Observações do pedido",
+    "add_notes_for_distributor": "Adicionar notas para o distribuidor",
+    "return_empties": "Devolva seus vasilhames",
+    "driver_will_collect": "O motorista irá recolhê-los.",
+    "promo_code": "Código promocional",
+    "order_summary": "Resumo do pedido",
+    "vat_details": "IVA (21%)",
+    "discount": "Desconto",
+    "place_order": "Fazer Pedido"
   }
 } 

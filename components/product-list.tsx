@@ -3,135 +3,104 @@
 import { useState, useEffect } from "react"
 import { ProductCard } from "@/components/product-card"
 import { motion } from "framer-motion"
-import { getProducts, type LocalizedProduct } from "@/services/product-service"
+import { getProducts, Product } from "@/services/product-service"
 import { ProductListSkeleton } from "@/components/skeletons"
 import { useFilter } from "@/context/filter-context"
+import { useInView } from "react-intersection-observer"
 import { useI18n } from "@/context/i18n-context"
+import { FilterTags } from "./filters/filter-tags"
 
-interface ProductCardData {
-  id: number
-  name: string
-  type: string
-  size: string
-  price: number
-  image: string
-  returnable: boolean
-  inStock: boolean
-  brand?: string
-}
-
+// Main products list component
 export default function ProductList() {
-  const [products, setProducts] = useState<LocalizedProduct[]>([])
-  const [loading, setLoading] = useState(true)
-  const { searchQuery, sortOption, filterProducts, setFilteredProductCount } = useFilter()
+  const { filterProducts, searchQuery } = useFilter()
+  const [products, setProducts] = useState<React.ReactNode[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+  const { ref, inView } = useInView({ threshold: 0.5 })
   const { t, locale } = useI18n()
 
-  // Fetch products whenever search query or locale changes
+  const PRODUCTS_PER_PAGE = 12
+
   useEffect(() => {
-    let isMounted = true
+    const loadProducts = async () => {
+      setIsLoading(true)
+      const allProducts = await getProducts(searchQuery || undefined, locale)
+      const filtered = filterProducts(allProducts)
 
-    async function fetchProducts() {
-      try {
-        setLoading(true)
-        // Pass the current locale to get translated products
-        const productsData = await getProducts(searchQuery || "", locale)
+      const paginated = filtered.slice(0, page * PRODUCTS_PER_PAGE)
+      setHasMore(filtered.length > paginated.length)
 
-        if (isMounted) {
-          setProducts(productsData)
-          setLoading(false)
-        }
-      } catch (error) {
-        console.error("Error fetching products:", error)
-        if (isMounted) {
-          setProducts([])
-          setLoading(false)
-        }
-      }
+      const productComponents = paginated.map((p) => (
+        <ProductCard
+          key={p.id}
+          product={{
+            id: p.id,
+            name: p.name,
+            type: p.type,
+            price: p.price,
+            image: p.image_url,
+            size: p.size,
+            returnable: p.returnable,
+            inStock: p.in_stock,
+            brand: p.name.split(" ")[0],
+          }}
+        />
+      ))
+
+      setProducts(productComponents)
+      setIsLoading(false)
     }
+    loadProducts()
+  }, [page, filterProducts, searchQuery, locale])
 
-    fetchProducts()
-
-    return () => {
-      isMounted = false
-    }
-  }, [searchQuery, locale]) // Add locale as dependency
-
-  // Apply filters to products (now solely from context)
-  const filteredProducts = filterProducts(products)
-
-  // Update the filtered product count in the context
   useEffect(() => {
-    setFilteredProductCount(filteredProducts.length)
-  }, [filteredProducts.length, setFilteredProductCount])
-
-  // Apply sorting
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
-    switch (sortOption) {
-      case "price-low":
-        return a.price - b.price
-      case "price-high":
-        return b.price - a.price
-      case "newest":
-        return b.id - a.id // Using ID as a proxy for newness
-      default: // featured
-        return 0
+    if (inView && !isLoading && hasMore) {
+      setPage((prevPage) => prevPage + 1)
     }
-  })
+  }, [inView, isLoading, hasMore])
 
-  if (loading) {
+  if (isLoading && products.length === 0) {
     return <ProductListSkeleton />
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {sortedProducts.length === 0 ? (
-        <div className="col-span-full text-center py-12">
-          <p className="text-lg text-gray-500">{t("products.no_products_found")}</p>
-          <p className="text-sm text-gray-400 mt-2">{t("products.try_adjusting_filters")}</p>
+    <>
+      <FilterTags />
+      <motion.div
+        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        {products}
+      </motion.div>
+      {hasMore && (
+        <div ref={ref} className="text-center py-8">
+          <p>{t("common.loading")}</p>
         </div>
-      ) : (
-        sortedProducts.map((product) => (
-          <motion.div
-            key={product.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            whileHover={{ y: -5 }}
-            className="transition-all duration-300"
-          >
-            <ProductCard
-              product={{
-                id: product.id,
-                name: product.localized.name,
-                type: product.localized.type,
-                size: product.size,
-                price: product.price,
-                image:
-                  product.image_url || `/placeholder.svg?height=200&width=200&query=${encodeURIComponent(product.name)}`,
-                returnable: product.returnable,
-                inStock: product.in_stock,
-                brand: product.name.split(" ")[0], // Extract brand from original name
-              }}
-            />
-          </motion.div>
-        ))
       )}
-    </div>
+      {!hasMore && products.length === 0 && (
+        <div className="text-center py-16">
+          <h2 className="text-2xl font-bold mb-2">{t("filters.no_products_found")}</h2>
+          <p className="text-gray-600">{t("filters.try_adjusting_filters")}</p>
+        </div>
+      )}
+    </>
   )
 }
 
 // Default products as fallback
-const defaultProducts: ProductCardData[] = [
+const defaultProducts: Product[] = [
   {
     id: 27,
     name: "Premium Cola Variety Pack",
     type: "Soda",
     size: "12 x 12 fl oz",
     price: 14.99,
-    image: "/products/04b0220b-def5-4481-b27-00d6c55d6234.c306a466de3157600795cc1064b62953.jpeg",
+    image_url: "/products/04b0220b-def5-4481-b27-00d6c55d6234.c306a466de3157600795cc1064b62953.jpeg",
     returnable: true,
-    inStock: true,
-    brand: "Assorted",
+    in_stock: true,
   },
   {
     id: 28,
@@ -139,10 +108,9 @@ const defaultProducts: ProductCardData[] = [
     type: "Sparkling Water",
     size: "8 x 12 fl oz",
     price: 9.99,
-    image: "/products/8aa3f01a-9f6d-43c4-a1f3-0a33fa8dad1d.46c5fde827e0adee668603f00cc44de5.jpeg",
+    image_url: "/products/8aa3f01a-9f6d-43c4-a1f3-0a33fa8dad1d.46c5fde827e0adee668603f00cc44de5.jpeg",
     returnable: true,
-    inStock: true,
-    brand: "Citrus",
+    in_stock: true,
   },
   {
     id: 100,
@@ -150,9 +118,8 @@ const defaultProducts: ProductCardData[] = [
     type: "Juice",
     size: "6 x 12 fl oz",
     price: 7.99,
-    image: "/products/25a0ccac-e863-4d9b-948f-87e50ff668dc.9f835718233d2bc5a5618e5a44ac9235.jpeg",
+    image_url: "/products/25a0ccac-e863-4d9b-948f-87e50ff668dc.9f835718233d2bc5a5618e5a44ac9235.jpeg",
     returnable: true,
-    inStock: true,
-    brand: "Grape",
+    in_stock: true,
   },
 ]

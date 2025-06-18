@@ -12,8 +12,10 @@ import { formatCurrency } from "@/lib/utils"
 import { ArrowLeft, MapPin, Package, ShoppingCart } from "lucide-react"
 import { useCart } from "@/context/cart-context"
 import { supabase } from "@/lib/supabase"
+import { useTranslation } from "@/hooks/use-translation"
 
 export default function OrderDetailsPage({ params }: { params: { id: string } }) {
+  const { t } = useTranslation()
   const router = useRouter()
   const { getOrderById, orders } = useOrders()
   const { addToCart } = useCart()
@@ -119,7 +121,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
         <Header />
         <main className="flex-1 container mx-auto px-4 py-8 md:py-12">
           <div className="flex justify-center items-center h-full">
-            <p>Loading order details...</p>
+            <p>{t("orders.loading_orders")}</p>
           </div>
         </main>
         <Footer />
@@ -142,7 +144,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
             className="flex items-center text-gray-600 mb-6"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to orders
+            {t("orders.my_orders")}
           </button>
           
           <div className="mb-6">
@@ -153,7 +155,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
                 ? 'bg-gray-100 text-gray-800'
                 : 'bg-red-100 text-red-800'
             }`}>
-              {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+              {t(`orders.status.${order.status}`)}
             </div>
             <h1 className="text-2xl font-bold">{order.orderNumber}</h1>
             <p className="text-gray-500">Ordered on {order.orderDate} at {order.orderTime}</p>
@@ -164,7 +166,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
               {/* Delivery address */}
               {order.storeName && (
                 <section>
-                  <h2 className="text-lg font-medium mb-4">Delivery address</h2>
+                  <h2 className="text-lg font-medium mb-4">{t("orders.delivery_address")}</h2>
                   <div className="bg-white border rounded-lg p-4 flex items-start gap-3">
                     <div className="bg-gray-100 p-2 rounded-full">
                       <MapPin className="h-5 w-5 text-gray-700" />
@@ -179,10 +181,10 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
               
               {/* Order items */}
               <section>
-                <h2 className="text-lg font-medium mb-4">Order items</h2>
+                <h2 className="text-lg font-medium mb-4">{t("orders.order_details")}</h2>
                 <div className="bg-white border rounded-lg overflow-hidden">
                   <div className="p-4 border-b">
-                    <div className="text-sm text-gray-600">{order.items.length} items</div>
+                    <div className="text-sm text-gray-600">{t("cart.item_count", { count: order.items.length, plural: order.items.length === 1 ? "" : "s" })}</div>
                   </div>
                   
                   <div className="divide-y">
@@ -204,7 +206,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
                         <div className="flex-1">
                           <div className="font-medium">{item.name}</div>
                           <div className="text-sm text-gray-600">{item.type}</div>
-                          <div className="text-sm text-gray-600">Quantity: {item.quantity}</div>
+                          <div className="text-sm text-gray-600">{t("cart.quantity")}: {item.quantity}</div>
                         </div>
                         <div className="font-bold">{formatCurrency(item.price * item.quantity)}</div>
                       </div>
@@ -215,7 +217,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
               
               {/* Delivery details */}
               <section>
-                <h2 className="text-lg font-medium mb-4">Delivery details</h2>
+                <h2 className="text-lg font-medium mb-4">{t("orders.delivery_details")}</h2>
                 <div className="bg-white border rounded-lg p-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -223,7 +225,7 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
                       <div className="font-medium">{order.orderDate}, {order.orderTime}</div>
                     </div>
                     <div>
-                      <div className="text-sm text-gray-500">Delivery date</div>
+                      <div className="text-sm text-gray-500">{t("orders.delivery_date")}</div>
                       <div className="font-medium">{order.deliveryDate}</div>
                     </div>
                   </div>
@@ -234,51 +236,37 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
             <div className="lg:col-span-1 space-y-6">
               {/* Order summary */}
               <div className="bg-white border rounded-lg p-6">
-                <h2 className="text-lg font-medium mb-4">Summary</h2>
+                <h2 className="text-lg font-medium mb-4">{t("checkout.order_summary")}</h2>
                 
                 <div className="space-y-2 mb-4">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Subtotal</span>
+                    <span className="text-gray-600">{t("cart.subtotal")}</span>
                     <span className="font-medium">{formatCurrency(subtotal)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">VAT 21%</span>
+                    <span className="text-gray-600">{t("checkout.vat_details")}</span>
                     <span className="font-medium">{formatCurrency(vat)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Delivery</span>
-                    <span className="text-green-600">Free</span>
+                    <span className="text-gray-600">{t("cart.delivery")}</span>
+                    <span className="text-green-600">{t("cart.free")}</span>
                   </div>
                 </div>
                 
                 <div className="flex justify-between font-bold text-lg border-t pt-4">
-                  <span>Total</span>
-                  <span>{formatCurrency(order.total)}</span>
+                  <span>{t("cart.total")}</span>
+                  <span className="font-medium">{formatCurrency(order.total)}</span>
                 </div>
-                
-                <Button 
-                  onClick={handleAddAllToCart}
-                  className="mt-4 w-full flex items-center justify-center gap-2 bg-black hover:bg-black/90 text-white"
-                >
-                  <ShoppingCart className="h-4 w-4" />
-                  Reorder all items
-                </Button>
               </div>
               
-              {/* Order status */}
+              {/* Actions */}
               <div className="bg-white border rounded-lg p-6">
-                <div className="flex items-start gap-3 mb-3">
-                  <div className="bg-gray-100 p-2 rounded-full">
-                    <Package className="h-5 w-5 text-gray-700" />
-                  </div>
-                  <div>
-                    <h2 className="font-medium">Order status</h2>
-                    <p className="text-gray-600 text-sm">Your order is {order.status}.</p>
-                  </div>
-                </div>
-                
-                <Button className="mt-2 w-full bg-blue-600 hover:bg-blue-700">
-                  {order.status === 'delivered' ? 'View delivery details' : 'Track order'}
+                <Button 
+                  onClick={handleAddAllToCart}
+                  className="w-full bg-black hover:bg-black/90 text-white"
+                >
+                  <ShoppingCart className="h-4 w-4 mr-2" />
+                  {t("orders.reorder")}
                 </Button>
               </div>
             </div>

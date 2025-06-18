@@ -16,14 +16,6 @@ export interface Product {
   type_pt?: string
 }
 
-export interface LocalizedProduct extends Product {
-  localized: {
-    name: string
-    type: string
-    description?: string
-  }
-}
-
 // Mock products as fallback for when database fails or is not configured
 // This is only used if Supabase connection fails and the database is empty
 const mockProducts: Product[] = [
@@ -39,7 +31,7 @@ const mockProducts: Product[] = [
     in_stock: true,
     name_pt: "Gatorade Thirst Quencher Ponche de Frutas",
     description_pt: "Reponha eletrólitos com sabor Ponche de Frutas",
-    type_pt: "Bebida Esportiva"
+    type_pt: "Bebida esportiva",
   },
   {
     id: 2,
@@ -53,26 +45,9 @@ const mockProducts: Product[] = [
     in_stock: true,
     name_pt: "OLIPOP Refrigerante Prebiótico Cola Vintage",
     description_pt: "Refrigerante prebiótico com sabor Cola Vintage, baixo açúcar",
-    type_pt: "Refrigerante Prebiótico"
+    type_pt: "Refrigerante",
   }
 ];
-
-// Helper function to get localized product data
-function localizeProduct(product: Product, locale: string): LocalizedProduct {
-  const localized = {
-    name: product.name,
-    type: product.type,
-    description: product.description,
-  }
-
-  if (locale === "pt-BR") {
-    localized.name = product.name_pt || product.name
-    localized.type = product.type_pt || product.type
-    localized.description = product.description_pt || product.description
-  }
-
-  return { ...product, localized }
-}
 
 // Check if Supabase is properly configured
 const isSupabaseConfigured = () => {
@@ -88,13 +63,13 @@ const isSupabaseConfigured = () => {
   return Boolean(supabaseUrl) && Boolean(supabaseAnonKey);
 }
 
-export async function getProducts(searchQuery?: string, locale: string = 'en'): Promise<LocalizedProduct[]> {
+export async function getProducts(searchQuery?: string, locale: string = 'en'): Promise<Product[]> {
   try {
     // If Supabase is not configured, return mock data
     if (!isSupabaseConfigured()) {
       console.warn("Supabase not configured. Using mock product data.");
       // NOTE: If you want every image in /public/products to have a product, use a Node.js script to generate missing product entries and import them into Supabase or your mock data.
-      return Promise.resolve(mockProducts.map(product => localizeProduct(product, locale)));
+      return Promise.resolve(mockProducts);
     }
 
     // Select all fields including translation columns
@@ -104,7 +79,7 @@ export async function getProducts(searchQuery?: string, locale: string = 'en'): 
     if (searchQuery && searchQuery.trim() !== "") {
       if (locale === 'pt-BR') {
         // Search in both original and Portuguese fields
-        query = query.or(`name.ilike.%${searchQuery}%,type.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,name_pt.ilike.%${searchQuery}%,type_pt.ilike.%${searchQuery}%,description_pt.ilike.%${searchQuery}%`);
+        query = query.or(`name.ilike.%${searchQuery}%,type.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,name_pt.ilike.%${searchQuery}%,description_pt.ilike.%${searchQuery}%,type_pt.ilike.%${searchQuery}%`);
       } else {
         // Search in original fields only
         query = query.or(`name.ilike.%${searchQuery}%,type.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%`);
@@ -115,28 +90,40 @@ export async function getProducts(searchQuery?: string, locale: string = 'en'): 
 
     if (error) {
       console.error("Error fetching products:", error);
-      return mockProducts.map(product => localizeProduct(product, locale));
+      return mockProducts;
     }
 
     // Return localized database data, only fall back to mock data if no products found
     if (data && data.length > 0) {
-      return data.map(product => localizeProduct(product, locale));
+      // Localize the data based on the locale
+      const localizedData = data.map(product => {
+        if (locale === 'pt-BR') {
+          return {
+            ...product,
+            name: product.name_pt || product.name,
+            type: product.type_pt || product.type,
+            description: product.description_pt || product.description,
+          }
+        }
+        return product;
+      });
+      return localizedData;
     } else {
-      return mockProducts.map(product => localizeProduct(product, locale));
+      return mockProducts;
     }
   } catch (e) {
     console.error("Error fetching products:", e);
-    return mockProducts.map(product => localizeProduct(product, locale));
+    return mockProducts;
   }
 }
 
-export async function getProductById(id: number, locale: string = 'en'): Promise<LocalizedProduct | null> {
+export async function getProductById(id: number, locale: string = 'en'): Promise<Product | null> {
   try {
     // If Supabase is not configured, return mock data
     if (!isSupabaseConfigured()) {
       console.warn("Supabase not configured. Using mock product data.");
       const product = mockProducts.find(p => p.id === id);
-      return Promise.resolve(product ? localizeProduct(product, locale) : null);
+      return Promise.resolve(product || null);
     }
 
     const { data, error } = await supabase.from("products").select("*").eq("id", id).single();
@@ -144,14 +131,27 @@ export async function getProductById(id: number, locale: string = 'en'): Promise
     if (error) {
       console.error("Error fetching product:", error);
       const mockProduct = mockProducts.find(p => p.id === id);
-      return mockProduct ? localizeProduct(mockProduct, locale) : null;
+      return mockProduct || null;
     }
 
-    return data ? localizeProduct(data, locale) : null;
+    if (data) {
+      // Localize the data based on the locale
+      if (locale === 'pt-BR') {
+        return {
+          ...data,
+          name: data.name_pt || data.name,
+          type: data.type_pt || data.type,
+          description: data.description_pt || data.description,
+        };
+      }
+      return data;
+    }
+
+    return null;
   } catch (e) {
     console.error("Error fetching product:", e);
     const mockProduct = mockProducts.find(p => p.id === id);
-    return mockProduct ? localizeProduct(mockProduct, locale) : null;
+    return mockProduct || null;
   }
 }
 

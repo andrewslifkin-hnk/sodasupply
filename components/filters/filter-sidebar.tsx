@@ -36,25 +36,25 @@ export function FilterSidebar() {
       {/* Sort by section */}
       <div className="py-4 border-b border-gray-200">
         <div className="flex items-center justify-between px-1 mb-4">
-          <h3 className="text-lg font-medium">Sort by</h3>
+          <h3 className="text-lg font-medium">{t('filters.sort_by')}</h3>
         </div>
         <RadioGroup value={sortOption} onValueChange={value => setSortOption(value as any)}>
           <div className="space-y-3">
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="featured" id="featured" />
-              <Label htmlFor="featured">Featured</Label>
+              <Label htmlFor="featured">{t('filters.featured')}</Label>
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="price-low" id="price-low" />
-              <Label htmlFor="price-low">Price: Low to High</Label>
+              <Label htmlFor="price-low">{t('filters.price_low_to_high')}</Label>
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="price-high" id="price-high" />
-              <Label htmlFor="price-high">Price: High to Low</Label>
+              <Label htmlFor="price-high">{t('filters.price_high_to_low')}</Label>
             </div>
             <div className="flex items-center space-x-2">
               <RadioGroupItem value="newest" id="newest" />
-              <Label htmlFor="newest">Newest</Label>
+              <Label htmlFor="newest">{t('filters.newest')}</Label>
             </div>
           </div>
         </RadioGroup>

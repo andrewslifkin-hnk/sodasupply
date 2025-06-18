@@ -10,8 +10,10 @@ import Footer from "@/components/footer"
 import { useCart } from "@/context/cart-context"
 import { useStore } from "@/context/store-context"
 import { useOrders } from "@/context/orders-context"
+import { useTranslation } from "@/hooks/use-translation"
 
 export default function OrderConfirmationPage() {
+  const { t } = useTranslation()
   // Add the cart context and store context
   const { clearCart, items } = useCart()
   const { selectedStore } = useStore()
@@ -220,13 +222,13 @@ export default function OrderConfirmationPage() {
   // Safe formatCurrency function that handles edge cases
   const safeFormatCurrency = (amount: number | undefined | null) => {
     if (amount === undefined || amount === null) {
-      return "€0.00"
+      return t("common.currency_symbol") + "0.00"
     }
     try {
       return formatCurrency(amount)
     } catch (error) {
       console.error("Error formatting currency:", error)
-      return "€0.00"
+      return t("common.currency_symbol") + "0.00"
     }
   }
 
@@ -236,7 +238,7 @@ export default function OrderConfirmationPage() {
         <Header />
         <main className="flex-1 container mx-auto px-4 py-8 md:py-12">
           <div className="flex justify-center items-center h-full">
-            <p>Loading your order confirmation...</p>
+            <p>{t("orders.loading_confirmation")}</p>
           </div>
         </main>
         <Footer />
@@ -248,186 +250,174 @@ export default function OrderConfirmationPage() {
     <div className="min-h-screen flex flex-col">
       <Header />
 
-      {/* Main content */}
       <main className="flex-1 container mx-auto px-4 py-8 md:py-12">
-        {/* Success message */}
-        <div className="flex flex-col items-center text-center mb-8 md:mb-12">
-          <div className="w-24 h-24 bg-[#E8FFCC] rounded-full flex items-center justify-center mb-4">
-            <Check className="w-8 h-8 text-black" />
+        <div className="max-w-4xl mx-auto">
+          {/* Top Section */}
+          <div className="text-center mb-8">
+            <div className="inline-block bg-green-100 p-4 rounded-full mb-4">
+              <Check className="h-10 w-10 text-green-600" />
+            </div>
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">{t("orders.order_confirmed")}</h1>
+            <p className="text-gray-600 text-lg">{t("orders.order_placed_successfully")}</p>
           </div>
-          <h1 className="text-2xl md:text-3xl font-bold mb-2">Your order was successfully placed.</h1>
-          <p className="text-gray-600">The distributor will send a confirmation shortly to {phoneNumber}</p>
-        </div>
 
-        {/* Order status and edit sections */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          {/* Order status */}
-          <div className="bg-[#E8FFCC]/50 p-4 md:p-6 rounded-lg">
-            <div className="flex items-start gap-3 mb-3">
-              <div className="bg-black p-2 rounded-full">
-                <Package className="h-5 w-5 text-white" />
+          <div className="bg-gray-50 rounded-lg p-6 mb-8 text-center">
+            <Button>{t("orders.track_order")}</Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Left Column */}
+            <div className="space-y-8">
+              {/* Order Details */}
+              <div className="border rounded-lg p-6">
+                <h2 className="text-xl font-medium mb-4">{t("orders.order_details")}</h2>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">{t("orders.order_no")}</span>
+                    <span className="font-medium">#{orderNumber}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">{t("orders.placed_at")}</span>
+                    <span className="font-medium">
+                      {orderTime} {t("common.on")} {orderDate}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div>
-                <h2 className="font-medium text-lg">Order status</h2>
-                <p className="text-gray-600 text-sm">Review your order and keep track of updates.</p>
+
+              {/* Delivery Details */}
+              <div className="border rounded-lg p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-medium">{t("orders.delivery_address")}</h2>
+                  <Button variant="ghost" size="sm" className="text-sm">
+                    {t("common.change")}
+                  </Button>
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="bg-gray-100 p-3 rounded-full mt-1">
+                    <MapPin className="h-5 w-5 text-gray-700" />
+                  </div>
+                  <div>
+                    <div className="font-medium">{selectedStore?.name}</div>
+                    <div className="text-sm text-gray-600">
+                      {selectedStore?.address}, {selectedStore?.city}
+                    </div>
+                  </div>
+                </div>
+                <div className="border-t my-4"></div>
+                <div className="flex items-start gap-4">
+                  <div className="bg-gray-100 p-3 rounded-full mt-1">
+                    <Package className="h-5 w-5 text-gray-700" />
+                  </div>
+                  <div>
+                    <div className="font-medium">{t("orders.delivery_date_label")}</div>
+                    <div className="text-sm text-gray-600">{deliveryDate}</div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      {t("orders.driver_will_call")} {phoneNumber} {t("orders.to_confirm_delivery")}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">{t("orders.edit_order_until")} {editDeadline}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* What happens next */}
+              <div className="border rounded-lg p-6">
+                <h2 className="text-xl font-medium mb-4">{t("orders.what_happens_next")}</h2>
+                <ul className="space-y-4 text-sm text-gray-600">
+                  <li className="flex gap-4">
+                    <div className="bg-gray-100 p-2 rounded-full h-fit">
+                      <Check className="h-4 w-4 text-gray-600" />
+                    </div>
+                    <span>{t("orders.email_confirmation_message")}</span>
+                  </li>
+                  <li className="flex gap-4">
+                    <div className="bg-gray-100 p-2 rounded-full h-fit">
+                      <Check className="h-4 w-4 text-gray-600" />
+                    </div>
+                    <span>{t("orders.distributor_prepares_order")}</span>
+                  </li>
+                  <li className="flex gap-4">
+                    <div className="bg-gray-100 p-2 rounded-full h-fit">
+                      <Check className="h-4 w-4 text-gray-600" />
+                    </div>
+                    <span>{t("orders.track_on_my_orders")}</span>
+                  </li>
+                </ul>
               </div>
             </div>
-            <Button className="bg-black hover:bg-black/90 text-white mt-2">Track order</Button>
-          </div>
 
-          {/* Missed anything */}
-          <div className="bg-blue-50 p-4 md:p-6 rounded-lg">
-            <div className="flex items-start gap-3 mb-3">
-              <div className="bg-blue-500 p-2 rounded-full">
-                <ShoppingCart className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <h2 className="font-medium text-lg">Missed anything?</h2>
-                <p className="text-gray-600 text-sm">You can edit this order until {editDeadline}</p>
-              </div>
-            </div>
-            <Button variant="outline" className="mt-2">
-              Edit order
-            </Button>
-          </div>
-        </div>
-
-        {/* Order details */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            {/* Delivery address */}
-            <section>
-              <h2 className="text-lg font-medium mb-4">Delivery address</h2>
-              <div className="border rounded-lg p-4 flex items-start gap-3">
+            {/* Right Column (Order Summary) */}
+            <div className="border rounded-lg p-6 h-fit sticky top-8">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-medium">{t("checkout.order_summary")}</h2>
                 <div className="bg-gray-100 p-2 rounded-full">
-                  <MapPin className="h-5 w-5 text-gray-700" />
-                </div>
-                <div>
-                  <div className="font-medium">{selectedStore?.name || "Cafe Scully"}</div>
-                  <div className="text-sm text-gray-600">
-                    {selectedStore?.address || "122 Amstelkade"}, {selectedStore?.city || "Amsterdam"},{" "}
-                    {selectedStore?.region || "1019 NP"}
-                  </div>
+                  <ShoppingCart className="h-5 w-5 text-gray-700" />
                 </div>
               </div>
-            </section>
-
-            {/* Delivery details */}
-            <section>
-              <h2 className="text-lg font-medium mb-4">Delivery details</h2>
-              <div className="border rounded-lg p-4">
-                <div className="space-y-4">
-                  <div>
-                    <div className="text-sm text-gray-500">Order number</div>
-                    <div className="font-medium">{orderNumber}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-500">Order placed</div>
-                    <div className="font-medium">
-                      {orderDate}, {orderTime}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-500">Delivered date</div>
-                    <div className="font-medium">{deliveryDate}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-500">Payment method</div>
-                    <div className="font-medium">Payment on delivery</div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Products */}
-            <section>
-              <h2 className="text-lg font-medium mb-4">Products</h2>
-              <div className="border rounded-lg overflow-hidden">
-                <div className="p-4 border-b">
-                  <div className="text-sm text-gray-600">
-                    {getSafeItems().length} {getSafeItems().length === 1 ? 'item' : 'items'}
-                  </div>
-                </div>
-
-                <div className="divide-y">
-                  {getSafeItems().length > 0 ? (
-                    getSafeItems().map((item) => (
-                      <div key={item.id} className="p-4 flex items-center gap-4">
-                        <div className="relative h-16 w-16 bg-gray-100 rounded">
-                          <Image
-                            src={item.image || "/images/no-products-found.png"}
-                            alt={item.name || "Product"}
-                            fill
-                            className="object-contain p-2"
-                            onError={(e) => {
-                              console.error("Image failed to load:", item.image);
-                              // Use a reliable fallback image that exists in the project
-                              (e.target as HTMLImageElement).src = "/images/no-products-found.png";
-                            }}
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-medium">{item.name || "Product"}</div>
-                          <div className="text-sm text-gray-600">{item.type || "Item"}</div>
-                          <div className="text-sm text-gray-600">Quantity: {item.quantity || 1}</div>
-                        </div>
-                        <div className="font-bold">
-                          {safeFormatCurrency(
-                            (typeof item.price === 'number' ? item.price : 0) * 
-                            (item.quantity || 1)
-                          )}
-                        </div>
+              <div className="space-y-4">
+                {getSafeItems().map((item) => (
+                  <div key={item.id} className="flex items-center gap-4">
+                    <div className="relative h-16 w-16 bg-gray-100 rounded-lg overflow-hidden">
+                      <Image
+                        src={item.image || "/images/no-products-found.png"}
+                        alt={item.name || "Product image"}
+                        fill
+                        className="object-contain p-1"
+                      />
+                      <div className="absolute -top-2 -right-2 bg-gray-900 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center">
+                        {item.quantity}
                       </div>
-                    ))
-                  ) : (
-                    <div className="p-8 text-center text-gray-500">
-                      <p>Order processed. Your cart has been cleared.</p>
                     </div>
-                  )}
-                </div>
+                    <div className="flex-1">
+                      <div className="font-medium text-sm truncate">{item.name}</div>
+                      <div className="text-xs text-gray-500">{item.type}</div>
+                    </div>
+                    <div className="font-medium text-sm">{safeFormatCurrency(item.price * item.quantity)}</div>
+                  </div>
+                ))}
               </div>
-            </section>
-          </div>
 
-          <div className="lg:col-span-1 space-y-6">
-            {/* Order Summary */}
-            <div className="bg-white border rounded-lg p-6">
-              <h2 className="text-lg font-medium mb-4">Summary</h2>
+              <div className="border-t my-6"></div>
 
-              <div className="space-y-2 mb-4">
+              <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Subtotal</span>
+                  <span className="text-gray-600">{t("cart.subtotal")}</span>
                   <span className="font-medium">{safeFormatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">VAT 21%</span>
+                  <span className="text-gray-600">{t("checkout.vat_details")}</span>
                   <span className="font-medium">{safeFormatCurrency(vat)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Delivery</span>
-                  <span className="text-green-600">Free</span>
+                  <span className="text-gray-600">{t("orders.delivery_fee")}</span>
+                  <span className="font-medium text-green-600">{t("cart.free")}</span>
                 </div>
               </div>
 
-              <div className="flex justify-between font-bold text-lg border-t pt-4">
-                <span>Total</span>
+              <div className="border-t my-4"></div>
+
+              <div className="flex justify-between font-bold text-lg">
+                <span>{t("cart.total")}</span>
                 <span>{safeFormatCurrency(total)}</span>
               </div>
             </div>
+          </div>
 
-            {/* Need help */}
-            <div className="bg-gray-50 rounded-lg p-6">
-              <div className="flex items-start gap-3 mb-3">
-                <div className="bg-gray-200 p-2 rounded-full">
-                  <HelpCircle className="h-5 w-5 text-gray-700" />
-                </div>
-                <div>
-                  <h2 className="font-medium text-lg">Need help?</h2>
-                  <p className="text-gray-600 text-sm">Find answers and contact details on our support page.</p>
-                </div>
+          {/* Bottom section */}
+          <div className="mt-12 text-center">
+            <div className="border rounded-lg p-6 inline-flex items-center gap-4">
+              <HelpCircle className="h-6 w-6 text-gray-500" />
+              <div>
+                <h3 className="font-medium">{t("account.need_help")}</h3>
+                <p className="text-sm text-gray-600">{t("orders.help_center_contact")}</p>
               </div>
-              <Button className="bg-black hover:bg-black/90 text-white mt-2 w-full">Get support</Button>
             </div>
+          </div>
+
+          <div className="mt-8 text-center">
+            <Button onClick={() => (window.location.href = "/")} size="lg">
+              {t("cart.continue_shopping")}
+            </Button>
           </div>
         </div>
       </main>

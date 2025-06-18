@@ -17,8 +17,10 @@ import { useMediaQuery } from "@/hooks/use-media-query"
 import Header from "@/components/header"
 import Footer from "@/components/footer"
 import { useOrders } from "@/context/orders-context"
+import { useTranslation } from "@/hooks/use-translation"
 
 export default function CheckoutPage() {
+  const { t } = useTranslation()
   const { items, totalItems, clearCart } = useCart()
   const { selectedStore } = useStore()
   const { getNextOrderNumber } = useOrders()
@@ -105,7 +107,7 @@ export default function CheckoutPage() {
       router.push("/order-confirmation")
     } catch (error) {
       console.error("Error placing order:", error)
-      alert("There was an error placing your order. Please try again.")
+      alert(t("common.order_error"))
       setIsSubmitting(false)
     }
   }
@@ -115,9 +117,9 @@ export default function CheckoutPage() {
       <div className="min-h-screen flex flex-col">
         <Header />
         <main className="flex-1 container mx-auto px-4 py-8 flex flex-col items-center justify-center">
-          <h1 className="text-2xl font-bold mb-4">Your cart is empty</h1>
-          <p className="text-gray-500 mb-6">Add some products to your cart before checking out</p>
-          <Button onClick={() => router.push("/")}>Continue shopping</Button>
+          <h1 className="text-2xl font-bold mb-4">{t("cart.empty_title")}</h1>
+          <p className="text-gray-500 mb-6">{t("cart.empty_description")}</p>
+          <Button onClick={() => router.push("/")}>{t("cart.continue_shopping")}</Button>
         </main>
         <Footer />
       </div>
@@ -131,16 +133,16 @@ export default function CheckoutPage() {
       <main className="flex-1 container mx-auto px-4 py-8">
         <Link href="/" className="inline-flex items-center text-sm text-gray-600 hover:text-black mb-6">
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Back to shopping
+          {t("common.back_to_shopping")}
         </Link>
 
-        <h1 className="text-2xl font-bold mb-6">Checkout</h1>
+        <h1 className="text-2xl font-bold mb-6">{t("navigation.checkout")}</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-8">
             {/* Delivery Address */}
             <section>
-              <h2 className="text-lg font-medium mb-4">Delivery address</h2>
+              <h2 className="text-lg font-medium mb-4">{t("orders.delivery_address")}</h2>
               <div className="border rounded-lg p-4 flex items-start gap-3">
                 <div className="bg-gray-100 p-2 rounded-full">
                   <MapPin className="h-5 w-5 text-gray-700" />
@@ -158,25 +160,25 @@ export default function CheckoutPage() {
             {/* Preferred Delivery Date */}
             <section>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-medium">Preferred delivery date</h2>
+                <h2 className="text-lg font-medium">{t("checkout.preferred_delivery_date")}</h2>
                 <Button
                   variant="ghost"
                   size="sm"
                   className="text-sm text-gray-600"
                   onClick={() => setIsDateSheetOpen(true)}
                 >
-                  Change
+                  {t("common.change")}
                 </Button>
               </div>
               <div className="border rounded-lg p-4">
                 <div className="font-medium">{getFormattedDate()}</div>
-                <div className="text-sm text-gray-600">Earliest option available. Free of charge.</div>
+                <div className="text-sm text-gray-600">{t("checkout.earliest_delivery")}</div>
               </div>
             </section>
 
             {/* Distributor */}
             <section>
-              <h2 className="text-lg font-medium mb-4">Distributor</h2>
+              <h2 className="text-lg font-medium mb-4">{t("products.distributor")}</h2>
               <div className="border rounded-lg p-4 flex items-center gap-3">
                 <div className="bg-gray-100 p-2 rounded-full">
                   <Truck className="h-5 w-5 text-gray-700" />
@@ -187,23 +189,23 @@ export default function CheckoutPage() {
 
             {/* Payment Details */}
             <section>
-              <h2 className="text-lg font-medium mb-4">Payment details</h2>
+              <h2 className="text-lg font-medium mb-4">{t("checkout.payment_details")}</h2>
               <div className="border rounded-lg p-4 flex items-center gap-3">
                 <div className="bg-green-100 p-2 rounded-full">
                   <CreditCard className="h-5 w-5 text-green-700" />
                 </div>
                 <div>
-                  <div className="font-medium">Payment on delivery</div>
-                  <div className="text-sm text-gray-600">Pay driver in cash</div>
+                  <div className="font-medium">{t("checkout.payment_on_delivery")}</div>
+                  <div className="text-sm text-gray-600">{t("checkout.pay_driver_in_cash")}</div>
                 </div>
               </div>
             </section>
 
             {/* Order Remarks */}
             <section>
-              <h2 className="text-lg font-medium mb-4">Order remarks</h2>
+              <h2 className="text-lg font-medium mb-4">{t("checkout.order_remarks")}</h2>
               <Textarea
-                placeholder="Add notes for distributor"
+                placeholder={t("checkout.add_notes_for_distributor")}
                 value={remarks}
                 onChange={(e) => setRemarks(e.target.value)}
                 className="w-full h-32"
@@ -218,8 +220,8 @@ export default function CheckoutPage() {
                   <Recycle className="h-5 w-5 text-green-700" />
                 </div>
                 <div>
-                  <div className="font-medium">Return your empties</div>
-                  <div className="text-sm text-gray-600">The driver will collect them.</div>
+                  <div className="font-medium">{t("checkout.return_empties")}</div>
+                  <div className="text-sm text-gray-600">{t("checkout.driver_will_collect")}</div>
                 </div>
               </div>
             </section>
@@ -227,15 +229,15 @@ export default function CheckoutPage() {
             {/* Products */}
             <section>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-medium">Products</h2>
+                <h2 className="text-lg font-medium">{t("navigation.products")}</h2>
                 <Button variant="ghost" size="sm" className="text-sm text-gray-600">
-                  Edit
+                  {t("common.edit")}
                 </Button>
               </div>
 
               <div className="border rounded-lg overflow-hidden">
                 <div className="p-4 border-b">
-                  <div className="text-sm text-gray-600">{totalItems} items</div>
+                  <div className="text-sm text-gray-600">{t("cart.item_count", { count: totalItems })}</div>
                 </div>
 
                 <div className="divide-y">
@@ -266,78 +268,79 @@ export default function CheckoutPage() {
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white border rounded-lg p-6 sticky top-8">
-              <h2 className="text-lg font-medium mb-4">Summary</h2>
+            <div className="bg-white border rounded-lg p-6 sticky top-24">
+              <h2 className="text-xl font-medium mb-6">{t("checkout.order_summary")}</h2>
 
-              {/* Promo code section */}
-              <div className="mb-4">
-                {!isMobile && isPromoInputVisible ? (
-                  <div className="space-y-2">
-                    <label htmlFor="desktop-promo-code" className="text-sm font-medium">
-                      Promo code
-                    </label>
-                    <div className="flex gap-2">
+              {isMobile ? (
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center text-sm gap-2">
+                    <Tag className="h-4 w-4" />
+                    <span>{t("checkout.promo_code")}</span>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => setIsPromoSheetOpen(true)}>
+                    {promoCode || t("common.add")}
+                  </Button>
+                </div>
+              ) : (
+                <div className="mb-4">
+                  <Button variant="ghost" size="sm" className="w-full justify-start px-0" onClick={togglePromoInput}>
+                    <div className="flex items-center text-sm gap-2">
+                      <Tag className="h-4 w-4" />
+                      <span>{t("checkout.promo_code")}</span>
+                    </div>
+                  </Button>
+                  {isPromoInputVisible && (
+                    <div className="flex gap-2 mt-2">
                       <Input
-                        id="desktop-promo-code"
+                        placeholder={t("checkout.promo_code")}
                         value={promoCode}
                         onChange={(e) => setPromoCode(e.target.value)}
-                        placeholder="Enter promo code"
-                        className="flex-1"
                       />
-                      <Button onClick={handleInlineApplyPromo} className="bg-black hover:bg-black/90 text-white">
-                        Apply
-                      </Button>
+                      <Button onClick={handleInlineApplyPromo}>{t("common.apply")}</Button>
                     </div>
-                  </div>
-                ) : (
-                  <button
-                    className="text-sm text-blue-600 hover:underline flex items-center gap-1"
-                    onClick={togglePromoInput}
-                  >
-                    <Tag className="h-4 w-4" />
-                    {promoCode && !isMobile ? `${promoCode} applied` : "Add a promo code"}
-                  </button>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
 
-              <div className="space-y-2 mb-4">
+              <div className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Subtotal</span>
-                  <span className="font-medium">{formatCurrency(subtotal)}</span>
+                  <span>{t("cart.subtotal")}</span>
+                  <span>{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">VAT</span>
-                  <span className="font-medium">{formatCurrency(vat)}</span>
+                  <span>{t("checkout.vat_details")}</span>
+                  <span>{formatCurrency(vat)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Delivery</span>
-                  <span className="text-green-600">Free</span>
+                  <span>{t("cart.delivery")}</span>
+                  <span className="font-medium text-green-600">{t("cart.free")}</span>
                 </div>
                 {discount > 0 && (
-                  <div className="flex justify-between text-purple-600">
-                    <span>Discounts</span>
-                    <span>− {formatCurrency(discount)}</span>
+                  <div className="flex justify-between">
+                    <span>{t("checkout.discount")}</span>
+                    <span className="font-medium text-red-600">-{formatCurrency(discount)}</span>
                   </div>
                 )}
               </div>
 
-              <div className="flex justify-between font-bold text-lg border-t pt-4 mb-6">
-                <span>Total</span>
+              <div className="border-t my-4"></div>
+
+              <div className="flex justify-between font-bold text-lg">
+                <span>{t("cart.total")}</span>
                 <span>{formatCurrency(total)}</span>
               </div>
 
               <Button
-                className="w-full bg-black hover:bg-black/90 text-white"
+                size="lg"
+                className="w-full mt-6"
                 onClick={handlePlaceOrder}
                 disabled={isSubmitting}
+                aria-label={t("checkout.place_order")}
               >
                 {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing...
-                  </>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
-                  "Place order"
+                  t("checkout.place_order")
                 )}
               </Button>
             </div>
@@ -345,24 +348,20 @@ export default function CheckoutPage() {
         </div>
       </main>
 
-      {/* Mobile Promo Code Sheet */}
-      {isMobile && (
-        <PromoCodeSheet
-          isOpen={isPromoSheetOpen}
-          onClose={() => setIsPromoSheetOpen(false)}
-          onApply={handleApplyPromo}
-        />
-      )}
+      <Footer />
 
-      {/* Delivery Date Sheet */}
+      <PromoCodeSheet
+        isOpen={isPromoSheetOpen}
+        onClose={() => setIsPromoSheetOpen(false)}
+        onApply={handleApplyPromo}
+      />
+
       <DeliveryDateSheet
         isOpen={isDateSheetOpen}
         onClose={() => setIsDateSheetOpen(false)}
         onSave={setSelectedDateId}
         selectedDateId={selectedDateId}
       />
-
-      <Footer />
     </div>
   )
 }

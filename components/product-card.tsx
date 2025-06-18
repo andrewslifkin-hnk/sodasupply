@@ -8,7 +8,7 @@ import { AddToCartButton } from "@/components/add-to-cart-button"
 import { useState, useEffect } from "react"
 import { StatsigUser, createFeatureGate, identify } from "../flags"
 import { useI18n } from "@/context/i18n-context"
-import { formatCurrency } from "@/lib/i18n-utils"
+import { formatCurrency, normalizeSize } from "@/lib/i18n-utils"
 
 // Feature flag hook for product card elements
 function useFeatureFlag(flagKey: string) {
@@ -58,8 +58,8 @@ export function ProductCard({
     <div className="relative group overflow-hidden rounded-lg shadow-md hover:shadow-lg transition-all duration-300 ease-in-out">
       <div className="relative">
         <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
-          <div className="bg-gray-100 text-[#202020] text-xs font-medium px-2 py-1 rounded">{product.type}</div>
-          <div className="bg-gray-100 text-[#202020] text-xs font-medium px-2 py-1 rounded">{product.size}</div>
+          <div className="bg-gray-100 text-[#202020] text-xs font-medium px-2 py-1 rounded">{t(`product_types.${product.type}`)}</div>
+          <div className="bg-gray-100 text-[#202020] text-xs font-medium px-2 py-1 rounded">{t(`sizes.${normalizeSize(product.size)}`)}</div>
           
           {!flagLoading && discountBadgeEnabled && (
             <div className="bg-red-500 text-white text-xs font-medium px-2 py-1 rounded flex items-center gap-1">
@@ -105,7 +105,7 @@ export function ProductCard({
 
         <h3 className="font-medium text-[#202020] mb-1 line-clamp-2">{product.name}</h3>
         <div className="text-sm text-[#202020]/70 mb-2">
-          {product.type} · {product.size}
+          {t(`product_types.${product.type}`)} · {t(`sizes.${normalizeSize(product.size)}`)}
         </div>
         <div className="flex items-center justify-between">
           <div className="font-bold text-[#202020]">{formatCurrency(product.price, locale)}</div>

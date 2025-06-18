@@ -5,6 +5,7 @@ import { createContext, useContext, useReducer, useCallback, useEffect, useMemo,
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { getProducts, type Product } from "@/services/product-service"
 import { useI18n } from "@/context/i18n-context"
+import { normalizeSize } from "@/lib/i18n-utils"
 
 /**
  * Defines the types of filters supported by the system
@@ -175,13 +176,16 @@ interface FilterContextType {
   getActiveFiltersByCategory: (category: string) => ActiveFilter[]
 
   // Product filtering
-  filterProducts: <T extends Product>(products: T[]) => T[]
+  filterProducts: (products: Product[]) => Product[]
   filteredProductCount: number
   setFilteredProductCount: (count: number) => void
 
   // --- Static sidebar ---
   staticSidebarEnabled: boolean
   setStaticSidebarEnabled: (enabled: boolean) => void
+
+  // --- Loading state ---
+  areFiltersInitialized: boolean
 }
 
 /**
@@ -214,30 +218,42 @@ const extractBrand = (product: Product): string => {
   return name.split(' ')[0]
 }
 
-// Helper function to normalize size for translation key
-const normalizeSize = (size: string): string => {
-  // Extract the base size (e.g., "12 fl oz" from "12 fl oz 12 Pack Cans")
-  const baseSize = size.match(/([\d.]+ fl oz|[\d.]+ Liters?|[\d.]+ ml)/i)?.[0] || size
-  
-  // Extract the package info
-  const packageMatch = size.match(/(\d+)\s*(Pack|Count|Bottles?|Cans?)/i)
-  const packageInfo = packageMatch 
-    ? `${packageMatch[1]}_${packageMatch[2].toLowerCase().replace(/s$/, '')}`
-    : ''
+// Helper function to create a filter predicate from an ActiveFilter
+const createFilterPredicate = (filter: ActiveFilter): FilterPredicate => {
+  return (product: Product) => {
+    switch (filter.category) {
+      case 'brand':
+        return extractBrand(product) === filter.value
+      case 'size':
+        return product.size === filter.value
+      case 'type':
+        return product.type === filter.value
+      case 'availability':
+        if (filter.id === 'availability-instock') return product.in_stock
+        if (filter.id === 'availability-returnable') return product.returnable
+        return true
+      case 'price':
+        const [min, max] = filter.value as [number, number]
+        return product.price >= min && product.price <= max
+      default:
+        return true
+    }
+  }
+}
 
-  // Clean and normalize the base size
-  const normalizedBase = baseSize.toLowerCase().replace(/\s+/g, '_')
-
-  // Combine for translation key
-  const key = packageInfo 
-    ? `${normalizedBase}_${packageInfo}`
-    : normalizedBase
-
-  // Further normalize the key
-  return key.replace(/\s+/g, '_')
-    .replace(/-/g, '_')
-    .replace(/\./g, '_')
-    .toLowerCase()
+// Helper function to get the correct sort function
+const getSortFunction = (sortOption: SortOption) => {
+  switch (sortOption) {
+    case 'price-low':
+      return (a: Product, b: Product) => a.price - b.price
+    case 'price-high':
+      return (a: Product, b: Product) => b.price - a.price
+    case 'newest':
+      return (a: Product, b: Product) => b.id - a.id // Assuming higher ID is newer
+    case 'featured':
+    default:
+      return () => 0 // No change in order for featured
+  }
 }
 
 /**
@@ -336,9 +352,97 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
   // UI state
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false)
   const [filteredProductCount, setFilteredProductCount] = useState(0)
+  const [areFiltersInitialized, setAreFiltersInitialized] = useState(false)
 
   // Sync flags to prevent infinite loops
   const skipUrlToStateSync = useRef(false);
+
+  const reinitializeFilters = useCallback(async () => {
+    if (!t) return; // Wait for translations to load
+
+    // Get products with current locale
+    const products = await getProducts(undefined, locale)
+    if (!products || products.length === 0) return
+
+    // Get unique brands from products
+    const brands = Array.from(new Set(products.map(product => extractBrand(product))))
+
+    // Create brand filter options
+    const brandOptions: CheckboxFilterOption[] = brands
+      .sort()
+      .map(brand => ({
+        id: `brand-${brand.toLowerCase()}`,
+        label: t(`brands.${brand}`),
+        value: brand,
+        type: FilterType.CHECKBOX,
+        category: 'brand'
+      }))
+
+    // Get unique sizes and normalize them
+    const sizes = Array.from(new Set(products.map(product => product.size)))
+    
+    // Create size filter options
+    const sizeOptions: CheckboxFilterOption[] = sizes
+      .sort()
+      .map(size => {
+        const normalizedSize = normalizeSize(size)
+        const translationKey = `sizes.${normalizedSize}`
+        const translatedLabel = t(translationKey)
+        return {
+          id: `size-${size.toLowerCase().replace(/\s+/g, '-')}`,
+          label: translatedLabel !== translationKey ? translatedLabel : size,
+          value: size,
+          type: FilterType.CHECKBOX,
+          category: 'size'
+        }
+      })
+
+    // Get unique types from products
+    const types = Array.from(new Set(products.map(product => product.type)))
+
+    // Create type filter options
+    const typeOptions: CheckboxFilterOption[] = types
+      .sort()
+      .map(type => {
+        const translationKey = `product_types.${type}`
+        const translatedLabel = t(translationKey)
+        return {
+          id: `type-${normalizeType(type)}`,
+          label: translatedLabel !== translationKey ? translatedLabel : type,
+          value: type,
+          type: FilterType.CHECKBOX,
+          category: 'type'
+        }
+      })
+
+    // Update filter categories
+    const categories: FilterCategory[] = [
+      {
+        id: 'brand',
+        label: t('filters.brands'),
+        type: FilterType.CHECKBOX,
+        options: brandOptions,
+        isExpanded: true
+      },
+      {
+        id: 'size',
+        label: t('filters.sizes'),
+        type: FilterType.CHECKBOX,
+        options: sizeOptions,
+        isExpanded: true
+      },
+      {
+        id: 'type',
+        label: t('filters.types'),
+        type: FilterType.CHECKBOX,
+        options: typeOptions,
+        isExpanded: true
+      }
+    ]
+
+    dispatch({ type: 'SET_FILTER_CATEGORIES', payload: categories })
+    setAreFiltersInitialized(true)
+  }, [t, locale]);
 
   // Calculate total active filters
   const totalActiveFilters = state.activeFilters.length + (state.searchQuery ? 1 : 0)
@@ -365,92 +469,8 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
   }, [searchParams, state.activeFilters])
 
   useEffect(() => {
-    const initializeFilters = async () => {
-      // Get products with current locale
-      const products = await getProducts(undefined, locale)
-      if (!products || products.length === 0) return
-
-      // Get unique brands from products
-      const brands = Array.from(new Set(products.map(product => extractBrand(product))))
-
-      // Create brand filter options
-      const brandOptions: CheckboxFilterOption[] = brands
-        .sort()
-        .map(brand => ({
-          id: `brand-${brand.toLowerCase()}`,
-          label: t(`brands.${brand}`),
-          value: brand,
-          type: FilterType.CHECKBOX,
-          category: 'brand'
-        }))
-
-      // Get unique sizes and normalize them
-      const sizes = Array.from(new Set(products.map(product => product.size)))
-      
-      // Create size filter options
-      const sizeOptions: CheckboxFilterOption[] = sizes
-        .sort()
-        .map(size => {
-          const normalizedSize = normalizeSize(size)
-          const translationKey = `sizes.${normalizedSize}`
-          const translatedLabel = t(translationKey)
-          return {
-            id: `size-${size.toLowerCase().replace(/\s+/g, '-')}`,
-            label: translatedLabel !== translationKey ? translatedLabel : size,
-            value: size,
-            type: FilterType.CHECKBOX,
-            category: 'size'
-          }
-        })
-
-      // Get unique types from products
-      const types = Array.from(new Set(products.map(product => product.type)))
-
-      // Create type filter options
-      const typeOptions: CheckboxFilterOption[] = types
-        .sort()
-        .map(type => {
-          const translationKey = `product_types.${type}`
-          const translatedLabel = t(translationKey)
-          return {
-            id: `type-${normalizeType(type)}`,
-            label: translatedLabel !== translationKey ? translatedLabel : type,
-            value: type,
-            type: FilterType.CHECKBOX,
-            category: 'type'
-          }
-        })
-
-      // Update filter categories
-      const categories: FilterCategory[] = [
-        {
-          id: 'brand',
-          label: t('filters.brands'),
-          type: FilterType.CHECKBOX,
-          options: brandOptions,
-          isExpanded: true
-        },
-        {
-          id: 'size',
-          label: t('filters.sizes'),
-          type: FilterType.CHECKBOX,
-          options: sizeOptions,
-          isExpanded: true
-        },
-        {
-          id: 'type',
-          label: t('filters.types'),
-          type: FilterType.CHECKBOX,
-          options: typeOptions,
-          isExpanded: true
-        }
-      ]
-
-      dispatch({ type: 'SET_FILTER_CATEGORIES', payload: categories })
-    }
-
-    initializeFilters()
-  }, [t, locale])
+    reinitializeFilters();
+  }, [reinitializeFilters])
 
   /**
    * Parse URL parameters into filter state
@@ -681,76 +701,34 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
    * This function applies all active filters to a list of products
    */
   const filterProducts = useCallback(
-    <T extends Product>(products: T[]): T[] => {
-      if (state.activeFilters.length === 0 && !state.searchQuery) {
-        return products
+    (products: Product[]): Product[] => {
+      let filtered = [...products]
+
+      // 1. Filter by search query (if any)
+      if (state.searchQuery) {
+        const lowercasedQuery = state.searchQuery.toLowerCase()
+        filtered = filtered.filter(p => {
+          const name = p.name.toLowerCase()
+          const type = p.type.toLowerCase()
+          const namePt = p.name_pt?.toLowerCase() || ''
+          
+          return name.includes(lowercasedQuery) || type.includes(lowercasedQuery) || namePt.includes(lowercasedQuery)
+        })
       }
 
-      return products.filter(product => {
-        // Apply search query filter
-        if (state.searchQuery) {
-          const query = state.searchQuery.toLowerCase()
-          const nameMatch = product.name?.toLowerCase().includes(query)
-          const descriptionMatch = product.description?.toLowerCase().includes(query)
+      // 2. Apply active filters
+      const activeFilterPredicates = state.activeFilters.map((filter) => createFilterPredicate(filter))
+      if (activeFilterPredicates.length > 0) {
+        filtered = filtered.filter((product) =>
+          activeFilterPredicates.every((predicate) => predicate(product)),
+        )
+      }
 
-          if (!(nameMatch || descriptionMatch)) {
-            return false
-          }
-        }
-
-        // Group filters by category
-        const filtersByCategory: Record<string, ActiveFilter[]> = {}
-        state.activeFilters.forEach(filter => {
-          if (!filtersByCategory[filter.category]) {
-            filtersByCategory[filter.category] = []
-          }
-          filtersByCategory[filter.category].push(filter)
-        })
-
-        // Apply filters grouped by category
-        return Object.entries(filtersByCategory).every(([category, filters]) => {
-          if (filters.length === 0) {
-            return true
-          }
-
-          switch (category) {
-            case "brand":
-              return filters.some(filter => extractBrand(product) === filter.value)
-
-            case "size":
-              // For size category, check if ANY filter matches (OR condition)
-              return filters.some(filter => product.size === filter.value)
-
-            case "availability":
-              // For availability toggles, use AND condition
-              return filters.every(filter => {
-                if (filter.id === "availability-instock") {
-                  return product.in_stock
-                }
-                if (filter.id === "availability-returnable") {
-                  return product.returnable
-                }
-                return true
-              })
-
-            case "price":
-              // For price range filter
-              return filters.every(filter => {
-                const [min, max] = filter.value as [number, number]
-                return product.price >= min && product.price <= max
-              })
-
-            case "type":
-              // For type category, check if ANY filter matches (OR condition)
-              return filters.some(filter => product.type === filter.value)
-
-            default:
-              return true
-          }
-        })
-      })
+      // 3. Apply sorting
+      filtered.sort(getSortFunction(state.sortOption))
+      return filtered
     },
-    [state.activeFilters, state.searchQuery],
+    [state.activeFilters, state.searchQuery, state.sortOption],
   )
 
   // Sync active filters to URL
@@ -810,6 +788,9 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
       // --- Static sidebar ---
       staticSidebarEnabled,
       setStaticSidebarEnabled,
+
+      // --- Loading state ---
+      areFiltersInitialized
     }),
     [
       state.activeFilters,
@@ -835,6 +816,7 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
       setFilteredProductCount,
       staticSidebarEnabled,
       setStaticSidebarEnabled,
+      areFiltersInitialized
     ],
   )
 

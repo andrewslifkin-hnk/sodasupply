@@ -30,6 +30,25 @@ export interface TranslationKeys {
     cart: string
     orders: string
     checkout: string
+    my_orders: string
+    my_account: string
+    categories: string
+    deals: string
+    notifications: string
+  }
+  search: {
+    search_products: string
+    clear_search: string
+    no_results: string
+    search_results: string
+    search_products_placeholder: string
+    type_to_search: string
+    searching: string
+    results_count: string
+    view_all_results: string
+    search_suggestions: string
+    recent_searches: string
+    popular_searches: string
   }
   common: {
     loading: string
@@ -49,11 +68,74 @@ export interface TranslationKeys {
     close: string
     select: string
     current: string
+    menu: string
     currency_symbol: string
     add_to_cart: string
     buy_now: string
     out_of_stock: string
     in_stock: string
+    view_activity: string
+    show_menu: string
+    hide_menu: string
+    start_shopping: string
+    all_filters: string
+    filter_products: string
+    sort_by: string
+    featured: string
+    price_low_to_high: string
+    price_high_to_low: string
+    newest: string
+    confirm: string
+    previous: string
+    open: string
+    show_more: string
+    show_less: string
+    apply: string
+    reset: string
+    clear: string
+    add: string
+    remove: string
+    update: string
+    submit: string
+    send: string
+    upload: string
+    download: string
+    print: string
+    copy: string
+    share: string
+    like: string
+    unlike: string
+    favorite: string
+    unfavorite: string
+    bookmark: string
+    unbookmark: string
+    follow: string
+    unfollow: string
+    subscribe: string
+    unsubscribe: string
+    enable: string
+    disable: string
+    activate: string
+    deactivate: string
+    connect: string
+    disconnect: string
+    login: string
+    logout: string
+    register: string
+    signin: string
+    signup: string
+    home: string
+    profile: string
+    settings: string
+    help: string
+    about: string
+    terms: string
+    privacy: string
+    filter_functionality_coming_soon: string
+    back_to_shopping: string
+    change: string
+    order_error: string
+    on: string
   }
   account: {
     hi_there: string
@@ -75,17 +157,25 @@ export interface TranslationKeys {
     redeem_points: string
     claim_reward: string
     back_to_club: string
+    redeem_your_points: string
+    view_activity: string
   }
   cart: {
-    shopping_cart: string
-    empty_cart: string
-    continue_shopping: string
-    checkout: string
-    subtotal: string
-    total: string
+    title: string
     quantity: string
-    remove: string
-    update_cart: string
+    subtotal: string
+    vat: string
+    delivery: string
+    free: string
+    total: string
+    checkout: string
+    continue_shopping: string
+    item_count: string
+    empty_title: string
+    empty_description: string
+    add_to_cart: string
+    added_to_cart: string
+    remove_from_cart: string
   }
   orders: {
     order_confirmation: string
@@ -98,6 +188,12 @@ export interface TranslationKeys {
     track_order: string
     view_delivery_details: string
     loading_confirmation: string
+    my_orders: string
+    loading_orders: string
+    reorder: string
+    and_more_items: string
+    no_orders_yet: string
+    no_orders_description: string
     status: {
       pending: string
       processing: string
@@ -105,6 +201,20 @@ export interface TranslationKeys {
       delivered: string
       cancelled: string
     }
+    order_confirmed: string
+    order_placed_successfully: string
+    order_no: string
+    placed_at: string
+    delivery_date_label: string
+    driver_will_call: string
+    to_confirm_delivery: string
+    edit_order_until: string
+    what_happens_next: string
+    email_confirmation_message: string
+    distributor_prepares_order: string
+    track_on_my_orders: string
+    delivery_fee: string
+    help_center_contact: string
   }
   filters: {
     clear_all_filters: string
@@ -128,6 +238,18 @@ export interface TranslationKeys {
     brand_label: string
     size_label: string
     price_label: string
+    brands: string
+    sizes: string
+    types: string
+    clear_all: string
+    filter_products: string
+    no_products_found: string
+    try_adjusting_filters: string
+    sort_by: string
+    featured: string
+    price_low_to_high: string
+    price_high_to_low: string
+    newest: string
   }
   products: {
     product_added: string
@@ -149,6 +271,12 @@ export interface TranslationKeys {
     nutrition: string
     reviews: string
     similar_products: string
+    no_categories_found: string
+    no_products_found: string
+    try_adjusting_filters: string
+    distributor: string
+    atlas_beverages: string
+    products_count: string
     product_description: string
     specifications: string
     related_products: string
@@ -156,18 +284,86 @@ export interface TranslationKeys {
     size: string
     flavor: string
     brand: string
-    no_categories_found: string
-    no_products_found: string
-    try_adjusting_filters: string
-    distributor: string
-    atlas_beverages: string
-    products_count: string
+  }
+  welcome: {
+    welcome_to: string
+    lets_get_started: string
+    your_most_purchased: string
+    view_your_orders: string
+    check_loyalty_points: string
+  }
+  promo: {
+    limited_time_offer: string
+    free_shipping_message: string
+    promo_code: string
+    at_checkout: string
+    shop_now: string
   }
   language: {
     english: string
     portuguese_brazil: string
     select_language: string
     language_changed: string
+  }
+  brands: {
+    BODYARMOR: string
+    "COCA-COLA": string
+    DIET: string
+    GATORADE: string
+    VITAMINWATER: string
+    GREAT: string
+    OLIPOP: string
+    PLACEHOLDER: string
+    POPPI: string
+    POWERADE: string
+    PROPEL: string
+    SAVIA: string
+    SPRITE: string
+  }
+  sizes: {
+    "12_fl_oz": string
+    "16_fl_oz": string
+    "2_liters": string
+    "12_fl_oz_12_pack_bottle": string
+    "12_fl_oz_12_pack_can": string
+    "12_fl_oz_18_bottle": string
+    "12_fl_oz_18_count_bottle": string
+    "12_fl_oz_8_pack_bottle": string
+    "12_fl_oz_8_pack_can": string
+    "16_fl_oz_bottle": string
+    "16_fl_oz_6_pack_bottle": string
+    "355_ml": string
+    "473_ml": string
+    "2_liters_bottle": string
+    "12_fl_oz_24_pack_can": string
+    "12_fl_oz_24_pack_bottle": string
+    "12_fl_oz_12_count": string
+    "12_fl_oz_8_count": string
+    "12_fl_oz_6_count": string
+    "16 fl oz_6 pack bottles": string
+  }
+  product_types: {
+    "Sports Drink": string
+    "Enhanced Water": string
+    "Soda": string
+    "Juice": string
+    "Beverage": string
+  }
+  checkout: {
+    preferred_delivery_date: string
+    earliest_delivery: string
+    payment_details: string
+    payment_on_delivery: string
+    pay_driver_in_cash: string
+    order_remarks: string
+    add_notes_for_distributor: string
+    return_empties: string
+    driver_will_collect: string
+    promo_code: string
+    order_summary: string
+    vat_details: string
+    discount: string
+    place_order: string
   }
 }
 

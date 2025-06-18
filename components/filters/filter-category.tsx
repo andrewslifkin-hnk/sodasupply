@@ -100,7 +100,7 @@ export function FilterCategory({ category }: FilterCategoryProps) {
                 className="text-sm text-gray-600 hover:text-gray-800 font-medium"
                 type="button"
               >
-                {showAll ? "View less" : `View ${(filteredOptions?.length || 0) - maxToShow} more`}
+                {showAll ? t('filters.view_less') : t('filters.view_more', { count: (filteredOptions?.length || 0) - maxToShow })}
               </button>
             )}
           </div>
@@ -117,7 +117,7 @@ export function FilterCategory({ category }: FilterCategoryProps) {
                 className="text-sm text-gray-600 hover:text-gray-800 font-medium"
                 type="button"
               >
-                {showAll ? "View less" : `View ${(filteredOptions?.length || 0) - maxToShow} more`}
+                {showAll ? t('filters.view_less') : t('filters.view_more', { count: (filteredOptions?.length || 0) - maxToShow })}
               </button>
             )}
           </div>
@@ -170,7 +170,7 @@ export function FilterCategory({ category }: FilterCategoryProps) {
               className="h-6 px-2 text-xs text-gray-500 hover:text-black"
               onClick={() => clearCategoryFilters(category.id)}
             >
-              Clear {activeCount}
+              {t('filters.clear_count', { count: activeCount })}
             </Button>
           )}
           <Button
