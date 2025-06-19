@@ -98,7 +98,7 @@ export function AddToCartButton({ product, className }: AddToCartButtonProps) {
         disabled={!product.inStock}
         className={cn(
           "rounded-full shadow-lg z-10 transition-all duration-300",
-          "bg-black hover:bg-black/90 text-white",
+          "bg-[#1d1d1d] hover:bg-[#1d1d1d]/90 text-white",
           !product.inStock && "opacity-50 cursor-not-allowed bg-gray-300 hover:bg-gray-300",
           className,
         )}
@@ -119,7 +119,7 @@ export function AddToCartButton({ product, className }: AddToCartButtonProps) {
         }}
         className={cn(
           "rounded-full shadow-lg z-10 transition-all duration-300",
-          "bg-black hover:bg-black/90 text-white",
+          "bg-[#1d1d1d] hover:bg-[#1d1d1d]/90 text-white",
           className,
         )}
       >
@@ -128,16 +128,12 @@ export function AddToCartButton({ product, className }: AddToCartButtonProps) {
     )
   }
 
-  // Expanded state (minus, quantity, plus)
+  // Expanded state (minus, quantity, plus) - don't apply className here
   return (
     <motion.div
       initial={{ width: 40 }}
       animate={{ width: expanded ? 120 : 64 }}
-      className={cn(
-        "flex items-center justify-between bg-white rounded-full shadow-lg z-10 h-10",
-        "border border-gray-200",
-        className,
-      )}
+      className="flex items-center justify-between bg-white rounded-full shadow-lg z-10 h-10 border-2 border-gray-300"
     >
       <AnimatePresence>
         {expanded && (
@@ -151,7 +147,7 @@ export function AddToCartButton({ product, className }: AddToCartButtonProps) {
               size="icon"
               variant="ghost"
               onClick={decrementQuantity}
-              className="rounded-full h-8 w-8 bg-black text-white hover:bg-black/90"
+              className="rounded-full h-8 w-8 bg-[#1d1d1d] text-white hover:bg-[#1d1d1d]/90"
             >
               <Minus className="h-3 w-3" />
             </Button>
@@ -160,7 +156,7 @@ export function AddToCartButton({ product, className }: AddToCartButtonProps) {
       </AnimatePresence>
 
       <motion.div
-        className="flex items-center justify-center font-medium text-sm min-w-[40px]"
+        className="flex items-center justify-center font-medium text-sm min-w-[40px] text-gray-600"
         initial={{ scale: 0.8 }}
         animate={{ scale: 1 }}
       >
@@ -179,7 +175,7 @@ export function AddToCartButton({ product, className }: AddToCartButtonProps) {
               size="icon"
               variant="ghost"
               onClick={incrementQuantity}
-              className="rounded-full h-8 w-8 bg-black text-white hover:bg-black/90"
+              className="rounded-full h-8 w-8 bg-[#1d1d1d] text-white hover:bg-[#1d1d1d]/90"
             >
               <Plus className="h-3 w-3" />
             </Button>

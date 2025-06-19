@@ -78,22 +78,11 @@ export function FilterSheet() {
     { id: "package-crate", label: "Crate", category: "package", type: FilterType.CHECKBOX, value: "Crate" },
   ]
 
-  const getSizeOptions = (): CheckboxFilterOption[] => [
-    { id: "size-330ml", label: "330ml", category: "size", type: FilterType.CHECKBOX, value: "330ml" },
-    { id: "size-500ml", label: "500ml", category: "size", type: FilterType.CHECKBOX, value: "500ml" },
-    { id: "size-1.5l", label: "1.5L", category: "size", type: FilterType.CHECKBOX, value: "1.5L" },
-    { id: "size-2l", label: "2L", category: "size", type: FilterType.CHECKBOX, value: "2L" },
-    { id: "size-6-x", label: "6-Pack", category: "size", type: FilterType.CHECKBOX, value: "6 x" },
-    { id: "size-12-x", label: "12-Pack", category: "size", type: FilterType.CHECKBOX, value: "12 x" },
-    { id: "size-24-x", label: "24-Pack", category: "size", type: FilterType.CHECKBOX, value: "24 x" },
-    // Add more common sizes found in the sports drinks
-    { id: "size-8-x", label: "8-Pack", category: "size", type: FilterType.CHECKBOX, value: "8 x" },
-    { id: "size-18-x", label: "18-Pack", category: "size", type: FilterType.CHECKBOX, value: "18 x" },
-    { id: "size-16-fl-oz", label: "16 fl oz", category: "size", type: FilterType.CHECKBOX, value: "16 fl oz" },
-    { id: "size-20-fl-oz", label: "20 fl oz", category: "size", type: FilterType.CHECKBOX, value: "20 fl oz" },
-    { id: "size-28-fl-oz", label: "28 fl oz", category: "size", type: FilterType.CHECKBOX, value: "28 fl oz" },
-    { id: "size-12-fl-oz", label: "12 fl oz", category: "size", type: FilterType.CHECKBOX, value: "12 fl oz" },
-  ]
+  const getSizeOptions = (): CheckboxFilterOption[] => {
+    // Return empty array - sizes are now handled dynamically by the filter context
+    // This allows proper translation to metric units in Portuguese
+    return []
+  }
 
   const getPriceOptions = (): RangeFilterOption[] => [
     {

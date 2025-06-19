@@ -136,29 +136,43 @@ export const normalizeSize = (size: string): string => {
     return size.toLowerCase().replace(/\s+/g, '_');
   }
   
-  // Extract the base size (e.g., "12 fl oz" from "12 fl oz 12 Pack Cans")
-  const baseSize = size.match(/([\d.]+ fl oz|[\d.]+ Liters?|[\d.]+ ml|[\d.]+ Litros?)/i)?.[0] || size
-  
-  // Extract the package info
-  const packageMatch = size.match(/(\d+)\s*(Pack|Count|Bottles?|Cans?|Garrafas?|Latas?|Unidades?)/i)
-  const packageInfo = packageMatch 
-    ? `${packageMatch[1]}_${packageMatch[2].toLowerCase().replace(/s$/, '').replace(/garrafas?/i, 'bottle').replace(/latas?/i, 'can').replace(/unidades?/i, 'count')}`
-    : ''
-
-  // Clean and normalize the base size
-  const normalizedBase = baseSize.toLowerCase()
+  // Normalize the size string to match our translation keys
+  let normalizedSize = size.toLowerCase()
+    .trim()
+    // Replace multiple spaces with single space first
+    .replace(/\s+/g, ' ')
+    // Handle specific patterns that were causing issues
+    .replace(/(\d+)\s*oz\s+(\d+)\s*pack\s+can/gi, '$1oz_$2_pack_can')
+    .replace(/(\d+)\s*fl\s*oz\s+(\d+)\s*pack\s+pantry\s+pack/gi, '$1_fl_oz_$2_pack_pantry_pack')
+    .replace(/(\d+)\s*fl\s*oz\s+pantry\s+pack/gi, '$1_fl_oz_pantry_pack')
+    .replace(/(\d+)\s*fl\s*oz\s+bottle\s+(\d+)\s*pack/gi, '$1_fl_oz_bottle_$2_pack')
+    .replace(/(\d+)\s*fl\s*oz\s+\((\d+)\s*glass\s*bottle\)/gi, '$1_fl_oz_($2_glass_bottle)')
+    .replace(/(\d+)\s*fl\s*oz\s+\((\d+)\s*glass\s*bottles\)/gi, '$1_fl_oz_($2_glass_bottles)')
+    // Handle general fl oz patterns
+    .replace(/(\d+)\s*fl\s*oz/g, '$1_fl_oz')
+    .replace(/(\d+\.?\d*)\s*oz/g, '$1oz')
+    // Handle parentheses patterns
+    .replace(/\(\s*(\d+)\s*(pack|count|glass bottles|bottles|glass bottle)\s*\)/gi, '($1_$2)')
+    .replace(/\(\s*(\d+)\s*(glass)\s*(bottles|bottle)\s*\)/gi, '($1_$2_$3)')
+    // Replace spaces with underscores
     .replace(/\s+/g, '_')
-    .replace(/litros?/gi, 'liters')
-    .replace(/garrafa/gi, 'bottle')
-
-  // Combine for translation key
-  const key = packageInfo 
-    ? `${normalizedBase}_${packageInfo}`
-    : normalizedBase
-
-  // Further normalize the key
-  return key.replace(/\s+/g, '_')
+    // Handle dashes and periods
     .replace(/-/g, '_')
     .replace(/\./g, '_')
-    .toLowerCase()
+    // Normalize common terms
+    .replace(/bottles?/gi, 'bottle')
+    .replace(/cans?/gi, 'can')
+    .replace(/packs?/gi, 'pack')
+    .replace(/counts?/gi, 'count')
+    .replace(/glass/gi, 'glass')
+    .replace(/plastic/gi, 'plastic')
+    .replace(/refrigerated/gi, 'refrigerated')
+    .replace(/pantry/gi, 'pantry')
+    .replace(/mini/gi, 'mini')
+    // Clean up multiple underscores
+    .replace(/_+/g, '_')
+    // Remove leading/trailing underscores
+    .replace(/^_|_$/g, '')
+  
+  return normalizedSize
 } 

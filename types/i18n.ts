@@ -341,6 +341,53 @@ export interface TranslationKeys {
     "12_fl_oz_8_count": string
     "12_fl_oz_6_count": string
     "16 fl oz_6 pack bottles": string
+    "12_fl_oz_glass_bottle": string
+    "12_fl_oz_(12_glass_bottles)": string
+    "12_fl_oz_(24_glass_bottles)": string
+    "20_fl_oz": string
+    "20_fl_oz_bottle": string
+    "20_fl_oz_(8_pack)": string
+    "12_fl_oz_(12_pack)": string
+    "12_fl_oz_(18_pack)": string
+    "12_fl_oz_(4_pack)": string
+    "12_fl_oz_bottles_8_pack": string
+    "16_fl_oz_6_pack_bottles": string
+    "12_fl_oz_8_pack_bottles": string
+    "12_fl_oz_8_pack": string
+    "12_fl_oz_4_pack_pantry_packs": string
+    "12_fl_oz_pantry_packs": string
+    "12_fl_oz_refrigerated": string
+    "12_fl_oz_cans_12_pack": string
+    "12_fl_oz_cans_24_pack": string
+    "12_fl_oz_12_count_bottles": string
+    "12_fl_oz_18_count_bottles": string
+    "12_fl_oz_12_pack_cans": string
+    "12_fl_oz_24_pack_cans": string
+    "12_fl_oz_18_ct_bottles": string
+    "12_fl_oz_18_bottles": string
+    "12_oz_1_pack_can": string
+    "12_oz_4_pack_cans": string
+    "16_fl_oz_(6_pack)": string
+    "16.9_fl_oz_(6_pack)": string
+    "16.9_fl_oz_(12_pack)": string
+    "16.9_fl_oz_(18_pack)": string
+    "20_fl_oz_(12_pack)": string
+    "20_fl_oz_8_count": string
+    "20_fl_oz_8_count_bottles": string
+    "20_fl_oz_12_count": string
+    "28_fl_oz": string
+    "28_fl_oz_bottle": string
+    "28_fl_oz_plastic_bottle": string
+    "28_fl_oz_1_count": string
+    "7.5oz_mini_can": string
+    "50.7_fl_oz_1_count": string
+    "12oz_1_pack_can": string
+    "12oz_4_pack_can": string
+    "12_fl_oz_pantry_pack": string
+    "12_fl_oz_4_pack_pantry_pack": string
+    "12_fl_oz_(24_glass_bottle)": string
+    "12_fl_oz_(12_glass_bottle)": string
+    "12_fl_oz_bottle_8_pack": string
   }
   product_types: {
     "Sports Drink": string

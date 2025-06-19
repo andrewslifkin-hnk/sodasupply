@@ -12,7 +12,7 @@ import { FilterTags } from "./filters/filter-tags"
 
 // Main products list component
 export default function ProductList() {
-  const { filterProducts, searchQuery, setFilteredProductCount } = useFilter()
+  const { filterProducts, searchQuery, setFilteredProductCount, filteredProductCount } = useFilter()
   const [products, setProducts] = useState<React.ReactNode[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [page, setPage] = useState(1)
@@ -71,13 +71,21 @@ export default function ProductList() {
     <>
       <FilterTags />
       <motion.div
-        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-0"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
         {products}
       </motion.div>
+      
+      {/* Products found counter */}
+      {!isLoading && products.length > 0 && (
+        <div className="text-center py-4 text-sm text-gray-500">
+          {t('filters.products_found', { count: filteredProductCount })}
+        </div>
+      )}
+      
       {hasMore && (
         <div ref={ref} className="text-center py-8">
           <p>{t("common.loading")}</p>

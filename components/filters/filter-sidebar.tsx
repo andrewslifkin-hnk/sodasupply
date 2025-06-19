@@ -75,9 +75,6 @@ export function FilterSidebar() {
           <FilterCategoryComponent key={category.id} category={category} />
         ))}
       </div>
-      <div className="mt-6 text-sm text-gray-500">
-        {t('filters.products_found', { count: filteredProductCount })}
-      </div>
     </aside>
   )
 } 
