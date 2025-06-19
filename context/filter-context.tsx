@@ -213,6 +213,7 @@ const extractBrand = (product: Product): string => {
   if (name.includes('COCA-COLA') || name.includes('COCA COLA')) return 'COCA-COLA'
   if (name.includes('GATORADE')) return 'GATORADE'
   if (name.includes('VITAMINWATER')) return 'VITAMINWATER'
+  if (name.includes('BOYLAN')) return 'BOYLAN'
   
   // Default to first word
   return name.split(' ')[0]

@@ -39,6 +39,7 @@ export function FilterSheet() {
     // Only include brands that have products in the inventory
     { id: "brand-olipop", label: "Olipop", category: "brand", type: FilterType.CHECKBOX, value: "Olipop" },
     { id: "brand-poppi", label: "Poppi", category: "brand", type: FilterType.CHECKBOX, value: "Poppi" },
+    { id: "brand-boylan", label: "Boylan", category: "brand", type: FilterType.CHECKBOX, value: "Boylan" },
     { id: "brand-cocacola", label: "Coca-Cola", category: "brand", type: FilterType.CHECKBOX, value: "Coca-Cola" },
     { id: "brand-sprite", label: "Sprite", category: "brand", type: FilterType.CHECKBOX, value: "Sprite" },
     { id: "brand-assorted", label: "Assorted", category: "brand", type: FilterType.CHECKBOX, value: "Assorted" },
@@ -59,6 +60,8 @@ export function FilterSheet() {
     // Only include types that have products in the inventory
     { id: "type-prebiotic", label: "Prebiotic", category: "type", type: FilterType.CHECKBOX, value: "Prebiotic" },
     { id: "type-soda", label: "Soda", category: "type", type: FilterType.CHECKBOX, value: "Soda" },
+    { id: "type-craftsoda", label: "Craft Soda", category: "type", type: FilterType.CHECKBOX, value: "Craft Soda" },
+    { id: "type-dietcraftsoda", label: "Diet Craft Soda", category: "type", type: FilterType.CHECKBOX, value: "Diet Craft Soda" },
     { id: "type-sparklingwater", label: "Sparkling Water", category: "type", type: FilterType.CHECKBOX, value: "Sparkling Water" },
     { id: "type-energydrink", label: "Energy Drink", category: "type", type: FilterType.CHECKBOX, value: "Energy Drink" },
     // Sports drink product types
@@ -89,6 +92,7 @@ export function FilterSheet() {
     { id: "size-16-fl-oz", label: "16 fl oz", category: "size", type: FilterType.CHECKBOX, value: "16 fl oz" },
     { id: "size-20-fl-oz", label: "20 fl oz", category: "size", type: FilterType.CHECKBOX, value: "20 fl oz" },
     { id: "size-28-fl-oz", label: "28 fl oz", category: "size", type: FilterType.CHECKBOX, value: "28 fl oz" },
+    { id: "size-12-fl-oz", label: "12 fl oz", category: "size", type: FilterType.CHECKBOX, value: "12 fl oz" },
   ]
 
   const getPriceOptions = (): RangeFilterOption[] => [

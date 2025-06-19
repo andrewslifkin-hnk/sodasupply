@@ -308,6 +308,7 @@
   },
   "brands": {
     "BODYARMOR": "BODYARMOR",
+    "BOYLAN": "Boylan",
     "COCA-COLA": "Coca-Cola",
     "DIET": "Diet Coke",
     "GATORADE": "Gatorade",
@@ -353,13 +354,10 @@
     "Sports Drink": "Bebida Esportiva",
     "Enhanced Water": "Água Enriquecida",
     "Soda": "Refrigerante",
+    "Craft Soda": "Refrigerante Artesanal",
+    "Diet Craft Soda": "Refrigerante Diet Artesanal",
     "Juice": "Suco",
-    "Beverage": "Bebidas",
-    "Bebida Esportiva": "Bebida Esportiva",
-    "Água Enriquecida": "Água Enriquecida",
-    "Refrigerante": "Refrigerante",
-    "Refrigerante Prebiótico": "Refrigerante Prebiótico",
-    "Prebiotic Soda": "Refrigerante Prebiótico"
+    "Beverage": "Bebida"
   },
   "checkout": {
     "preferred_delivery_date": "Data de entrega preferida",

@@ -315,6 +315,7 @@
   },
   "brands": {
     "BODYARMOR": "BODYARMOR",
+    "BOYLAN": "Boylan",
     "COCA-COLA": "Coca-Cola",
     "DIET": "Diet Coke",
     "GATORADE": "Gatorade",
@@ -354,6 +355,8 @@
     "Sports Drink": "Sports Drink",
     "Enhanced Water": "Enhanced Water",
     "Soda": "Soda",
+    "Craft Soda": "Craft Soda",
+    "Diet Craft Soda": "Diet Craft Soda",
     "Juice": "Juice",
     "Beverage": "Beverage"
   },
