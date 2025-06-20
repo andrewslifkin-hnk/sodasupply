@@ -2,16 +2,36 @@
 
 import { Check, MapPin, ChevronUp, ChevronDown } from "lucide-react"
 import { useStore } from "@/context/store-context"
-import { useRef, useEffect } from "react"
+import { useRef, useEffect, useState } from "react"
 import { useOnClickOutside } from "@/hooks/use-click-outside"
 import { Button } from "@/components/ui/button"
 
+// Hook to check URL parameter for store selector
+function useStoreVisibility() {
+  const [isEnabled, setIsEnabled] = useState(true) // Default to true
+  
+  useEffect(() => {
+    // Only check URL parameters on the client side
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search)
+      const storeParam = urlParams.get('store_selector')
+      
+      // Enable by default, disable only if explicitly set to 'false', 'off', or '0'
+      const enabled = storeParam === null || !['false', 'off', '0'].includes(storeParam.toLowerCase())
+      setIsEnabled(enabled)
+    }
+  }, [])
+  
+  return isEnabled
+}
+
 export function StoreDropdown() {
   const { stores, selectedStore, isStoreMenuOpen, openStoreMenu, closeStoreMenu, selectStore } = useStore()
+  const isStoreVisible = useStoreVisibility()
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   // Close dropdown when clicking outside
-  useOnClickOutside(dropdownRef, closeStoreMenu)
+  useOnClickOutside(dropdownRef as React.RefObject<HTMLDivElement>, closeStoreMenu)
 
   // Close dropdown when pressing escape
   useEffect(() => {
@@ -27,6 +47,9 @@ export function StoreDropdown() {
       document.removeEventListener("keydown", handleEscape)
     }
   }, [isStoreMenuOpen, closeStoreMenu])
+
+  // Don't render if disabled via URL parameter
+  if (!isStoreVisible) return null
 
   if (!selectedStore) return null
 

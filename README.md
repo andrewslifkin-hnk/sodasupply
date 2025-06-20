@@ -14,6 +14,10 @@ SodaSupply is a Next.js-based e-commerce platform designed specifically for beve
 - **Order Management**: Track order status and history
 - **Responsive Design**: Optimized for mobile, tablet, and desktop views
 - **Supabase Integration**: Backend powered by Supabase for data storage
+- **Store Selector**: Location-based selection
+- **Loyalty Club**: Program for rewarding customers
+- **Multi-language Support**: English and Portuguese
+- **Feature Flags**: For controlled rollouts
 
 ## Screenshots
 
@@ -127,3 +131,30 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## License
 
 This project is licensed under the MIT License.
+
+## URL Parameter Controls
+
+### Store Selector Toggle
+
+You can control the visibility of the store selector in the header using a URL parameter:
+
+- **Enable store selector** (default): `/?store_selector=true` or just `/` (enabled by default)
+- **Disable store selector**: `/?store_selector=false` or `/?store_selector=off` or `/?store_selector=0`
+
+### Distributor Selector Toggle
+
+You can control the visibility of the distributor selector on product pages using a URL parameter:
+
+- **Enable distributor selector** (default): `/?distributor_selector=true` or just `/` (enabled by default)
+- **Disable distributor selector**: `/?distributor_selector=false` or `/?distributor_selector=off` or `/?distributor_selector=0`
+
+### Examples:
+- `https://yoursite.com/` - Both selectors are shown (default)
+- `https://yoursite.com/?store_selector=false` - Store selector hidden, distributor selector shown
+- `https://yoursite.com/?distributor_selector=false` - Distributor selector hidden, store selector shown
+- `https://yoursite.com/?store_selector=false&distributor_selector=false` - Both selectors hidden
+- `https://yoursite.com/products?distributor_selector=off` - Distributor selector hidden on products page
+
+Both parameters work independently and in combination. This works in both development and production environments.
+
+## Getting Started

@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense } from "react"
+import { Suspense, useState, useEffect } from "react"
 import ProductList from "@/components/product-list"
 import { ProductListSkeleton } from "@/components/skeletons"
 import { FilterBar } from "@/components/filters/filter-bar"
@@ -13,9 +13,29 @@ import { FilterTags } from "@/components/filters/filter-tags"
 import { useI18n } from "@/context/i18n-context"
 import { ProductSubMenu } from "@/components/product-sub-menu"
 
+// Hook to check URL parameter for distributor selector
+function useDistributorVisibility() {
+  const [isEnabled, setIsEnabled] = useState(true) // Default to true
+  
+  useEffect(() => {
+    // Only check URL parameters on the client side
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search)
+      const distributorParam = urlParams.get('distributor_selector')
+      
+      // Enable by default, disable only if explicitly set to 'false', 'off', or '0'
+      const enabled = distributorParam === null || !['false', 'off', '0'].includes(distributorParam.toLowerCase())
+      setIsEnabled(enabled)
+    }
+  }, [])
+  
+  return isEnabled
+}
+
 export function ProductView({ pageTitle }: { pageTitle?: string }) {
   const { staticSidebarEnabled, filteredProductCount } = useFilter()
   const { t } = useI18n()
+  const isDistributorVisible = useDistributorVisibility()
   const title = pageTitle || t('products.all_products')
   
   return (
@@ -25,12 +45,14 @@ export function ProductView({ pageTitle }: { pageTitle?: string }) {
           {/* Products title and distributor selector in a single row, full width */}
           <div className="flex items-center justify-between w-full mt-2 mb-4">
             <h1 className="text-2xl font-bold tracking-tight text-[#202020]">{title}</h1>
-            <span className="text-[#202020]/80">
-              {t('products.distributor')}:{" "}
-              <span className="font-medium underline underline-offset-4 decoration-black/30 hover:decoration-black transition-all cursor-pointer">
-                {t('products.atlas_beverages')}
+            {isDistributorVisible && (
+              <span className="text-[#202020]/80">
+                {t('products.distributor')}:{" "}
+                <span className="font-medium underline underline-offset-4 decoration-black/30 hover:decoration-black transition-all cursor-pointer">
+                  {t('products.atlas_beverages')}
+                </span>
               </span>
-            </span>
+            )}
           </div>
           {/* Flex row: sidebar and main content */}
           <div className="flex w-full">
@@ -52,14 +74,16 @@ export function ProductView({ pageTitle }: { pageTitle?: string }) {
           <WelcomeMenu />
           <div className="mb-4">
             <h1 className="text-2xl font-bold tracking-tight text-[#202020] mb-4">{title}</h1>
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-[#202020]/80">
-                {t('products.distributor')}:{" "}
-                <span className="font-medium underline underline-offset-4 decoration-black/30 hover:decoration-black transition-all cursor-pointer">
-                  {t('products.atlas_beverages')}
+            {isDistributorVisible && (
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-[#202020]/80">
+                  {t('products.distributor')}:{" "}
+                  <span className="font-medium underline underline-offset-4 decoration-black/30 hover:decoration-black transition-all cursor-pointer">
+                    {t('products.atlas_beverages')}
+                  </span>
                 </span>
-              </span>
-            </div>
+              </div>
+            )}
             {/* Sub menu */}
             <ProductSubMenu />
             <FilterBar />
