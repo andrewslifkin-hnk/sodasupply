@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useState, useEffect } from "react"
+import { Suspense } from "react"
 import ProductList from "@/components/product-list"
 import { ProductListSkeleton } from "@/components/skeletons"
 import { FilterBar } from "@/components/filters/filter-bar"
@@ -12,30 +12,12 @@ import { useFilter } from "@/context/filter-context"
 import { FilterTags } from "@/components/filters/filter-tags"
 import { useI18n } from "@/context/i18n-context"
 import { ProductSubMenu } from "@/components/product-sub-menu"
-
-// Hook to check URL parameter for distributor selector
-function useDistributorVisibility() {
-  const [isEnabled, setIsEnabled] = useState(true) // Default to true
-  
-  useEffect(() => {
-    // Only check URL parameters on the client side
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search)
-      const distributorParam = urlParams.get('distributor_selector')
-      
-      // Enable by default, disable only if explicitly set to 'false', 'off', or '0'
-      const enabled = distributorParam === null || !['false', 'off', '0'].includes(distributorParam.toLowerCase())
-      setIsEnabled(enabled)
-    }
-  }, [])
-  
-  return isEnabled
-}
+import { useDistributorSelector } from "@/hooks/use-url-parameters"
 
 export function ProductView({ pageTitle }: { pageTitle?: string }) {
   const { staticSidebarEnabled, filteredProductCount } = useFilter()
   const { t } = useI18n()
-  const isDistributorVisible = useDistributorVisibility()
+  const isDistributorVisible = useDistributorSelector()
   const title = pageTitle || t('products.all_products')
   
   return (

@@ -4,30 +4,11 @@ import { Check, MapPin, X } from "lucide-react"
 import { useStore } from "@/context/store-context"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet"
-import { useState, useEffect } from "react"
-
-// Hook to check URL parameter for store selector
-function useStoreVisibility() {
-  const [isEnabled, setIsEnabled] = useState(true) // Default to true
-  
-  useEffect(() => {
-    // Only check URL parameters on the client side
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search)
-      const storeParam = urlParams.get('store_selector')
-      
-      // Enable by default, disable only if explicitly set to 'false', 'off', or '0'
-      const enabled = storeParam === null || !['false', 'off', '0'].includes(storeParam.toLowerCase())
-      setIsEnabled(enabled)
-    }
-  }, [])
-  
-  return isEnabled
-}
+import { useStoreSelector } from "@/hooks/use-url-parameters"
 
 export function StoreSheet() {
   const { stores, isStoreSheetOpen, closeStoreSheet, selectStore } = useStore()
-  const isStoreVisible = useStoreVisibility()
+  const isStoreVisible = useStoreSelector()
 
   // Don't render if disabled via URL parameter
   if (!isStoreVisible) return null

@@ -7,6 +7,7 @@ import { StoreProvider } from "@/context/store-context"
 import { FilterProvider } from "@/context/filter-context"
 import { OrderProvider } from "@/context/orders-context"
 import { I18nProvider } from "@/context/i18n-context"
+import { AdminPanel } from "@/components/admin-panel"
 import { Suspense } from "react"
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
@@ -65,6 +66,7 @@ export default function RootLayout({
             </CartProvider>
           </StoreProvider>
         </I18nProvider>
+        <AdminPanel />
         <Analytics />
         <SpeedInsights />
       </body>

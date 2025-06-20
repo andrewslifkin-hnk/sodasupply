@@ -134,27 +134,79 @@ This project is licensed under the MIT License.
 
 ## URL Parameter Controls
 
-### Store Selector Toggle
+The application includes a centralized URL parameter management system located in `hooks/use-url-parameters.ts`. This allows you to control various features using URL parameters.
 
-You can control the visibility of the store selector in the header using a URL parameter:
+### Available Parameters
 
-- **Enable store selector** (default): `/?store_selector=true` or just `/` (enabled by default)
-- **Disable store selector**: `/?store_selector=false` or `/?store_selector=off` or `/?store_selector=0`
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `store_selector` | `true` | Controls the store selector in the header |
+| `distributor_selector` | `true` | Controls the distributor selector on product pages |
+| `promo_banner` | `true` | Controls promotional banners (future use) |
+| `search_overlay` | `true` | Controls search overlay functionality (future use) |
+| `admin_panel` | `false` | Shows the admin panel for managing all parameters |
 
-### Distributor Selector Toggle
+### Parameter Values
 
-You can control the visibility of the distributor selector on product pages using a URL parameter:
+You can use multiple formats to enable/disable features:
 
-- **Enable distributor selector** (default): `/?distributor_selector=true` or just `/` (enabled by default)
-- **Disable distributor selector**: `/?distributor_selector=false` or `/?distributor_selector=off` or `/?distributor_selector=0`
+**Enable (true):** `true`, `on`, `1`, `yes`, `enabled`, or omit the parameter
+**Disable (false):** `false`, `off`, `0`, `no`, `disabled`
 
-### Examples:
-- `https://yoursite.com/` - Both selectors are shown (default)
-- `https://yoursite.com/?store_selector=false` - Store selector hidden, distributor selector shown
-- `https://yoursite.com/?distributor_selector=false` - Distributor selector hidden, store selector shown
-- `https://yoursite.com/?store_selector=false&distributor_selector=false` - Both selectors hidden
-- `https://yoursite.com/products?distributor_selector=off` - Distributor selector hidden on products page
+### Usage Examples
 
-Both parameters work independently and in combination. This works in both development and production environments.
+**Single Parameters:**
+- `https://yoursite.com/?store_selector=false` - Hide store selector
+- `https://yoursite.com/?distributor_selector=off` - Hide distributor selector
+- `https://yoursite.com/?store_selector=disabled` - Hide store selector
+
+**Multiple Parameters:**
+- `https://yoursite.com/?store_selector=false&distributor_selector=false` - Hide both selectors
+- `https://yoursite.com/?store_selector=on&distributor_selector=off` - Show store, hide distributor
+- `https://yoursite.com/products?distributor_selector=0&promo_banner=no` - Hide distributor and promo banner
+
+**All Features Disabled:**
+```
+https://yoursite.com/?store_selector=false&distributor_selector=false&promo_banner=false&search_overlay=false
+```
+
+### Development Usage
+
+For testing on localhost:
+```bash
+# Hide both selectors
+http://localhost:3002/?store_selector=false&distributor_selector=false
+
+# Hide only store selector
+http://localhost:3002/?store_selector=off
+
+# Hide only distributor selector  
+http://localhost:3002/?distributor_selector=disabled
+
+# Access admin panel
+http://localhost:3002/?admin_panel=true
+
+# Access admin panel with other parameters
+http://localhost:3002/?admin_panel=true&store_selector=false
+```
+
+### Programmatic Usage
+
+You can also control parameters programmatically in your code:
+
+```typescript
+import { useUrlParameters, updateUrlParameters } from "@/hooks/use-url-parameters"
+
+// Get current parameter values
+const params = useUrlParameters()
+
+// Update parameters programmatically
+updateUrlParameters({ 
+  store_selector: false, 
+  distributor_selector: true 
+})
+```
+
+This system works in both development and production environments and automatically handles URL cleanup (removes parameters when they match default values).
 
 ## Getting Started
