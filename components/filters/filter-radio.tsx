@@ -47,13 +47,25 @@ export function FilterRadioGroup({ options, groupId, groupLabel }: FilterRadioGr
     }
   }
 
+  const handleRowClick = (optionId: string, e: React.MouseEvent) => {
+    // Prevent event if clicking directly on the radio button
+    if ((e.target as HTMLElement).closest('[role="radio"]')) {
+      return
+    }
+    handleChange(optionId)
+  }
+
   return (
     <RadioGroup value={selectedValue} onValueChange={handleChange}>
       <div className="space-y-3">
         {options.map((option) => (
-          <div key={option.id} className="flex flex-row-reverse items-center justify-between space-x-reverse space-x-2">
+          <div 
+            key={option.id} 
+            className="flex flex-row-reverse items-center justify-between space-x-reverse space-x-2 cursor-pointer hover:bg-gray-50 p-2 -m-2 rounded-md transition-colors"
+            onClick={(e) => handleRowClick(option.id, e)}
+          >
             <RadioGroupItem value={option.id} id={option.id} />
-            <Label htmlFor={option.id}>{option.label}</Label>
+            <Label htmlFor={option.id} className="cursor-pointer flex-1">{option.label}</Label>
           </div>
         ))}
       </div>

@@ -35,40 +35,8 @@ export function FilterSheet() {
   const isMobile = useMediaQuery("(max-width: 768px)")
 
   // Define filter options for each category
-  const getBrandOptions = (): CheckboxFilterOption[] => [
-    // Only include brands that have products in the inventory
-    { id: "brand-olipop", label: "Olipop", category: "brand", type: FilterType.CHECKBOX, value: "Olipop" },
-    { id: "brand-poppi", label: "Poppi", category: "brand", type: FilterType.CHECKBOX, value: "Poppi" },
-    { id: "brand-boylan", label: "Boylan", category: "brand", type: FilterType.CHECKBOX, value: "Boylan" },
-    { id: "brand-cocacola", label: "Coca-Cola", category: "brand", type: FilterType.CHECKBOX, value: "Coca-Cola" },
-    { id: "brand-sprite", label: "Sprite", category: "brand", type: FilterType.CHECKBOX, value: "Sprite" },
-    { id: "brand-assorted", label: "Assorted", category: "brand", type: FilterType.CHECKBOX, value: "Assorted" },
-    { id: "brand-citrus", label: "Citrus", category: "brand", type: FilterType.CHECKBOX, value: "Citrus" },
-    { id: "brand-cherry", label: "Cherry", category: "brand", type: FilterType.CHECKBOX, value: "Cherry" },
-    { id: "brand-orange", label: "Orange", category: "brand", type: FilterType.CHECKBOX, value: "Orange" },
-    { id: "brand-raspberry", label: "Raspberry", category: "brand", type: FilterType.CHECKBOX, value: "Raspberry" },
-    { id: "brand-energy", label: "Energy", category: "brand", type: FilterType.CHECKBOX, value: "Energy" },
-    // Sports drink brands
-    { id: "brand-gatorade", label: "Gatorade", category: "brand", type: FilterType.CHECKBOX, value: "Gatorade" },
-    { id: "brand-bodyarmor", label: "BODYARMOR", category: "brand", type: FilterType.CHECKBOX, value: "BODYARMOR" },
-    { id: "brand-powerade", label: "POWERADE", category: "brand", type: FilterType.CHECKBOX, value: "POWERADE" },
-    { id: "brand-vitaminwater", label: "vitaminwater", category: "brand", type: FilterType.CHECKBOX, value: "vitaminwater" },
-    { id: "brand-propel", label: "Propel", category: "brand", type: FilterType.CHECKBOX, value: "Propel" },
-  ]
-
-  const getTypeOptions = (): CheckboxFilterOption[] => [
-    // Only include types that have products in the inventory
-    { id: "type-prebiotic", label: "Prebiotic", category: "type", type: FilterType.CHECKBOX, value: "Prebiotic" },
-    { id: "type-soda", label: "Soda", category: "type", type: FilterType.CHECKBOX, value: "Soda" },
-    { id: "type-craftsoda", label: "Craft Soda", category: "type", type: FilterType.CHECKBOX, value: "Craft Soda" },
-    { id: "type-dietcraftsoda", label: "Diet Craft Soda", category: "type", type: FilterType.CHECKBOX, value: "Diet Craft Soda" },
-    { id: "type-sparklingwater", label: "Sparkling Water", category: "type", type: FilterType.CHECKBOX, value: "Sparkling Water" },
-    { id: "type-energydrink", label: "Energy Drink", category: "type", type: FilterType.CHECKBOX, value: "Energy Drink" },
-    // Sports drink product types
-    { id: "type-sportsdrink", label: "Sports Drink", category: "type", type: FilterType.CHECKBOX, value: "Sports Drink" },
-    { id: "type-enhancedwater", label: "Enhanced Water", category: "type", type: FilterType.CHECKBOX, value: "Enhanced Water" },
-    { id: "type-fitnesswater", label: "Fitness Water", category: "type", type: FilterType.CHECKBOX, value: "Fitness Water" },
-  ]
+  // Note: Brand, size, and type options are now handled dynamically by the FilterContext
+  // to avoid duplicates and ensure consistency with actual product data
 
   const getPackageOptions = (): CheckboxFilterOption[] => [
     { id: "package-bottle", label: "Bottle", category: "package", type: FilterType.CHECKBOX, value: "Bottle" },
@@ -77,12 +45,6 @@ export function FilterSheet() {
     { id: "package-case", label: "Case", category: "package", type: FilterType.CHECKBOX, value: "Case" },
     { id: "package-crate", label: "Crate", category: "package", type: FilterType.CHECKBOX, value: "Crate" },
   ]
-
-  const getSizeOptions = (): CheckboxFilterOption[] => {
-    // Return empty array - sizes are now handled dynamically by the filter context
-    // This allows proper translation to metric units in Portuguese
-    return []
-  }
 
   const getPriceOptions = (): RangeFilterOption[] => [
     {
@@ -107,48 +69,34 @@ export function FilterSheet() {
     },
   ]
 
-  // Add options to each category
+  // Add options to each category - only for static options
+  // Dynamic options (brand, size, type) are already provided by the FilterContext
   const categoriesWithOptions = categories.map((category) => {
     switch (category.id) {
-      case "brand":
-        return { ...category, options: getBrandOptions() }
-      case "type":
-        return { ...category, options: getTypeOptions() }
       case "package":
         return { ...category, options: getPackageOptions() }
-      case "size":
-        return { ...category, options: getSizeOptions() }
       case "price":
         return { ...category, options: getPriceOptions() }
       case "availability":
         return { ...category, options: getAvailabilityOptions() }
       default:
+        // For brand, size, and type categories, use the options already provided by FilterContext
         return category
     }
   })
 
   return (
     <Sheet open={isFilterSheetOpen} onOpenChange={closeFilterSheet}>
-      <SheetContent
-        side={isMobile ? "bottom" : "right"}
-        className={isMobile ? "h-[90vh] rounded-t-xl p-0" : "w-[400px] p-0"}
-      >
+      <SheetContent side="left" className="w-[400px] sm:w-[500px] p-0 flex flex-col h-full">
         <div className="flex flex-col h-full">
-          <SheetHeader className="px-6 py-4 border-b border-gray-200">
+          <SheetHeader className="p-6 border-b border-gray-200 flex-shrink-0">
             <div className="flex items-center justify-between">
-              <SheetTitle className="text-xl">Filter</SheetTitle>
-              <div className="flex items-center gap-2">
-                {activeFilters.length > 0 && (
-                  <Button variant="outline" size="sm" className="h-8 text-sm" onClick={clearAllFilters}>
-                    Reset all
-                  </Button>
-                )}
-                <SheetClose asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <X className="h-5 w-5" />
-                  </Button>
-                </SheetClose>
-              </div>
+              <SheetTitle className="text-lg font-semibold">Filter Products</SheetTitle>
+              <SheetClose asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <X className="h-4 w-4" />
+                </Button>
+              </SheetClose>
             </div>
           </SheetHeader>
 

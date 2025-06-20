@@ -34,14 +34,26 @@ export function FilterToggle({ option, hideLabel = false }: FilterToggleProps) {
     }
   }
 
+  const handleToggle = () => {
+    handleChange(!isActive)
+  }
+
   return (
-    <div className="flex items-center justify-between space-x-2">
+    <div 
+      className="flex items-center justify-between space-x-2 cursor-pointer hover:bg-gray-50 p-2 -m-2 rounded-md transition-colors"
+      onClick={handleToggle}
+    >
       {!hideLabel && (
-        <Label htmlFor={option.id} className="cursor-pointer">
+        <Label className="text-base cursor-pointer flex-1 select-none">
           {option.label}
         </Label>
       )}
-      <Switch id={option.id} checked={isActive} onCheckedChange={handleChange} />
+      <Switch
+        id={option.id}
+        checked={isActive}
+        onCheckedChange={handleChange}
+        className="data-[state=checked]:bg-black"
+      />
     </div>
   )
 }

@@ -282,11 +282,18 @@ function filterReducer(state: FilterState, action: FilterAction): FilterState {
       }
       return { ...state, activeFilters: [...otherFilters, newFilter] }
     }
-    case "ADD_FILTER":
+    case "ADD_FILTER": {
+      // Check if filter with the same ID already exists to prevent duplicates
+      const existingFilterIndex = state.activeFilters.findIndex(filter => filter.id === action.payload.id)
+      if (existingFilterIndex !== -1) {
+        // Filter already exists, don't add duplicate
+        return state
+      }
       return {
         ...state,
         activeFilters: [...state.activeFilters, action.payload],
       }
+    }
     case "REMOVE_FILTER":
       return {
         ...state,
@@ -717,12 +724,28 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
         })
       }
 
-      // 2. Apply active filters
-      const activeFilterPredicates = state.activeFilters.map((filter) => createFilterPredicate(filter))
-      if (activeFilterPredicates.length > 0) {
-        filtered = filtered.filter((product) =>
-          activeFilterPredicates.every((predicate) => predicate(product)),
-        )
+      // 2. Apply active filters with proper logic:
+      // - OR logic within the same category (e.g., Boylan OR Olipop for brands)
+      // - AND logic across different categories (e.g., brand AND size AND availability)
+      if (state.activeFilters.length > 0) {
+        // Group filters by category
+        const filtersByCategory = state.activeFilters.reduce((acc, filter) => {
+          if (!acc[filter.category]) {
+            acc[filter.category] = []
+          }
+          acc[filter.category].push(filter)
+          return acc
+        }, {} as Record<string, ActiveFilter[]>)
+
+        // For each product, check if it passes ALL category requirements
+        filtered = filtered.filter((product) => {
+          // For each category, at least one filter in that category must match (OR logic within category)
+          // But ALL categories must have at least one match (AND logic across categories)
+          return Object.entries(filtersByCategory).every(([category, filtersInCategory]) => {
+            // Within this category, at least one filter must match (OR logic)
+            return filtersInCategory.some(filter => createFilterPredicate(filter)(product))
+          })
+        })
       }
 
       // 3. Apply sorting
