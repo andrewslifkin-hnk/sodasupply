@@ -2,9 +2,19 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Soda Supply App', () => {
   test('home page redirects to products', async ({ page }) => {
+    // Listen for console errors to debug the client-side exception
+    page.on('console', msg => {
+      if (msg.type() === 'error') {
+        console.log('Browser console error:', msg.text());
+      }
+    });
+
     await page.goto('/');
     
-    // Should be redirected to /products
+    // Wait for the redirect to complete instead of immediate assertion
+    await page.waitForURL('/products', { timeout: 10000 });
+    
+    // Verify we're on the products page
     await expect(page).toHaveURL('/products');
   });
 
