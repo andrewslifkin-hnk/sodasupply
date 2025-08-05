@@ -6,6 +6,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { getProducts, type Product } from "@/services/product-service"
 import { useI18n } from "@/context/i18n-context"
 import { normalizeSize } from "@/lib/i18n-utils"
+import { useMediaQuery } from "@/hooks/use-media-query"
 
 /**
  * Defines the types of filters supported by the system
@@ -362,6 +363,16 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
   const [filteredProductCount, setFilteredProductCount] = useState(0)
   const [areFiltersInitialized, setAreFiltersInitialized] = useState(false)
 
+  // --- Static sidebar state ---
+  // Enable static sidebar on desktop (min-width: 1024px), disable on mobile/tablet
+  const isDesktop = useMediaQuery("(min-width: 1024px)")
+  const [staticSidebarEnabled, setStaticSidebarEnabled] = useState<boolean>(false)
+
+  // Update staticSidebarEnabled based on screen size
+  useEffect(() => {
+    setStaticSidebarEnabled(isDesktop)
+  }, [isDesktop])
+
   // Sync flags to prevent infinite loops
   const skipUrlToStateSync = useRef(false);
 
@@ -454,9 +465,6 @@ export function FilterProvider({ children }: { children: React.ReactNode }) {
 
   // Calculate total active filters
   const totalActiveFilters = state.activeFilters.length + (state.searchQuery ? 1 : 0)
-
-  // --- Static sidebar state ---
-  const [staticSidebarEnabled, setStaticSidebarEnabled] = useState<boolean>(true)
 
   // This effect syncs the URL to the state, handling back/forward navigation
   useEffect(() => {

@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useFilter, type SortOption } from "@/context/filter-context"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { FilterTags } from "./filter-tags"
+import { MobileQuickFilters } from "./mobile-quick-filters"
 import { useI18n } from "@/context/i18n-context"
 
 /**
@@ -31,9 +32,39 @@ export function FilterBar() {
 
   return (
     <div className="mb-6">
-      <div className="flex items-center justify-between">
-        {/* Filter button */}
-        {!staticSidebarEnabled && (
+      {/* Mobile layout */}
+      {!staticSidebarEnabled && isMobile && (
+        <div className="space-y-3">
+          {/* Row with Filters button and quick filters */}
+          <div className="flex items-center gap-3">
+            {/* Filters button */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 text-[#202020] rounded-full border-gray-300 shrink-0"
+              onClick={openFilterSheet}
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              <span>{t('common.filter_products')}</span>
+              {totalActiveFilters > 0 && (
+                <Badge className="h-5 w-5 p-0 flex items-center justify-center rounded-full bg-black text-white text-xs">
+                  {totalActiveFilters}
+                </Badge>
+              )}
+            </Button>
+            
+            {/* Quick filters - horizontally scrollable */}
+            <div className="flex-1">
+              <MobileQuickFilters />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Desktop layout */}
+      {!staticSidebarEnabled && !isMobile && (
+        <div className="flex items-center justify-between">
+          {/* Filter button */}
           <Button
             variant="outline"
             size="sm"
@@ -48,10 +79,8 @@ export function FilterBar() {
               </Badge>
             )}
           </Button>
-        )}
 
-        {/* Sort dropdown (desktop only) */}
-        {!staticSidebarEnabled && !isMobile && (
+          {/* Sort dropdown (desktop only) */}
           <div className="w-[220px]">
             <Select value={sortOption} onValueChange={handleSortChange}>
               <SelectTrigger className="rounded-full border-gray-300">
@@ -65,8 +94,8 @@ export function FilterBar() {
               </SelectContent>
             </Select>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Filter tags */}
       <FilterTags />
