@@ -12,12 +12,12 @@ import { useFilter } from "@/context/filter-context"
 import { FilterTags } from "@/components/filters/filter-tags"
 import { useI18n } from "@/context/i18n-context"
 import { ProductSubMenu } from "@/components/product-sub-menu"
-import { useDistributorSelector } from "@/hooks/use-url-parameters"
+import { useDistributorFeatureFlag } from "@/hooks/use-distributor-feature-flag"
 
 export function ProductView({ pageTitle }: { pageTitle?: string }) {
   const { staticSidebarEnabled, filteredProductCount } = useFilter()
   const { t } = useI18n()
-  const isDistributorVisible = useDistributorSelector()
+  const isDistributorVisible = useDistributorFeatureFlag()
   const title = pageTitle || t('products.all_products')
   
   return (

@@ -100,7 +100,8 @@ class FeatureFlagClient {
           'my_first_gate': true,
           'my_test_gate': false,
           'promo_banner': true,
-          'product_discount_badge': true
+          'product_discount_badge': true,
+          'distributor_selector': false
           // banner_carousel flag removed
         };
         result = fallbackFlags[key] || false;

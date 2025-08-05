@@ -18,6 +18,7 @@ import Header from "@/components/header"
 import Footer from "@/components/footer"
 import { useOrders } from "@/context/orders-context"
 import { useTranslation } from "@/hooks/use-translation"
+import { useDistributorFeatureFlag } from "@/hooks/use-distributor-feature-flag"
 
 export default function CheckoutPage() {
   const { t } = useTranslation()
@@ -28,6 +29,7 @@ export default function CheckoutPage() {
   const router = useRouter()
   const isMobile = useMediaQuery("(max-width: 768px)")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const isDistributorVisible = useDistributorFeatureFlag()
 
   // State for promo code
   const [isPromoSheetOpen, setIsPromoSheetOpen] = useState(false)
@@ -177,15 +179,17 @@ export default function CheckoutPage() {
             </section>
 
             {/* Distributor */}
-            <section>
-              <h2 className="text-lg font-medium mb-4">{t("products.distributor")}</h2>
-              <div className="border rounded-lg p-4 flex items-center gap-3">
-                <div className="bg-gray-100 p-2 rounded-full">
-                  <Truck className="h-5 w-5 text-gray-700" />
+            {isDistributorVisible && (
+              <section>
+                <h2 className="text-lg font-medium mb-4">{t("products.distributor")}</h2>
+                <div className="border rounded-lg p-4 flex items-center gap-3">
+                  <div className="bg-gray-100 p-2 rounded-full">
+                    <Truck className="h-5 w-5 text-gray-700" />
+                  </div>
+                  <div className="font-medium">Beverage Direct</div>
                 </div>
-                <div className="font-medium">Beverage Direct</div>
-              </div>
-            </section>
+              </section>
+            )}
 
             {/* Payment Details */}
             <section>
