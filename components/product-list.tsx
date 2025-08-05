@@ -8,7 +8,6 @@ import { ProductListSkeleton } from "@/components/skeletons"
 import { useFilter } from "@/context/filter-context"
 import { useInView } from "react-intersection-observer"
 import { useI18n } from "@/context/i18n-context"
-import { FilterTags } from "./filters/filter-tags"
 
 // Main products list component
 export default function ProductList() {
@@ -69,7 +68,6 @@ export default function ProductList() {
 
   return (
     <>
-      <FilterTags />
       <motion.div
         className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-0"
         initial={{ opacity: 0 }}
