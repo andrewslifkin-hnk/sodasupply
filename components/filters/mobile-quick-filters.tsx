@@ -77,7 +77,7 @@ export function MobileQuickFilters() {
   }
 
   return (
-    <ScrollArea className="w-full whitespace-nowrap">
+    <ScrollArea className="w-full whitespace-nowrap overflow-hidden">
       <div className="flex w-max space-x-2 p-1">
         {availableQuickFilters.map((option) => {
           const isActive = isFilterActive(option)
@@ -86,7 +86,7 @@ export function MobileQuickFilters() {
               key={option.id}
               variant={isActive ? "default" : "outline"}
               size="sm"
-              className={`rounded-full whitespace-nowrap ${
+              className={`rounded-full whitespace-nowrap shrink-0 ${
                 isActive 
                   ? "bg-black text-white hover:bg-gray-800" 
                   : "border-gray-300 text-[#202020] hover:bg-gray-50"

@@ -54,7 +54,7 @@ export function FilterBar() {
             </Button>
             
             {/* Quick filters - horizontally scrollable */}
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <MobileQuickFilters />
             </div>
           </div>
