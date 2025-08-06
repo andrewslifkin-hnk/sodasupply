@@ -15,6 +15,7 @@ import { useSearch } from "@/context/search-context"
 import { SearchOverlay } from "@/components/search-overlay"
 import { SearchDropdown } from "@/components/search-dropdown"
 import { useMediaQuery } from "@/hooks/use-media-query"
+// import { useMobileBottomNav } from "@/hooks/use-mobile-bottom-nav" // Uncomment to use mobile bottom nav state
 import { StoreDropdown } from "@/components/store-selector/store-dropdown"
 import { StoreSheet } from "@/components/store-selector/store-sheet"
 import { CartSheet } from "@/components/cart/cart-sheet"
@@ -31,6 +32,7 @@ export default function Header() {
   const { clearAllFilters, clearAndSetTypeFilter } = useFilter()
   const { t } = useI18n()
   const isMobile = useMediaQuery("(max-width: 768px)")
+  // const { isEnabled: hasBottomNav } = useMobileBottomNav() // Uncomment to detect bottom nav state
   const searchContainerRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
   const pathname = usePathname()
