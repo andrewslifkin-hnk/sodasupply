@@ -1,14 +1,17 @@
 "use client"
 
-import React from "react"
+import React, { useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Package, Search, Heart, Menu } from "lucide-react"
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
-import { Button } from "@/components/ui/button"
+import { Package, Search, Heart, ShoppingCart } from "lucide-react"
+
+import { Badge } from "@/components/ui/badge"
 import { useFilter } from "@/context/filter-context"
 import { useI18n } from "@/context/i18n-context"
+import { useCart } from "@/context/cart-context"
+import { CartSheet } from "@/components/cart/cart-sheet"
+import { useMobileBottomNavFlag } from "@/hooks/use-mobile-bottom-nav-flag"
 
 
 interface NavItem {
@@ -16,7 +19,7 @@ interface NavItem {
   label: string
   icon: React.ElementType
   href?: string
-  isSheet?: boolean
+  isCart?: boolean
 }
 
 export function MobileBottomNav() {
@@ -24,6 +27,27 @@ export function MobileBottomNav() {
   const router = useRouter()
   const { clearAllFilters } = useFilter()
   const { t } = useI18n()
+  const { totalItems } = useCart()
+  const [isCartOpen, setIsCartOpen] = useState(false)
+  const { isEnabled, isLoading } = useMobileBottomNavFlag()
+  
+  // Add CSS class to body for spacing when enabled
+  React.useEffect(() => {
+    if (isEnabled && !isLoading) {
+      document.body.classList.add('has-bottom-nav')
+    } else {
+      document.body.classList.remove('has-bottom-nav')
+    }
+    
+    return () => {
+      document.body.classList.remove('has-bottom-nav')
+    }
+  }, [isEnabled, isLoading])
+  
+  // Don't render if feature flag is disabled or loading
+  if (isLoading || !isEnabled) {
+    return null
+  }
   
   const navItems: NavItem[] = [
     {
@@ -45,10 +69,10 @@ export function MobileBottomNav() {
       href: "/club" // Loyalty/club page
     },
     {
-      id: "menu",
-      label: "Menu",
-      icon: Menu,
-      isSheet: true
+      id: "cart",
+      label: "Cart",
+      icon: ShoppingCart,
+      isCart: true
     }
   ]
 
@@ -69,44 +93,7 @@ export function MobileBottomNav() {
     return pathname.startsWith(item.href)
   }
 
-  const MenuSheet = () => (
-    <Sheet>
-      <SheetTrigger asChild>
-        <button
-          className={cn(
-            "flex flex-col items-center justify-center h-full px-2 py-1 rounded-lg transition-colors",
-            "text-gray-400 hover:text-gray-600"
-          )}
-        >
-          <Menu className="h-6 w-6 mb-1" />
-          <span className="text-xs font-medium">Menu</span>
-        </button>
-      </SheetTrigger>
-      <SheetContent side="left" className="w-[300px] sm:w-[400px]">
-        <SheetTitle className="sr-only">{t('common.menu')}</SheetTitle>
-        <nav className="flex flex-col gap-4 mt-8">
-          <button
-            onClick={() => {
-              clearAllFilters();
-              router.push("/");
-            }}
-            className="text-left text-lg font-medium bg-transparent border-0 p-0"
-          >
-            {t('navigation.home')}
-          </button>
-          <Link href="/categories" className="text-lg font-medium">
-            {t('navigation.categories')}
-          </Link>
-          <Link href="/deals" className="text-lg font-medium">
-            {t('navigation.deals')}
-          </Link>
-          <Link href="/about" className="text-lg font-medium">
-            {t('footer.about_us')}
-          </Link>
-        </nav>
-      </SheetContent>
-    </Sheet>
-  )
+
 
   return (
     <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-lg">
@@ -115,10 +102,26 @@ export function MobileBottomNav() {
           const Icon = item.icon
           const isActive = isActiveTab(item)
           
-          if (item.isSheet) {
+          if (item.isCart) {
             return (
               <div key={item.id} className="flex-1 flex justify-center">
-                <MenuSheet />
+                <button
+                  onClick={() => setIsCartOpen(true)}
+                  className={cn(
+                    "flex flex-col items-center justify-center h-full px-2 py-1 rounded-lg transition-colors relative",
+                    "text-gray-400 hover:text-gray-600"
+                  )}
+                >
+                  <div className="relative">
+                    <Icon className="h-6 w-6 mb-1" />
+                    {totalItems > 0 && (
+                      <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-red-500 text-white font-bold">
+                        {totalItems}
+                      </Badge>
+                    )}
+                  </div>
+                  <span className="text-xs font-medium">{item.label}</span>
+                </button>
               </div>
             )
           }
@@ -144,6 +147,9 @@ export function MobileBottomNav() {
           )
         })}
       </div>
+      
+      {/* Cart Sheet */}
+      <CartSheet isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </div>
   )
 }

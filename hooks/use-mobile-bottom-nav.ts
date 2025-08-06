@@ -8,10 +8,11 @@ import { useMobileBottomNavFlag } from './use-mobile-bottom-nav-flag'
  * when bottom navigation is enabled/disabled
  */
 export function useMobileBottomNav() {
-  const isEnabled = useMobileBottomNavFlag()
+  const { isEnabled, isLoading } = useMobileBottomNavFlag()
   
   return {
     isEnabled,
-    hasBottomNav: isEnabled
+    hasBottomNav: isEnabled,
+    isLoading
   }
 }
