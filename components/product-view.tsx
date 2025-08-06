@@ -54,7 +54,7 @@ export function ProductView({ pageTitle }: { pageTitle?: string }) {
           {/* Mobile/tablet layout */}
           <PromotionalBanner />
           <WelcomeMenu />
-          <div className="mb-4">
+          <div className="mb-4 px-4 md:px-0">
             <h1 className="text-2xl font-bold tracking-tight text-[#202020] mb-4">{title}</h1>
             {isDistributorVisible && (
               <div className="flex items-center justify-between mb-4">
