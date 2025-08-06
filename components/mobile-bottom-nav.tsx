@@ -2,11 +2,13 @@
 
 import React from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Home, Search, MessageCircle, Menu, Gift, Heart } from "lucide-react"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Package, Search, Heart, Menu } from "lucide-react"
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
+import { useFilter } from "@/context/filter-context"
+import { useI18n } from "@/context/i18n-context"
 
 
 interface NavItem {
@@ -19,29 +21,32 @@ interface NavItem {
 
 export function MobileBottomNav() {
   const pathname = usePathname()
+  const router = useRouter()
+  const { clearAllFilters } = useFilter()
+  const { t } = useI18n()
   
   const navItems: NavItem[] = [
     {
-      id: "home",
-      label: "Home",
-      icon: Home,
+      id: "products",
+      label: "Products",
+      icon: Package,
       href: "/products"
     },
     {
-      id: "find",
-      label: "Find", 
+      id: "search",
+      label: "Search", 
       icon: Search,
       href: "/products" // For now, could be promotions page later
     },
     {
-      id: "news",
-      label: "News",
-      icon: MessageCircle,
+      id: "club",
+      label: "Club",
+      icon: Heart,
       href: "/club" // Loyalty/club page
     },
     {
-      id: "me",
-      label: "Me",
+      id: "menu",
+      label: "Menu",
       icon: Menu,
       isSheet: true
     }
@@ -50,14 +55,14 @@ export function MobileBottomNav() {
   const isActiveTab = (item: NavItem) => {
     if (!item.href) return false
     
-    if (item.id === "home") {
+    if (item.id === "products") {
       return pathname === "/" || pathname.startsWith("/products")
     }
-    if (item.id === "news") {
+    if (item.id === "club") {
       return pathname.startsWith("/club")
     }
-    if (item.id === "find") {
-      // For now, using products page - can be updated when promotions page is added
+    if (item.id === "search") {
+      // For now, using products page - can be updated when search page is added
       return false
     }
     
@@ -74,24 +79,31 @@ export function MobileBottomNav() {
           )}
         >
           <Menu className="h-6 w-6 mb-1" />
-          <span className="text-xs font-medium">Me</span>
+          <span className="text-xs font-medium">Menu</span>
         </button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-80">
-        <div className="flex flex-col space-y-4 mt-8">
-          <Link href="/account" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100">
-            <Home className="h-5 w-5" />
-            <span>Account</span>
+      <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+        <SheetTitle className="sr-only">{t('common.menu')}</SheetTitle>
+        <nav className="flex flex-col gap-4 mt-8">
+          <button
+            onClick={() => {
+              clearAllFilters();
+              router.push("/");
+            }}
+            className="text-left text-lg font-medium bg-transparent border-0 p-0"
+          >
+            {t('navigation.home')}
+          </button>
+          <Link href="/categories" className="text-lg font-medium">
+            {t('navigation.categories')}
           </Link>
-          <Link href="/orders" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100">
-            <Gift className="h-5 w-5" />
-            <span>Orders</span>
+          <Link href="/deals" className="text-lg font-medium">
+            {t('navigation.deals')}
           </Link>
-          <Link href="/club" className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100">
-            <Heart className="h-5 w-5" />
-            <span>Loyalty Club</span>
+          <Link href="/about" className="text-lg font-medium">
+            {t('footer.about_us')}
           </Link>
-        </div>
+        </nav>
       </SheetContent>
     </Sheet>
   )
