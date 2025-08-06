@@ -12,6 +12,7 @@ import { Suspense } from "react"
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { UmamiPageView } from "@/components/umami-pageview"
+import { MobileBottomNav } from "@/components/mobile-bottom-nav"
 import type { Metadata, Viewport } from "next"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -59,7 +60,10 @@ export default function RootLayout({
               <OrderProvider>
                 <Suspense>
                   <FilterProvider>
-                    <SearchProvider>{children}</SearchProvider>
+                    <SearchProvider>
+                      {children}
+                      <MobileBottomNav />
+                    </SearchProvider>
                   </FilterProvider>
                 </Suspense>
               </OrderProvider>
