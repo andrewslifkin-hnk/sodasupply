@@ -8,13 +8,15 @@ import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useI18n } from "@/context/i18n-context"
 import { formatCurrency } from "@/lib/i18n-utils"
+import { cn } from "@/lib/utils"
 
 interface CartSheetProps {
   isOpen: boolean
   onClose: () => void
+  side?: "right" | "bottom"
 }
 
-export function CartSheet({ isOpen, onClose }: CartSheetProps) {
+export function CartSheet({ isOpen, onClose, side = "right" }: CartSheetProps) {
   const { items, updateQuantity, removeFromCart, totalItems } = useCart()
   const router = useRouter()
   const { t, locale } = useI18n()
@@ -35,7 +37,13 @@ export function CartSheet({ isOpen, onClose }: CartSheetProps) {
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent side="right" className="w-full sm:max-w-lg p-0 flex flex-col">
+      <SheetContent
+        side={side}
+        className={cn(
+          side === "bottom" ? "h-[85vh] rounded-t-xl" : "w-full sm:max-w-lg",
+          "p-0 flex flex-col"
+        )}
+      >
         <SheetHeader className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <SheetTitle className="text-lg font-semibold">

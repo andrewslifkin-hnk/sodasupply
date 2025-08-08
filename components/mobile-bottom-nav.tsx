@@ -148,8 +148,8 @@ export function MobileBottomNav() {
         })}
       </div>
       
-      {/* Cart Sheet */}
-      <CartSheet isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      {/* Cart Sheet as bottom sheet on mobile */}
+      <CartSheet isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} side="bottom" />
     </div>
   )
 }
