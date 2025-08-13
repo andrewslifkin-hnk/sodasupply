@@ -12,7 +12,7 @@ test.describe('Soda Supply App', () => {
     await page.goto('/');
     
     // Wait for the redirect to complete instead of immediate assertion
-    await page.waitForURL('/products', { timeout: 10000 });
+    await page.waitForURL('**/products', { timeout: 10000 });
     
     // Verify we're on the products page
     await expect(page).toHaveURL('/products');

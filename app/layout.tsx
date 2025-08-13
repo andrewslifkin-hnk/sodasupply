@@ -11,7 +11,7 @@ import { AdminPanel } from "@/components/admin-panel"
 import { Suspense } from "react"
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
-import { UmamiPageView } from "@/components/umami-pageview"
+import { UmamiPageView } from "@/components/analytics/umami-pageview"
 import type { Metadata, Viewport } from "next"
 
 const inter = Inter({ subsets: ["latin"] })

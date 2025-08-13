@@ -10,23 +10,24 @@ let statsigInitialized = false;
 let statsigInitPromise: Promise<void> | null = null;
 
 async function ensureStatsigInitialized() {
-  if (typeof window !== "undefined") {
-    if (!statsigInitialized) {
-      if (!statsigInitPromise) {
-        let sessionId = sessionStorage.getItem("statsigDisplaySessionId");
-        if (!sessionId) {
-          sessionId = Math.random().toString(36).substring(2) + Date.now().toString(36);
-          sessionStorage.setItem("statsigDisplaySessionId", sessionId);
-        }
-        statsigInitPromise = Statsig.initialize(
-          process.env.NEXT_PUBLIC_STATSIG_CLIENT_KEY!,
-          { userID: sessionId }
-        );
-      }
-      await statsigInitPromise;
-      statsigInitialized = true;
-    }
+  if (typeof window === "undefined") return;
+  if (statsigInitialized) return;
+
+  const apiKey = process.env.NEXT_PUBLIC_STATSIG_CLIENT_KEY;
+  if (!apiKey) {
+    return;
   }
+
+  if (!statsigInitPromise) {
+    let sessionId = sessionStorage.getItem("statsigDisplaySessionId");
+    if (!sessionId) {
+      sessionId = Math.random().toString(36).substring(2) + Date.now().toString(36);
+      sessionStorage.setItem("statsigDisplaySessionId", sessionId);
+    }
+    statsigInitPromise = Statsig.initialize(apiKey, { userID: sessionId });
+  }
+  await statsigInitPromise;
+  statsigInitialized = true;
 }
 
 export function PromotionalBanner() {
@@ -36,13 +37,24 @@ export function PromotionalBanner() {
 
   useEffect(() => {
     async function checkExperiment() {
-      await ensureStatsigInitialized();
-      const experiment = Statsig.getExperiment("promo_banner_experiment");
-      const shouldShow = experiment.get("show_banner", false);
-      setShowBanner(shouldShow);
-      setLoading(false);
-      if (shouldShow) {
-        Statsig.logEvent("promo_banner_exposed");
+      try {
+        const apiKey = process.env.NEXT_PUBLIC_STATSIG_CLIENT_KEY;
+        if (!apiKey) {
+          setShowBanner(false);
+          setLoading(false);
+          return;
+        }
+        await ensureStatsigInitialized();
+        const experiment = Statsig.getExperiment("promo_banner_experiment");
+        const shouldShow = experiment.get("show_banner", false);
+        setShowBanner(shouldShow);
+        setLoading(false);
+        if (shouldShow) {
+          Statsig.logEvent("promo_banner_exposed");
+        }
+      } catch (_err) {
+        setShowBanner(false);
+        setLoading(false);
       }
     }
     checkExperiment();
