@@ -122,10 +122,5 @@
     @apply bg-white rounded-lg shadow-sm p-8;
   }
   
-  /* Mobile bottom navigation spacing - only when enabled */
-  @media (max-width: 768px) {
-    body.has-bottom-nav {
-      padding-bottom: 4rem; /* 64px for the bottom nav height */
-    }
-  }
+  
 }

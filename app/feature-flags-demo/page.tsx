@@ -36,7 +36,6 @@ function useFeatureFlag(flagKey: string) {
 
 export default function FeatureFlagsDemo() {
   const { enabled: myFeatureGateEnabled, loading, user } = useFeatureFlag("my_first_gate");
-  const { enabled: mobileBottomNavEnabled, loading: mobileBottomNavLoading } = useFeatureFlag("mobile_bottom_nav");
   
   return (
     <div className="container mx-auto p-8">
@@ -72,30 +71,7 @@ export default function FeatureFlagsDemo() {
           </p>
         </div>
         
-        <div className="mb-6 mt-8">
-          <h3 className="text-lg font-medium mb-2">mobile_bottom_nav</h3>
-          {mobileBottomNavLoading ? (
-            <p>Loading mobile bottom nav flag status...</p>
-          ) : (
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className={`inline-block w-3 h-3 rounded-full ${mobileBottomNavEnabled ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                <span>Status: {mobileBottomNavEnabled ? 'Enabled' : 'Disabled'}</span>
-              </div>
-              <div className="mt-2 text-sm text-gray-500">
-                Controls whether the mobile bottom navigation bar is visible
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="p-4 border rounded bg-gray-50">
-          <p>
-            {mobileBottomNavEnabled 
-              ? "Mobile bottom navigation is enabled! Check on mobile devices to see the bottom nav bar."
-              : "Mobile bottom navigation is disabled. The bottom nav bar will not appear on mobile devices."}
-          </p>
-        </div>
+        
       </div>
       
       <div className="mt-8 p-4 bg-gray-50 rounded border border-gray-200">

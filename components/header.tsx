@@ -15,7 +15,6 @@ import { useSearch } from "@/context/search-context"
 import { SearchOverlay } from "@/components/search-overlay"
 import { SearchDropdown } from "@/components/search-dropdown"
 import { useMediaQuery } from "@/hooks/use-media-query"
-import { useMobileBottomNav } from "@/hooks/use-mobile-bottom-nav"
 import { StoreDropdown } from "@/components/store-selector/store-dropdown"
 import { StoreSheet } from "@/components/store-selector/store-sheet"
 import { CartSheet } from "@/components/cart/cart-sheet"
@@ -32,7 +31,6 @@ export default function Header() {
   const { clearAllFilters, clearAndSetTypeFilter } = useFilter()
   const { t } = useI18n()
   const isMobile = useMediaQuery("(max-width: 768px)")
-  const { isEnabled: hasBottomNav } = useMobileBottomNav()
   const searchContainerRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
   const pathname = usePathname()
@@ -192,17 +190,15 @@ export default function Header() {
                   <span className="sr-only">{t('navigation.notifications')}</span>
                 </Button>
 
-                {!(isMobile && hasBottomNav) && (
-                  <Button data-testid="cart-button" variant="ghost" size="icon" className="text-white relative" onClick={() => setIsCartOpen(true)}>
-                    <ShoppingCart className="h-5 w-5" />
-                    {totalItems > 0 && (
-                      <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-white text-black font-bold">
-                        {totalItems}
-                      </Badge>
-                    )}
-                    <span className="sr-only">{t('navigation.cart')}</span>
-                  </Button>
-                )}
+                <Button data-testid="cart-button" variant="ghost" size="icon" className="text-white relative" onClick={() => setIsCartOpen(true)}>
+                  <ShoppingCart className="h-5 w-5" />
+                  {totalItems > 0 && (
+                    <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-white text-black font-bold">
+                      {totalItems}
+                    </Badge>
+                  )}
+                  <span className="sr-only">{t('navigation.cart')}</span>
+                </Button>
 
               </div>
             </div>

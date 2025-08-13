@@ -49,64 +49,60 @@ async function addFirstProductToCart(page: Page): Promise<boolean> {
   // Wait for products to load
   await page.waitForSelector('img[alt*="BODYARMOR"], img[alt*="Boylan"], img[alt*="OLIPOP"]', { timeout: 10000 });
   
-  // Find product cards and their buttons - target the button next to each product
-  const productCards = page.locator('main').locator('img[alt*="BODYARMOR"], img[alt*="Boylan"], img[alt*="OLIPOP"]');
-  const productCount = await productCards.count();
+  // Skip complex cart checking - just try to click everything and see what works
+  const allButtons = page.locator('button');
+  const buttonCount = await allButtons.count();
   
-  for (let i = 0; i < Math.min(productCount, 3); i++) {
+  console.log(`Found ${buttonCount} buttons on page`);
+  
+  for (let i = 0; i < buttonCount; i++) {
     try {
-      const productImage = productCards.nth(i);
+      const button = allButtons.nth(i);
+      const buttonText = await button.textContent();
+      const isVisible = await button.isVisible({ timeout: 500 });
       
-      // Find buttons near this product (should be 2 buttons per product based on snapshot)
-      const productContainer = productImage.locator('xpath=ancestor::*[position()<=3]').first();
-      const buttons = productContainer.locator('button').filter({ hasNot: page.locator('img[alt*="heart"], img[alt*="favorite"]') });
-      const buttonCount = await buttons.count();
-      
-      // Try the last button (usually the add-to-cart)
-      if (buttonCount > 0) {
-        const addButton = buttons.last();
-        if (await addButton.isVisible({ timeout: 1000 })) {
-          // First click: opens the stepper
-          await addButton.click();
-          await page.waitForTimeout(500);
-          
-          // Second click: click the same button again or find new plus button
-          const expandedButtons = productContainer.locator('button');
-          const newButtonCount = await expandedButtons.count();
-          
-          if (newButtonCount > buttonCount) {
-            // New buttons appeared (stepper), click the last one (plus)
-            await expandedButtons.last().click();
-          } else {
-            // No stepper appeared, click the same button again
-            await addButton.click();
-          }
-          
-          // Wait for cart to update
-          await page.waitForTimeout(500);
-          return true;
-        }
+      // Skip obviously wrong buttons
+      if (!isVisible || 
+          buttonText?.includes('Continue') ||
+          buttonText?.includes('Filter') ||
+          buttonText?.includes('Sort') ||
+          buttonText?.includes('Search') ||
+          buttonText?.includes('View') ||
+          buttonText?.includes('English') ||
+          buttonText?.includes('Notifications') ||
+          buttonText?.includes('Cart')) {
+        continue;
       }
-    } catch {}
-  }
-  
-  // Fallback: try any button that might be add-to-cart
-  try {
-    const allProductButtons = page.locator('main button').filter({ hasNot: page.locator('img[alt*="heart"], img[alt*="favorite"]') });
-    const count = await allProductButtons.count();
-    
-    for (let i = 0; i < Math.min(count, 5); i++) {
-      const button = allProductButtons.nth(i);
-      if (await button.isVisible({ timeout: 500 })) {
-        await button.click();
-        await page.waitForTimeout(300);
-        await button.click(); // Second click
-        await page.waitForTimeout(500);
+      
+      console.log(`Trying button ${i}: "${buttonText?.trim() || 'no text'}"`);
+      
+      // Click the button
+      await button.click({ timeout: 3000 });
+      await page.waitForTimeout(500);
+      
+      // Check if any cart badge appeared anywhere
+      const badges = page.locator('[class*="badge"], [class*="Badge"]');
+      const badgeCount = await badges.count();
+      if (badgeCount > 0) {
+        console.log(`Success! Found ${badgeCount} badges after clicking button ${i}`);
         return true;
       }
+      
+      // Check if cart text changed by looking for any element with cart count
+      const cartElements = page.locator('text=/Cart.*[1-9]|[1-9].*Cart/');
+      if (await cartElements.count() > 0) {
+        console.log('Success! Found cart with items');
+        return true;
+      }
+      
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      console.log(`Button ${i} failed: ${message}`);
+      continue;
     }
-  } catch {}
+  }
   
+  console.log('No button successfully added items to cart');
   return false;
 }
 
@@ -117,7 +113,6 @@ async function goToCart(page: Page) {
   // Try multiple selectors with fallbacks
   const cartSelectors = [
     '[data-testid="cart-button"]',
-    '[data-testid="mobile-cart-button"]',
     'button:has-text("Cart")',
     'button[aria-label*="cart" i]',
     'button:has([data-testid*="cart"])',

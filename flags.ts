@@ -101,8 +101,7 @@ class FeatureFlagClient {
           'my_test_gate': false,
           'promo_banner': true,
           'product_discount_badge': true,
-          'distributor_selector': false,
-          'mobile_bottom_nav': true
+          'distributor_selector': false
           // banner_carousel flag removed
         };
         result = fallbackFlags[key] || false;
