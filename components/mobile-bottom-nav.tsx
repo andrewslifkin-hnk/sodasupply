@@ -106,6 +106,7 @@ export function MobileBottomNav() {
             return (
               <div key={item.id} className="flex-1 flex justify-center">
                 <button
+                  data-testid="mobile-cart-button"
                   onClick={() => setIsCartOpen(true)}
                   className={cn(
                     "flex flex-col items-center justify-center h-full px-2 py-1 rounded-lg transition-colors relative",

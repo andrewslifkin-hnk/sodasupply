@@ -142,7 +142,7 @@ export function CartSheet({ isOpen, onClose, side = "right" }: CartSheetProps) {
               </div>
 
               <div className="space-y-2">
-                <Button onClick={handleCheckout} className="w-full">
+                <Button data-testid="checkout" onClick={handleCheckout} className="w-full">
                   {t('cart.checkout')}
                 </Button>
                 <Button variant="outline" onClick={handleContinueShopping} className="w-full">

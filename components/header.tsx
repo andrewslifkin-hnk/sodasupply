@@ -193,7 +193,7 @@ export default function Header() {
                 </Button>
 
                 {!(isMobile && hasBottomNav) && (
-                  <Button variant="ghost" size="icon" className="text-white relative" onClick={() => setIsCartOpen(true)}>
+                  <Button data-testid="cart-button" variant="ghost" size="icon" className="text-white relative" onClick={() => setIsCartOpen(true)}>
                     <ShoppingCart className="h-5 w-5" />
                     {totalItems > 0 && (
                       <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs bg-white text-black font-bold">

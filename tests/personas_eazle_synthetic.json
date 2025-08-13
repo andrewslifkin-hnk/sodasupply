@@ -1,0 +1,29 @@
+[
+  {
+    "persona_key": "fast",
+    "label": "Fast shopper",
+    "behaviours": {
+      "session_length": "short",
+      "pages_common": [],
+      "conversion_latency_hours": 0
+    }
+  },
+  {
+    "persona_key": "deliberate",
+    "label": "Deliberate shopper",
+    "behaviours": {
+      "session_length": "medium",
+      "pages_common": [],
+      "conversion_latency_hours": 4
+    }
+  },
+  {
+    "persona_key": "browser",
+    "label": "Browser",
+    "behaviours": {
+      "session_length": "long",
+      "pages_common": [],
+      "conversion_latency_hours": 24
+    }
+  }
+]
