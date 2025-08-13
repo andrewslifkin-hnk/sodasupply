@@ -1,11 +1,9 @@
 "use client"
 
 import type React from "react"
-
-import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Plus, Minus } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { useCart } from "@/context/cart-context"
 
@@ -25,163 +23,59 @@ interface AddToCartButtonProps {
 }
 
 export function AddToCartButton({ product, className }: AddToCartButtonProps) {
-  const [expanded, setExpanded] = useState(false)
   const { getItemQuantity, updateQuantity, addToCart } = useCart()
   const quantity = getItemQuantity(product.id)
-  const timerRef = useRef<NodeJS.Timeout | null>(null)
-
-  // Function to start the collapse timer
-  const startCollapseTimer = () => {
-    // Clear any existing timer
-    if (timerRef.current) {
-      clearTimeout(timerRef.current)
-    }
-
-    // Set a new timer to collapse after 3 seconds
-    timerRef.current = setTimeout(() => {
-      if (quantity > 0) {
-        setExpanded(false)
-      }
-    }, 3000)
-  }
-
-  // Reset timer when quantity changes or component mounts
-  useEffect(() => {
-    if (expanded && quantity > 0) {
-      startCollapseTimer()
-    }
-
-    // Cleanup timer on unmount
-    return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current)
-      }
-    }
-  }, [quantity, expanded])
-
-  const handleInitialAdd = () => {
-    if (!product.inStock) return
-
-    if (quantity === 0) {
-      addToCart(product)
-      setExpanded(true)
-      startCollapseTimer()
-    } else {
-      setExpanded(true)
-      startCollapseTimer()
-    }
-  }
 
   const incrementQuantity = (e: React.MouseEvent) => {
     e.stopPropagation()
-    updateQuantity(product.id, quantity + 1)
-    startCollapseTimer() // Reset timer on interaction
+    if (!product.inStock) return
+    if (quantity === 0) {
+      addToCart(product)
+    } else {
+      updateQuantity(product.id, quantity + 1)
+    }
   }
 
   const decrementQuantity = (e: React.MouseEvent) => {
     e.stopPropagation()
+    if (quantity <= 0) return
     updateQuantity(product.id, quantity - 1)
-
-    if (quantity - 1 <= 0) {
-      setTimeout(() => setExpanded(false), 300)
-    } else {
-      startCollapseTimer() // Reset timer on interaction
-    }
   }
 
-  // Default state (just the plus button)
-  if (!expanded && quantity === 0) {
-    return (
-      <Button
-        size="icon"
-        onClick={handleInitialAdd}
-        disabled={!product.inStock}
-        className={cn(
-          "rounded-full shadow-lg z-10 transition-all duration-300",
-          "bg-[#1d1d1d] hover:bg-[#1d1d1d]/90 text-white",
-          !product.inStock && "opacity-50 cursor-not-allowed bg-gray-300 hover:bg-gray-300",
-          className,
-        )}
-      >
-        <Plus className="h-4 w-4" />
-      </Button>
-    )
-  }
-
-  // Collapsed state with quantity (just shows the number)
-  if (!expanded && quantity > 0) {
-    return (
-      <Button
-        size="icon"
-        onClick={() => {
-          setExpanded(true)
-          startCollapseTimer()
-        }}
-        className={cn(
-          "rounded-full shadow-lg z-10 transition-all duration-300",
-          "bg-[#1d1d1d] hover:bg-[#1d1d1d]/90 text-white",
-          className,
-        )}
-      >
-        <span className="text-sm font-medium">{quantity}</span>
-      </Button>
-    )
-  }
-
-  // Expanded state (minus, quantity, plus) - don't apply className here
+  // Always show the stepper by default
   return (
     <motion.div
-      initial={{ width: 40 }}
-      animate={{ width: expanded ? 120 : 64 }}
-      className="flex items-center justify-between bg-white rounded-full shadow-lg z-10 h-10 border-2 border-gray-300"
+      initial={{ width: 120 }}
+      animate={{ width: 120 }}
+      className={cn(
+        "flex items-center justify-between bg-white rounded-full shadow-lg z-10 h-10 border-2 border-gray-300",
+        className,
+      )}
     >
-      <AnimatePresence>
-        {expanded && (
-          <motion.div
-            initial={{ opacity: 0, width: 0 }}
-            animate={{ opacity: 1, width: "auto" }}
-            exit={{ opacity: 0, width: 0 }}
-            className="overflow-hidden"
-          >
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={decrementQuantity}
-              className="rounded-full h-8 w-8 bg-[#1d1d1d] text-white hover:bg-[#1d1d1d]/90"
-            >
-              <Minus className="h-3 w-3" />
-            </Button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <motion.div
-        className="flex items-center justify-center font-medium text-sm min-w-[40px] text-gray-600"
-        initial={{ scale: 0.8 }}
-        animate={{ scale: 1 }}
+      <Button
+        size="icon"
+        variant="ghost"
+        onClick={decrementQuantity}
+        className="rounded-full h-8 w-8 bg-[#1d1d1d] text-white hover:bg-[#1d1d1d]/90"
+        disabled={!product.inStock || quantity <= 0}
       >
-        {quantity}
-      </motion.div>
+        <Minus className="h-3 w-3" />
+      </Button>
 
-      <AnimatePresence>
-        {expanded && (
-          <motion.div
-            initial={{ opacity: 0, width: 0 }}
-            animate={{ opacity: 1, width: "auto" }}
-            exit={{ opacity: 0, width: 0 }}
-            className="overflow-hidden"
-          >
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={incrementQuantity}
-              className="rounded-full h-8 w-8 bg-[#1d1d1d] text-white hover:bg-[#1d1d1d]/90"
-            >
-              <Plus className="h-3 w-3" />
-            </Button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <div className="flex items-center justify-center font-medium text-sm min-w-[40px] text-gray-600">
+        {quantity}
+      </div>
+
+      <Button
+        size="icon"
+        variant="ghost"
+        onClick={incrementQuantity}
+        data-testid="add-to-cart"
+        className="rounded-full h-8 w-8 bg-[#1d1d1d] text-white hover:bg-[#1d1d1d]/90"
+        disabled={!product.inStock}
+      >
+        <Plus className="h-3 w-3" />
+      </Button>
     </motion.div>
   )
 }
