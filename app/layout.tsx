@@ -67,8 +67,8 @@ export default function RootLayout({
               </OrderProvider>
             </CartProvider>
           </StoreProvider>
+          <AdminPanel />
         </I18nProvider>
-        <AdminPanel />
         <Analytics />
         <SpeedInsights />
       </body>

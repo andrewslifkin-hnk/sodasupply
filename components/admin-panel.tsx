@@ -5,11 +5,20 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
-import { Copy, Eye, EyeOff, X } from "lucide-react"
+import { Copy, Eye, EyeOff, X, Globe } from "lucide-react"
+import { useI18n, SUPPORTED_LOCALES, type SupportedLocale } from "@/context/i18n-context"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 export function AdminPanel() {
   const params = useUrlParameters()
   const isAdminVisible = useAdminPanel()
+  const { locale, setLocale, t } = useI18n()
 
   const copyUrl = (paramUpdates: Partial<typeof params>) => {
     const url = getUrlWithParameters(paramUpdates)
@@ -88,6 +97,51 @@ export function AdminPanel() {
           </div>
         </div>
 
+        {/* Language Preferences */}
+        <div className="border-t pt-3">
+          <h4 className="text-sm font-medium mb-2">Language Preferences</h4>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="language-select" className="text-sm flex items-center gap-2">
+              <Globe className="h-4 w-4" />
+              Language
+            </Label>
+            <Select
+              value={locale}
+              onValueChange={(value: SupportedLocale) => setLocale(value)}
+            >
+              <SelectTrigger className="w-[140px] h-8">
+                <SelectValue>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">
+                      {locale === 'en' ? '🇺🇸' : '🇧🇷'}
+                    </span>
+                    <span className="text-sm">{SUPPORTED_LOCALES[locale]}</span>
+                  </div>
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(SUPPORTED_LOCALES).map(([localeCode, localeName]) => (
+                  <SelectItem 
+                    key={localeCode} 
+                    value={localeCode}
+                    className="cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">
+                        {localeCode === 'en' ? '🇺🇸' : '🇧🇷'}
+                      </span>
+                      <span className="text-sm">{localeName}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="text-xs text-gray-500 mt-1">
+            Changes apply immediately and persist in localStorage
+          </div>
+        </div>
+
         {/* Preset Configurations */}
         <div className="border-t pt-3">
           <h4 className="text-sm font-medium mb-2">Quick Presets</h4>
@@ -160,6 +214,7 @@ export function AdminPanel() {
             <div>distributor: {params.distributor_selector.toString()}</div>
             <div>promo: {params.promo_banner.toString()}</div>
             <div>search: {params.search_overlay.toString()}</div>
+            <div>language: {locale}</div>
           </div>
         </div>
       </CardContent>
