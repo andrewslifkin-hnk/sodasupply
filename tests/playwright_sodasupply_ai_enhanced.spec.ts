@@ -394,10 +394,10 @@ test.describe('SodaSupply – AI-Enhanced Synthetic A/B journeys', () => {
       }
     }
     
-    // Write results to a single file with timestamp
+    // Write results to organized directory with timestamp
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const aiSuffix = USE_AI_PERSONAS ? '_ai_enhanced' : '';
-    const outputFile = `./results_${TOTAL_USERS}_users${aiSuffix}_${timestamp}.jsonl`;
+    const outputFile = `./test-results/synthetic-users/results_${TOTAL_USERS}_users${aiSuffix}_${timestamp}.jsonl`;
     const output = results.map(r => JSON.stringify(r)).join('\n') + '\n';
     fs.writeFileSync(outputFile, output, { encoding: 'utf-8' });
     

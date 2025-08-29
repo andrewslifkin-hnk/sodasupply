@@ -108,7 +108,7 @@ The AI-enhanced test performs:
 ## Output and Analysis
 
 ### Result Files
-Tests generate detailed JSONL files with:
+Tests generate detailed JSONL files in `test-results/synthetic-users/` with:
 ```json
 {
   "userIndex": 1,
@@ -160,6 +160,16 @@ tests/
 ├── personas_eazle_synthetic.json  # Persona definitions (now with 4 personas)
 ├── playwright_sodasupply_ab.spec.ts              # Original test
 └── playwright_sodasupply_ai_enhanced.spec.ts     # AI-enhanced test
+
+test-results/
+└── synthetic-users/               # Organized test results (git-ignored)
+    ├── results_*_users_ai_enhanced_*.jsonl       # Raw test data
+    ├── results_*_users_ai_enhanced_*.csv         # CSV exports
+    └── README.md                  # Directory documentation
+
+scripts/
+├── analyze-results.js             # Rich console analysis
+└── export-csv.js                  # CSV export tool
 ```
 
 ## Benefits

@@ -63,7 +63,7 @@ function jsonlToCsv(filePath) {
     // Combine headers and rows
     const csv = [headers.join(','), ...rows].join('\n');
     
-    // Write to file
+    // Write to file in same directory
     const outputFile = filePath.replace('.jsonl', '.csv');
     fs.writeFileSync(outputFile, csv, 'utf-8');
     
@@ -80,9 +80,12 @@ function main() {
   const args = process.argv.slice(2);
   
   if (args.length === 0) {
-    // Find the most recent results file
-    const files = fs.readdirSync('.')
-      .filter(file => file.startsWith('results_') && file.endsWith('.jsonl'))
+    // Find the most recent results file in organized directory
+    const resultsDir = './test-results/synthetic-users';
+    const legacyResults = fs.existsSync('.') ? fs.readdirSync('.').filter(file => file.startsWith('results_') && file.endsWith('.jsonl')) : [];
+    const organizedResults = fs.existsSync(resultsDir) ? fs.readdirSync(resultsDir).filter(file => file.startsWith('results_') && file.endsWith('.jsonl')).map(file => `${resultsDir}/${file}`) : [];
+    
+    const files = [...organizedResults, ...legacyResults]
       .sort()
       .reverse();
     
