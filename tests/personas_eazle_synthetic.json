@@ -25,5 +25,14 @@
       "pages_common": [],
       "conversion_latency_hours": 24
     }
+  },
+  {
+    "persona_key": "social",
+    "label": "Social influencer",
+    "behaviours": {
+      "session_length": "medium",
+      "pages_common": [],
+      "conversion_latency_hours": 2
+    }
   }
 ]

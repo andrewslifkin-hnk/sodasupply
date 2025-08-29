@@ -20,11 +20,17 @@ const personas = JSON.parse(fs.readFileSync(personasPath, 'utf-8')) as Persona[]
 const BASE_URL = process.env.EAZLE_BASE_URL || 'https://sodasupply.vercel.app/products';
 const ASSIGNMENT = process.env.AB_ASSIGNMENT || 'env'; // 'env' | 'random'
 const VARIANT_ENV = process.env.AB_VARIANT || 'control'; // if ASSIGNMENT='env'
-const RUNS = parseInt(process.env.RUNS || '1', 10);
+const TOTAL_USERS = parseInt(process.env.TOTAL_USERS || '100', 10);
 
 function pickVariant(): 'control' | 'test' {
   if (ASSIGNMENT === 'random') return Math.random() < 0.5 ? 'control' : 'test';
   return (VARIANT_ENV === 'test' ? 'test' : 'control');
+}
+
+function pickPersona(): Persona {
+  // Randomly distribute users across all available personas
+  const randomIndex = Math.floor(Math.random() * personas.length);
+  return personas[randomIndex];
 }
 
 async function waitBySessionLength(page: Page, length: 'short'|'medium'|'long') {
@@ -156,29 +162,90 @@ async function checkout(page: Page) {
 
 test.describe('SodaSupply – Synthetic A/B journeys', () => {
   test.describe.configure({ timeout: 90000 });
-  for (const persona of personas) {
-    test(`${persona.label}`, async ({ page }) => {
-      const results: any[] = [];
-      for (let i = 0; i < RUNS; i++) {
-        const variant = pickVariant();
-        const url = `${BASE_URL}${BASE_URL.includes('?') ? '&' : '?'}ab_variant=${variant}&persona=${persona.persona_key}`;
+  
+  test(`Simulate ${TOTAL_USERS} users across all personas`, async ({ page }) => {
+    const results: any[] = [];
+    
+    for (let userIndex = 0; userIndex < TOTAL_USERS; userIndex++) {
+      const persona = pickPersona();
+      const variant = pickVariant();
+      const url = `${BASE_URL}${BASE_URL.includes('?') ? '&' : '?'}ab_variant=${variant}&persona=${persona.persona_key}`;
+      
+      console.log(`User ${userIndex + 1}/${TOTAL_USERS}: ${persona.label} (${variant})`);
+      
+      try {
         await page.goto(url, { waitUntil: 'domcontentloaded' });
         await expect(page).toHaveURL(/products/);
         await waitBySessionLength(page, persona.behaviours.session_length);
         
         const addedToCart = await addFirstProductToCart(page);
         if (!addedToCart) {
-          throw new Error('Failed to add any product to cart');
+          console.warn(`User ${userIndex + 1}: Failed to add product to cart`);
+          results.push({ 
+            userIndex: userIndex + 1,
+            persona: persona.persona_key, 
+            variant, 
+            finalUrl: page.url(), 
+            status: 'failed_add_to_cart',
+            ts: new Date().toISOString() 
+          });
+          continue;
         }
         
         await waitBySessionLength(page, persona.behaviours.session_length);
         await goToCart(page);
         await waitBySessionLength(page, persona.behaviours.session_length);
         await checkout(page);
-        results.push({ persona: persona.persona_key, variant, finalUrl: page.url(), ts: new Date().toISOString() });
+        
+        results.push({ 
+          userIndex: userIndex + 1,
+          persona: persona.persona_key, 
+          variant, 
+          finalUrl: page.url(), 
+          status: 'completed',
+          ts: new Date().toISOString() 
+        });
+      } catch (error) {
+        console.warn(`User ${userIndex + 1}: Test failed -`, error);
+        results.push({ 
+          userIndex: userIndex + 1,
+          persona: persona.persona_key, 
+          variant, 
+          finalUrl: page.url(), 
+          status: 'failed',
+          error: error instanceof Error ? error.message : String(error),
+          ts: new Date().toISOString() 
+        });
       }
-      const out = results.map(r => JSON.stringify(r)).join('\n') + '\n';
-      fs.appendFileSync(`./results_${persona.persona_key}.jsonl`, out, { encoding: 'utf-8' });
-    });
-  }
+    }
+    
+    // Write results to a single file with timestamp
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const outputFile = `./results_100_users_${timestamp}.jsonl`;
+    const output = results.map(r => JSON.stringify(r)).join('\n') + '\n';
+    fs.writeFileSync(outputFile, output, { encoding: 'utf-8' });
+    
+    // Log summary statistics
+    const personaCounts = results.reduce((acc, r) => {
+      acc[r.persona] = (acc[r.persona] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    const variantCounts = results.reduce((acc, r) => {
+      acc[r.variant] = (acc[r.variant] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    const statusCounts = results.reduce((acc, r) => {
+      acc[r.status] = (acc[r.status] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    console.log('\n=== Test Summary ===');
+    console.log(`Total users simulated: ${results.length}`);
+    console.log('Persona distribution:', personaCounts);
+    console.log('Variant distribution:', variantCounts);
+    console.log('Status distribution:', statusCounts);
+    console.log(`Results written to: ${outputFile}`);
+  });
 });

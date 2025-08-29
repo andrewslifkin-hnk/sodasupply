@@ -1,0 +1,6 @@
+User Index,Persona,Variant,Status,AI Interaction Style,AI Predicted Conversion %,AI Session Duration,AI Search Terms,AI Decision Factors,Final URL,Timestamp,Error
+"1","deliberate","control","completed","thorough","50.0","120","energy drink; soda; beverage","price; brand reputation","https://sodasupply.vercel.app/products","2025-08-29T12:04:58.328Z",""
+"2","fast","control","completed","quick","70.0","30","energy drink; soda; beverage","price; brand reputation","https://sodasupply.vercel.app/products","2025-08-29T12:05:07.562Z",""
+"3","deliberate","control","abandoned_cart","thorough","50.0","120","energy drink; soda; beverage","price; brand reputation","https://sodasupply.vercel.app/products","2025-08-29T12:05:19.465Z",""
+"4","browser","control","abandoned_cart","hesitant","30.0","300","energy drink; soda; beverage","price; brand reputation","https://sodasupply.vercel.app/products","2025-08-29T12:05:36.066Z",""
+"5","deliberate","control","completed","thorough","50.0","120","energy drink; soda; beverage","price; brand reputation","https://sodasupply.vercel.app/products","2025-08-29T12:05:48.246Z",""
